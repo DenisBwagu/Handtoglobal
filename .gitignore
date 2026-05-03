@@ -8,13 +8,16 @@ config.local.php
 config.production.php
 
 # Database
-*.sql
 *.db
 *.sqlite
 *.sqlite3
 database/
 db_backup/
 logs/
+
+# Allow specific database schema files
+!db.sql
+!db_handtoglobal.sql
 
 # Server and Deployment
 /.htaccess

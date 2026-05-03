@@ -127,25 +127,184 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             $amount = (float)$_POST['amount'];
             $operation = $_POST['operation'] ?? 'add';
             
-            if ($amount <= 0) {
-                $error = 'Amount must be greater than 0';
+            // Validate amount is numeric and greater than 0
+            if ($amount <= 0 || !is_numeric($amount)) {
+                $error = 'Amount must be a valid number greater than 0';
             } else {
                 try {
                     if ($operation === 'add') {
                         $stmt = $conn->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
                         $stmt->execute([$amount, $user['id']]);
                         $success = 'Balance added successfully!';
+                        
+                        // Log balance change if balance_logs table exists
+                        try {
+                            $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
+                            $stmt->execute([$user['id'], $_SESSION['admin'], $amount, 'add', 'Admin manual adjustment']);
+                        } catch(PDOException $e) {
+                            // Log table doesn't exist, continue without logging
+                        }
                     } else {
-                        $stmt = $conn->prepare("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?");
-                        $stmt->execute([$amount, $user['id'], $amount]);
-                        $success = 'Balance deducted successfully!';
+                        // Check if user has sufficient balance for subtraction
+                        $stmt = $conn->prepare("SELECT balance FROM users WHERE id = ?");
+                        $stmt->execute([$user['id']]);
+                        $currentBalance = $stmt->fetch()['balance'];
+                        
+                        if ($currentBalance >= $amount) {
+                            $stmt = $conn->prepare("UPDATE users SET balance = balance - ? WHERE id = ?");
+                            $stmt->execute([$amount, $user['id']]);
+                            $success = 'Balance deducted successfully!';
+                            
+                            // Log balance change if balance_logs table exists
+                            try {
+                                $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
+                                $stmt->execute([$user['id'], $_SESSION['admin'], $amount, 'subtract', 'Admin manual adjustment']);
+                            } catch(PDOException $e) {
+                                // Log table doesn't exist, continue without logging
+                            }
+                        } else {
+                            $error = 'Insufficient balance for subtraction';
+                        }
                     }
                 } catch(PDOException $e) {
-                    $error = 'Failed to adjust balance';
+                    $error = 'Failed to adjust balance: ' . $e->getMessage();
                 }
             }
             break;
+            
+        case 'unlock_level':
+            $level = $_POST['level'] ?? '';
+            $validLevels = ['bronze', 'silver', 'gold', 'platinum'];
+            
+            if (!in_array(strtolower($level), $validLevels)) {
+                $error = 'Invalid level specified';
+            } else {
+                try {
+                    // Update the correct unlock column
+                    $unlockField = strtolower($level) . '_unlocked';
+                    $stmt = $conn->prepare("UPDATE users SET $unlockField = 1 WHERE id = ?");
+                    $stmt->execute([$user['id']]);
+                    
+                    // Update user level if needed
+                    $levelHierarchy = ['bronze' => 'Bronze', 'silver' => 'Silver', 'gold' => 'Gold', 'platinum' => 'Platinum'];
+                    $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
+                    $stmt->execute([$levelHierarchy[strtolower($level)], $user['id']]);
+                    
+                    $success = ucfirst($level) . ' level unlocked successfully!';
+                } catch(PDOException $e) {
+                    $error = 'Failed to unlock level: ' . $e->getMessage();
+                }
+            }
+            break;
+            
+        case 'user_limits':
+            // Validate and update user limits
+            $dailyLimit = !empty($_POST['daily_limit']) ? (int)$_POST['daily_limit'] : null;
+            $weeklyLimit = !empty($_POST['weekly_limit']) ? (int)$_POST['weekly_limit'] : null;
+            $monthlyLimit = !empty($_POST['monthly_limit']) ? (int)$_POST['monthly_limit'] : null;
+            
+            try {
+                // Check if limits columns exist, add them if they don't
+                $checkColumns = ['daily_task_limit', 'weekly_task_limit', 'monthly_task_limit'];
+                foreach ($checkColumns as $column) {
+                    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE '$column'");
+                    if ($check_column->rowCount() == 0) {
+                        $conn->exec("ALTER TABLE users ADD COLUMN $column INT DEFAULT 40");
+                    }
+                }
+                
+                // Build update query dynamically based on provided values
+                $updateFields = [];
+                $updateValues = [];
+                
+                if ($dailyLimit !== null && $dailyLimit > 0) {
+                    $updateFields[] = "daily_task_limit = ?";
+                    $updateValues[] = $dailyLimit;
+                }
+                
+                if ($weeklyLimit !== null && $weeklyLimit > 0) {
+                    $updateFields[] = "weekly_task_limit = ?";
+                    $updateValues[] = $weeklyLimit;
+                }
+                
+                if ($monthlyLimit !== null && $monthlyLimit > 0) {
+                    $updateFields[] = "monthly_task_limit = ?";
+                    $updateValues[] = $monthlyLimit;
+                }
+                
+                if (!empty($updateFields)) {
+                    $updateValues[] = $user['id'];
+                    $updateSql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
+                    $stmt = $conn->prepare($updateSql);
+                    $stmt->execute($updateValues);
+                    $success = 'User limits updated successfully!';
+                } else {
+                    $error = 'No valid limits provided';
+                }
+            } catch(PDOException $e) {
+                $error = 'Failed to update user limits: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'flush_levels':
+            try {
+                // Clear completed_tasks for this user only
+                $stmt = $conn->prepare("DELETE FROM completed_tasks WHERE user_id = ?");
+                $stmt->execute([$user['id']]);
+                
+                // Reset level-related fields
+                $stmt = $conn->prepare("UPDATE users SET bronze_unlocked = 1, silver_unlocked = 0, gold_unlocked = 0, platinum_unlocked = 0, level = 'Bronze', accuracy = 0, rating = 0, total_tasks = 0 WHERE id = ?");
+                $stmt->execute([$user['id']]);
+                
+                $success = 'User level progress reset successfully!';
+            } catch(PDOException $e) {
+                $error = 'Failed to flush levels: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'flush_account':
+            try {
+                // Clear completed_tasks
+                $stmt = $conn->prepare("DELETE FROM completed_tasks WHERE user_id = ?");
+                $stmt->execute([$user['id']]);
+                
+                // Reset level-related fields
+                $stmt = $conn->prepare("UPDATE users SET bronze_unlocked = 1, silver_unlocked = 0, gold_unlocked = 0, platinum_unlocked = 0, level = 'Bronze', accuracy = 0, rating = 0, total_tasks = 0, balance = 0 WHERE id = ?");
+                $stmt->execute([$user['id']]);
+                
+                $success = 'User account reset successfully!';
+            } catch(PDOException $e) {
+                $error = 'Failed to flush account: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'toggle_status':
+            try {
+                // Check if is_active column exists, add it if it doesn't
+                $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+                if ($check_column->rowCount() == 0) {
+                    $conn->exec("ALTER TABLE users ADD COLUMN is_active TINYINT(1) DEFAULT 1");
+                }
+                
+                $stmt = $conn->prepare("UPDATE users SET is_active = NOT is_active WHERE id = ?");
+                $stmt->execute([$user['id']]);
+                $success = 'User status updated successfully!';
+            } catch(PDOException $e) {
+                $error = 'Failed to update user status: ' . $e->getMessage();
+            }
+            break;
     }
+    
+    // Redirect to prevent form resubmission
+    if ($success) {
+        header("Location: user_view.php?id=" . $user['id'] . "&success=" . urlencode($success));
+        exit;
+    }
+}
+
+// Handle success message from redirect
+if (isset($_GET['success'])) {
+    $success = htmlspecialchars($_GET['success']);
 }
 
 // Get user statistics with error handling
@@ -553,6 +712,116 @@ if ($check_column->rowCount() > 0) {
             color: #842029;
             border: 1px solid #f5c2c7;
         }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 2px rgba(13,110,253,0.2);
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        .btn-primary {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5c636a;
+        }
     </style>
 </head>
 <body>
@@ -605,28 +874,28 @@ if ($check_column->rowCount() > 0) {
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-green">
+                    <button class="btn btn-green" onclick="showLoginAsModal()">
                         <i class="fas fa-sign-in-alt"></i> LoginAs
                     </button>
-                    <button class="btn">
+                    <button class="btn" onclick="showPasswordModal()">
                         <i class="fas fa-key"></i> ResetPassword
                     </button>
-                    <button class="btn">
+                    <button class="btn" onclick="showUnlockModal()">
                         <i class="fas fa-unlock"></i> UnlockLevel
                     </button>
-                    <button class="btn">
+                    <button class="btn" onclick="showBalanceModal()">
                         <i class="fas fa-dollar-sign"></i> AdjustBalance
                     </button>
-                    <button class="btn">
+                    <button class="btn" onclick="showLimitsModal()">
                         <i class="fas fa-sliders-h"></i> UserLimits
                     </button>
-                    <button class="btn btn-red">
-                        <i class="fas fa-ban"></i> Deactivate
+                    <button class="btn btn-red" onclick="showToggleStatusModal()">
+                        <i class="fas fa-ban"></i> <?php echo $isActive ? 'Deactivate' : 'Activate'; ?>
                     </button>
-                    <button class="btn btn-orange-outline">
+                    <button class="btn btn-orange-outline" onclick="showFlushLevelsModal()">
                         <i class="fas fa-trash"></i> FlushLevels
                     </button>
-                    <button class="btn btn-red">
+                    <button class="btn btn-red" onclick="showFlushAccountModal()">
                         <i class="fas fa-user-times"></i> FlushAccount
                     </button>
                 </div>
@@ -734,5 +1003,299 @@ if ($check_column->rowCount() > 0) {
             </div>
         </div>
     </div>
+
+    <!-- Login As Modal -->
+    <div id="loginAsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login as User</h3>
+                <span class="close" onclick="closeModal('loginAsModal')">&times;</span>
+            </div>
+            <p>Are you sure you want to login as <strong><?php echo htmlspecialchars($user['fullname']); ?></strong>?</p>
+            <p style="color: #dc3545; font-size: 12px;">You will be logged out of admin and logged in as this user.</p>
+            <form method="POST">
+                <input type="hidden" name="action" value="login_as">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-green">
+                        <i class="fas fa-sign-in-alt"></i> Login As User
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('loginAsModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Password</h3>
+                <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="action" value="reset_password">
+                <div class="form-group">
+                    <label>New Password (min 6 characters)</label>
+                    <input type="password" name="new_password" class="form-control" required minlength="6">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> Reset Password
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Unlock Level Modal -->
+    <div id="unlockModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Unlock Level</h3>
+                <span class="close" onclick="closeModal('unlockModal')">&times;</span>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="action" value="unlock_level">
+                <div class="form-group">
+                    <label>Select Level to Unlock</label>
+                    <select name="level" class="form-control" required>
+                        <option value="">Select Level</option>
+                        <option value="bronze">Bronze</option>
+                        <option value="silver">Silver</option>
+                        <option value="gold">Gold</option>
+                        <option value="platinum">Platinum</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-unlock"></i> Unlock Level
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('unlockModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Adjust Balance Modal -->
+    <div id="balanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adjust Balance</h3>
+                <span class="close" onclick="closeModal('balanceModal')">&times;</span>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="action" value="adjust_balance">
+                <div class="form-group">
+                    <label>Current Balance: <strong>$<?php echo number_format($user['balance'], 2); ?></strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Amount (USDT)</label>
+                    <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Operation</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="operation" value="add" checked>
+                            Add to Balance
+                        </label>
+                        <label>
+                            <input type="radio" name="operation" value="subtract">
+                            Subtract from Balance
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-dollar-sign"></i> Adjust Balance
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('balanceModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Limits Modal -->
+    <div id="limitsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>User Limits</h3>
+                <span class="close" onclick="closeModal('limitsModal')">&times;</span>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="action" value="user_limits">
+                <div class="form-group">
+                    <label>Daily Task Limit (leave empty to keep current)</label>
+                    <input type="number" name="daily_limit" class="form-control" min="1" placeholder="40">
+                </div>
+                <div class="form-group">
+                    <label>Weekly Task Limit (leave empty to keep current)</label>
+                    <input type="number" name="weekly_limit" class="form-control" min="1" placeholder="280">
+                </div>
+                <div class="form-group">
+                    <label>Monthly Task Limit (leave empty to keep current)</label>
+                    <input type="number" name="monthly_limit" class="form-control" min="1" placeholder="1200">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sliders-h"></i> Update Limits
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('limitsModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toggle Status Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Toggle User Status</h3>
+                <span class="close" onclick="closeModal('statusModal')">&times;</span>
+            </div>
+            <p>Are you sure you want to <?php echo $isActive ? 'deactivate' : 'activate'; ?> this user?</p>
+            <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
+            <form method="POST">
+                <input type="hidden" name="action" value="toggle_status">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-<?php echo $isActive ? 'danger' : 'success'; ?>">
+                        <i class="fas fa-<?php echo $isActive ? 'ban' : 'check'; ?>"></i> <?php echo $isActive ? 'Deactivate' : 'Activate'; ?> User
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('statusModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flush Levels Modal -->
+    <div id="flushLevelsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Flush Levels</h3>
+                <span class="close" onclick="closeModal('flushLevelsModal')">&times;</span>
+            </div>
+            <p style="color: #dc3545;">This will reset the user's level progress only.</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Clear completed tasks</li>
+                <li>Reset level unlocks to Bronze only</li>
+                <li>Reset accuracy and rating</li>
+                <li>Keep balance, deposits, withdrawals</li>
+                <li>Keep login details</li>
+            </ul>
+            <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
+            <form method="POST">
+                <input type="hidden" name="action" value="flush_levels">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-orange-outline">
+                        <i class="fas fa-trash"></i> Flush Levels
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('flushLevelsModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flush Account Modal -->
+    <div id="flushAccountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Flush Account</h3>
+                <span class="close" onclick="closeModal('flushAccountModal')">&times;</span>
+            </div>
+            <p style="color: #dc3545;">This will fully reset the user account activity.</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Clear completed tasks</li>
+                <li>Reset level unlocks and progress</li>
+                <li>Reset balance to 0</li>
+                <li>Reset accuracy and rating</li>
+                <li>Keep login details (name, email, password)</li>
+                <li>Keep registration date</li>
+            </ul>
+            <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
+            <form method="POST">
+                <input type="hidden" name="action" value="flush_account">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-red">
+                        <i class="fas fa-user-times"></i> Flush Account
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('flushAccountModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showLoginAsModal() {
+            document.getElementById('loginAsModal').style.display = 'block';
+        }
+        
+        function showPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+        
+        function showUnlockModal() {
+            document.getElementById('unlockModal').style.display = 'block';
+        }
+        
+        function showBalanceModal() {
+            document.getElementById('balanceModal').style.display = 'block';
+        }
+        
+        function showLimitsModal() {
+            document.getElementById('limitsModal').style.display = 'block';
+        }
+        
+        function showToggleStatusModal() {
+            document.getElementById('statusModal').style.display = 'block';
+        }
+        
+        function showFlushLevelsModal() {
+            document.getElementById('flushLevelsModal').style.display = 'block';
+        }
+        
+        function showFlushAccountModal() {
+            document.getElementById('flushAccountModal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        // Form validation for balance adjustment
+        document.querySelector('#balanceModal form').addEventListener('submit', function(e) {
+            const amount = parseFloat(this.querySelector('[name="amount"]').value);
+            const operation = this.querySelector('[name="operation"]:checked').value;
+            const currentBalance = <?php echo $user['balance']; ?>;
+            
+            if (operation === 'subtract' && amount > currentBalance) {
+                e.preventDefault();
+                alert('Cannot subtract more than the current balance');
+            }
+        });
+    </script>
 </body>
 </html>
