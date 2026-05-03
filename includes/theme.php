@@ -141,6 +141,5 @@ function adjustSizeValue($size, $pixels) {
 }
 
 // Output the theme CSS
-header('Content-Type: text/css');
 echo generateThemeCSS();
 ?>

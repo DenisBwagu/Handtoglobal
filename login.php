@@ -6,23 +6,12 @@ if (isLoggedIn()) {
     redirect('dashboard.php');
 }
 if (isAdminLoggedIn()) {
-    redirect('admin/index.php');
+    redirect('admin/dashboard.php');
 }
 
 $error = '';
-$dbError = '';
 
-// Check if database is available on page load (for non-POST requests)
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    try {
-        $conn = getConnection();
-        $conn = null; // Close connection if successful
-    } catch(PDOException $e) {
-        $dbError = 'Database connection failed. Please check if MySQL is running.';
-    }
-}
-
-// Handle POST request (form submission)
+// Handle POST request (form submission) ONLY
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = sanitize($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -33,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $conn = getConnection();
             
-            // First check admins table
-            $stmt = $conn->prepare("SELECT * FROM admins WHERE email = ?");
+            // Check admins table with LIMIT 1 for speed
+            $stmt = $conn->prepare("SELECT * FROM admins WHERE email = ? LIMIT 1");
             $stmt->execute([$email]);
             $admin = $stmt->fetch();
             
@@ -45,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_email'] = $admin['email'];
                 redirect('admin/dashboard.php');
             } else {
-                // Check users table
-                $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+                // Check users table with LIMIT 1 for speed
+                $stmt = $conn->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
                 $stmt->execute([$email]);
                 $user = $stmt->fetch();
                 
@@ -66,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } catch(PDOException $e) {
-            $dbError = 'Database connection failed. Please check if MySQL is running.';
+            $error = 'Login failed. Please try again.';
         }
     }
 }
@@ -77,14 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - HandToGlobal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        <?php include 'includes/theme.php'; ?>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -204,16 +188,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <h1 class="login-title">Welcome to HandToGlobal</h1>
         <div class="logo">
-            <i class="fas fa-hand-holding-usd"></i>
+            <i style="display: inline-block; font-size: 48px; color: #667eea;">H</i>
             <h1>HandToGlobal</h1>
         </div>
-        
-        <?php if ($dbError): ?>
-            <div class="alert alert-error" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a;">
-                <strong>Database Error:</strong> <?php echo htmlspecialchars($dbError); ?><br>
-                <small>Please start MySQL service or <a href="db_test.php" style="color: #d97706;">test connection</a></small>
-            </div>
-        <?php endif; ?>
         
         <?php if ($error): ?>
             <div class="alert alert-error">

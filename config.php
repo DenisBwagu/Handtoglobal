@@ -1,60 +1,56 @@
 <?php
-// Start session first - must be before any output
+// Start session first
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_PORT', 3307);
-define('DB_NAME', 'handtoglobal');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// handtoglobal/config.php
 
-// Application configuration
-define('APP_NAME', 'HandToGlobal');
-define('APP_URL', 'http://localhost/handtoglobal');
-define('DAILY_TASK_LIMIT', 40);
-
-// Level configuration
-define('BRONZE_REWARD', 1.80);
-define('SILVER_REWARD', 2.50);
-define('GOLD_REWARD', 3.50);
-define('PLATINUM_REWARD', 5.00);
-
-// Unlock amounts
-define('BRONZE_UNLOCK_AMOUNT', 100);
-define('SILVER_UNLOCK_AMOUNT', 150);
-define('GOLD_UNLOCK_AMOUNT', 250);
-define('PLATINUM_UNLOCK_AMOUNT', 500);
-
-// Database connection with fallback configurations
-function getConnection() {
-    $configs = [
-        ['host' => 'localhost', 'port' => 3307, 'pass' => ''],
-        ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
-        ['host' => '127.0.0.1', 'port' => 3307, 'pass' => ''],
-        ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
-        ['host' => 'localhost', 'port' => 3307, 'pass' => 'root'],
-        ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
-    ];
-    
-    foreach ($configs as $config) {
-        try {
-            $dsn = "mysql:host=" . $config['host'] . ";port=" . $config['port'] . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            $conn = new PDO($dsn, DB_USER, $config['pass']);
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            return $conn;
-        } catch(PDOException $e) {
-            // Try next configuration
-            continue;
-        }
-    }
-    
-    // If all configurations fail, throw detailed error
-    throw new PDOException("Could not connect to MySQL. Please check if MySQL service is running. Tried configurations: " . implode(', ', array_map(function($c) { return $c['host'] . ':' . $c['port']; }, $configs)));
+if (defined('HANDTOGLOBAL_CONFIG_LOADED')) {
+    return;
 }
+define('HANDTOGLOBAL_CONFIG_LOADED', true);
+
+// Database constants
+if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+if (!defined('DB_PORT')) define('DB_PORT', '3306');
+if (!defined('DB_NAME')) define('DB_NAME', 'handtoglobal');
+if (!defined('DB_USER')) define('DB_USER', 'root');
+if (!defined('DB_PASS')) define('DB_PASS', '');
+
+// App constants
+if (!defined('TELEGRAM_SUPPORT')) define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
+if (!defined('DAILY_TASK_LIMIT')) define('DAILY_TASK_LIMIT', 40);
+
+if (!function_exists('getConnection')) {
+    function getConnection() {
+        $configs = [
+            ['host' => DB_HOST, 'port' => DB_PORT, 'pass' => DB_PASS],
+            ['host' => 'localhost', 'port' => 3307, 'pass' => ''],
+            ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
+            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => ''],
+            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
+            ['host' => 'localhost', 'port' => 3307, 'pass' => 'root'],
+            ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
+        ];
+
+        foreach ($configs as $config) {
+            try {
+                $dsn = "mysql:host={$config['host']};port={$config['port']};dbname=" . DB_NAME . ";charset=utf8mb4";
+                $pdo = new PDO($dsn, DB_USER, $config['pass']);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                return $pdo;
+            } catch (PDOException $e) {
+                continue;
+            }
+        }
+
+        die("Database connection failed. Please check XAMPP MySQL and config.php.");
+    }
+}
+    
+// Helper functions
+
 
 // Helper functions
 function sanitize($input) {
@@ -100,13 +96,84 @@ function getAdminById($id) {
     return $stmt->fetch();
 }
 
-function getSetting($key, $default = null) {
-    $conn = getConnection();
-    $stmt = $conn->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-    $stmt->execute([$key]);
-    $result = $stmt->fetch();
-    return $result ? $result['setting_value'] : $default;
+if (!function_exists('getSetting')) {
+    function getSetting($key, $default = '') {
+        try {
+            $conn = getConnection();
+            $stmt = $conn->prepare("SELECT setting_value FROM settings WHERE setting_key = ? LIMIT 1");
+            $stmt->execute([$key]);
+            $value = $stmt->fetchColumn();
+
+            return ($value !== false && $value !== null) ? $value : $default;
+        } catch (Throwable $e) {
+            return $default;
+        }
+    }
 }
+
+if (!function_exists('setSetting')) {
+    function setSetting($key, $value) {
+        try {
+            $conn = getConnection();
+            $stmt = $conn->prepare("
+                INSERT INTO settings (setting_key, setting_value)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+            ");
+            return $stmt->execute([$key, $value]);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+if (!function_exists('getSetting')) {
+    function getSetting($key, $default = '') {
+        try {
+            $conn = getConnection();
+
+            $stmt = $conn->prepare("SELECT setting_value FROM settings WHERE setting_key = ? LIMIT 1");
+            $stmt->execute([$key]);
+
+            $value = $stmt->fetchColumn();
+
+            return ($value !== false && $value !== null) ? $value : $default;
+
+        } catch (Throwable $e) {
+            return $default;
+        }
+    }
+}
+
+if (!function_exists('setSetting')) {
+    function setSetting($key, $value) {
+        global $conn;
+
+        if (!$conn) return false;
+
+        try {
+            $stmt = $conn->prepare("
+                INSERT INTO settings (setting_key, setting_value)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+            ");
+            $stmt->bind_param("ss", $key, $value);
+            return $stmt->execute();
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
+if (!function_exists('getSiteSettings')) {
+    function getSiteSettings() {
+        return [
+            'site_name' => getSetting('SiteName', 'Hand to Global'),
+            'support_email' => getSetting('SupportEmail', 'support@handtoglobal.com'),
+            'telegram_link' => getSetting('TelegramLink', ''),
+        ];
+    }
+}
+
 
 function getThemeCSS() {
     $appearance = getSetting('appearance_mode', 'light');

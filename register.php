@@ -5,50 +5,102 @@ require_once 'config.php';
 if (isLoggedIn()) {
     redirect('dashboard.php');
 }
-if (isAdminLoggedIn()) {
-    redirect('admin/index.php');
-}
 
 $error = '';
 $success = '';
-$ref = isset($_GET['ref']) ? (int)$_GET['ref'] : null;
 
+// Handle POST request (form submission) ONLY
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullname = sanitize($_POST['fullname'] ?? '');
     $email = sanitize($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
+    $invitation_code = sanitize($_POST['invitation_code'] ?? '');
     
-    if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
-        $error = 'Please fill in all fields';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Please enter a valid email address';
-    } elseif (strlen($password) < 6) {
-        $error = 'Password must be at least 6 characters long';
+    if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password) || empty($invitation_code)) {
+        $error = 'Please fill in all required fields';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters';
     } else {
-        $conn = getConnection();
-        
-        // Check if email already exists
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
-            $error = 'Email address already registered';
-        } else {
-            // Create new user
-            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        try {
+            $conn = getConnection();
             
-            $stmt = $conn->prepare("INSERT INTO users (fullname, email, password, referred_by) VALUES (?, ?, ?, ?)");
-            if ($stmt->execute([$fullname, $email, $hashedPassword, $ref])) {
-                $success = 'Registration successful! You can now login.';
-                
-                // Create welcome notification
-                $userId = $conn->lastInsertId();
-                createNotification($userId, 'Welcome to HandToGlobal!', 'Your account has been created successfully. Start completing tasks to earn USDT!');
-            } else {
-                $error = 'Registration failed. Please try again.';
+            // Ensure users table has required columns
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    fullname VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    password VARCHAR(255) NOT NULL,
+                    balance DECIMAL(10,2) DEFAULT 0.00,
+                    level ENUM('Bronze', 'Silver', 'Gold', 'Platinum') DEFAULT 'Bronze',
+                    is_active TINYINT(1) DEFAULT 1,
+                    invitation_code VARCHAR(50) NULL,
+                    employee_id INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_email (email),
+                    INDEX idx_invitation (invitation_code),
+                    INDEX idx_employee (employee_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+            
+            // Add missing columns if they don't exist
+            $columns = $conn->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (!in_array('invitation_code', $columns)) {
+                $conn->exec("ALTER TABLE users ADD COLUMN invitation_code VARCHAR(50) NULL AFTER is_active");
             }
+            if (!in_array('employee_id', $columns)) {
+                $conn->exec("ALTER TABLE users ADD COLUMN employee_id INT NULL AFTER invitation_code");
+            }
+            
+            // Start transaction
+            $conn->beginTransaction();
+            
+            // Validate invitation code with LIMIT 1 for speed
+            $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND is_active = 1 LIMIT 1");
+            $stmt->execute([$invitation_code]);
+            $invitation = $stmt->fetch();
+            
+            if (!$invitation) {
+                $error = 'Invalid invitation code';
+            } elseif ($invitation['used_count'] >= $invitation['max_uses']) {
+                $error = 'Invitation code has reached its usage limit';
+            } else {
+                // Check if email already exists with LIMIT 1 for speed
+                $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    $error = 'Email already exists';
+                } else {
+                    // Create user with starting balance from invitation code
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    $starting_balance = $invitation['starting_balance'] > 0 ? $invitation['starting_balance'] : 20.00;
+                    
+                    $stmt = $conn->prepare("INSERT INTO users (fullname, email, password, balance, level, is_active, invitation_code, employee_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt->execute([$fullname, $email, $hashed_password, $starting_balance, 'Bronze', 1, $invitation_code, $invitation['employee_id']]);
+                    $user_id = $conn->lastInsertId();
+                    
+                    // Update invitation code usage
+                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = used_count + 1 WHERE code = ?");
+                    $stmt->execute([$invitation_code]);
+                    
+                    // Record finance activity if starting balance > 0
+                    if ($starting_balance > 0) {
+                        $stmt = $conn->prepare("INSERT INTO finance_activities (user_id, type, category, amount, reason, balance_after, source_table, source_id) VALUES (?, 'registration_bonus', 'Initial Balance', ?, 'Registration bonus with invitation code', ?, 'users', ?)");
+                        $stmt->execute([$user_id, $starting_balance, $starting_balance, $user_id]);
+                    }
+                    
+                    $conn->commit();
+                    $success = 'Registration successful! You can now login with your credentials.';
+                }
+            }
+        } catch(PDOException $e) {
+            $conn->rollback();
+            $error = 'Registration failed. Please try again.';
         }
     }
 }
@@ -59,14 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - HandToGlobal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        <?php include 'includes/theme.php'; ?>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -166,9 +213,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .alert-success {
-            background: #c6f6d5;
-            color: #2f855a;
-            border: 1px solid #9ae6b4;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         
         .login-link {
@@ -190,9 +237,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="register-container">
-        <h1 class="register-title">Join HandToGlobal</h1>
+        <h1 class="login-title">Create Account</h1>
         <div class="logo">
-            <i class="fas fa-hand-holding-usd"></i>
+            <i style="display: inline-block; font-size: 48px; color: #667eea;">H</i>
             <h1>HandToGlobal</h1>
         </div>
         
@@ -221,12 +268,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password (min 6 chars)" required>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
             </div>
             
             <div class="form-group">
                 <label for="confirm_password">Confirm Password</label>
                 <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="invitation_code">Invitation Code</label>
+                <input type="text" id="invitation_code" name="invitation_code" placeholder="Enter invitation code" required>
             </div>
             
             <button type="submit" class="btn">Create Account</button>

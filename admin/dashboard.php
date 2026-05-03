@@ -621,7 +621,7 @@ $recentUsers = $conn->query("SELECT fullname, email, level, balance, created_at 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">FINANCE</div>
                 <ul class="sidebar-menu">
-                    <li><a href="finance-analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="finance.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
                     <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
                 </ul>
             </div>
