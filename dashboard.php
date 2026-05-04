@@ -1009,7 +1009,7 @@ foreach ($levels as $level) {
                         return;
                     }
                     
-                    if (!data.tasks || data.tasks.length === 0) {
+                    if (data.completed || !data.task) {
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981;"></i>
@@ -1021,9 +1021,8 @@ foreach ($levels as $level) {
                         return;
                     }
                     
-                    // Display first task
-                    const task = data.tasks[0];
-                    displayTask(task, level, data.tasks);
+                    // Display current task
+                    displayTask(data.task, level, data.all_tasks);
                     
                 })
                 .catch(error => {
@@ -1085,25 +1084,26 @@ foreach ($levels as $level) {
                 </div>
                 
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes')" style="flex: 1;">
+                    <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${level}')" style="flex: 1;">
                         <i class="fas fa-check"></i> I Know This Item
                     </button>
-                    <button class="btn" onclick="completeTask(${task.id}, 'no')" style="flex: 1; background: #ef4444; color: white;">
+                    <button class="btn" onclick="completeTask(${task.id}, 'no', '${level}')" style="flex: 1; background: #ef4444; color: white;">
                         <i class="fas fa-times"></i> I Don't Know
                     </button>
                 </div>
             `;
         }
         
-        function completeTask(taskId, response) {
-            fetch('complete_task.php', {
+        function completeTask(taskId, response, level) {
+            fetch('task_action.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({
+                body: new URLSearchParams({
                     task_id: taskId,
-                    response: response
+                    answer: response,
+                    level: level
                 })
             })
             .then(response => response.json())
