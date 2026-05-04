@@ -737,3 +737,24 @@ function getUserStats($userId) {
         'platinum_progress' => $platinumProgress
     ];
 }
+
+// Global support link function
+if (!function_exists('getSupportLink')) {
+    function getSupportLink() {
+        static $support_link = null;
+        
+        if ($support_link === null) {
+            try {
+                $conn = getConnection();
+                $stmt = $conn->prepare("SELECT setting_value FROM settings WHERE setting_key = 'telegram_link' LIMIT 1");
+                $stmt->execute();
+                $result = $stmt->fetch();
+                $support_link = $result['setting_value'] ?? '#';
+            } catch (PDOException $e) {
+                $support_link = '#';
+            }
+        }
+        
+        return $support_link;
+    }
+}

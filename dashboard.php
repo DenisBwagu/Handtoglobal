@@ -17,15 +17,51 @@ $user = $stmt->fetch();
 // Get user statistics
 $stats = [];
 try {
-    // Available tasks for current level
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE level = ? AND status = 'active'");
-    $stmt->execute([$user['level']]);
-    $stats['available_tasks'] = $stmt->fetch()['count'];
+    // Determine current level based on completion
+    $levels = ['Bronze', 'Silver', 'Gold', 'VIP'];
     
-    // Completed tasks
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM completed_tasks WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $stats['completed_tasks'] = $stmt->fetch()['count'];
+    // Get user's stored level or calculate it
+    $current_level = $user['level'] ?? 'Bronze';
+    
+    foreach ($levels as $level) {
+        // Total tasks for this level
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE level = ? AND active = 1");
+        $stmt->execute([$level]);
+        $total_tasks = $stmt->fetch()['count'];
+        
+        // Completed tasks for this level
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) as count FROM completed_tasks ct
+            JOIN tasks t ON ct.task_id = t.id
+            WHERE ct.user_id = ? AND t.level = ?
+        ");
+        $stmt->execute([$_SESSION['user_id'], $level]);
+        $completed_tasks = $stmt->fetch()['count'];
+        
+        $stats['levels'][$level] = [
+            'total' => $total_tasks,
+            'completed' => $completed_tasks,
+            'available' => max(0, $total_tasks - $completed_tasks)
+        ];
+        
+        // Calculate current level if not stored in users table
+        if (empty($user['level'])) {
+            if ($completed_tasks < $total_tasks) {
+                $current_level = $level;
+                break;
+            }
+        }
+    }
+    
+    $stats['current_level'] = $current_level;
+    $stats['available_tasks'] = isset($stats['levels'][$current_level]) ? $stats['levels'][$current_level]['available'] : 0;
+    $stats['completed_tasks'] = isset($stats['levels'][$current_level]) ? $stats['levels'][$current_level]['completed'] : 0;
+    
+    // Total completed tasks across all levels (for other uses)
+    $stats['total_completed_all'] = 0;
+    foreach ($stats['levels'] as $level_data) {
+        $stats['total_completed_all'] += $level_data['completed'];
+    }
     
     // Pending withdrawals
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM withdrawals WHERE user_id = ? AND status = 'Pending'");
@@ -41,11 +77,14 @@ try {
     $stmt->execute([$_SESSION['user_id'], $today]);
     $stats['today_completed'] = $stmt->fetch()['count'];
     
-    // Max levels per day from settings
-    $stats['max_levels_per_day'] = (int)get_setting('max_levels_per_day', '3');
+    // Daily task limit from settings
+    $stats['daily_task_limit'] = (int)get_setting('daily_task_limit', '40');
     
     // Tasks per level (default 40)
     $stats['tasks_per_level'] = (int)get_setting('tasks_per_level', '40');
+    
+    // Get support link from global function
+    $support_link = getSupportLink();
     
 } catch(PDOException $e) {
     $stats = [
@@ -544,6 +583,23 @@ foreach ($levels as $level) {
             font-size: 10px;
         }
         
+                
+        /* Support Button */
+        .support-completed-btn {
+            margin-top: 12px;
+            background: #0ea5e9;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        .support-completed-btn:hover {
+            background: #0c4a6e;
+        }
+        
         /* Modals */
         .modal {
             display: none;
@@ -694,7 +750,7 @@ foreach ($levels as $level) {
                     <?php endif; ?>
                 </div>
                 <div class="top-bar-right">
-                    <div class="user-balance">
+                    <div class="user-balance balance-amount">
                         Balance: $<?php echo number_format($user['balance'], 2); ?>
                     </div>
                 </div>
@@ -706,9 +762,9 @@ foreach ($levels as $level) {
                 <div class="card welcome-card">
                     <div class="welcome-info">
                         <h2>Welcome back, <?php echo htmlspecialchars($user['fullname']); ?></h2>
-                        <p><?php echo htmlspecialchars($user['level']); ?> - <?php echo $stats['completed_tasks']; ?> tasks completed</p>
+                        <p id="welcomeLevelText"><?php echo htmlspecialchars($stats['current_level']); ?> - <?php echo $stats['completed_tasks']; ?> tasks completed</p>
                     </div>
-                    <div class="welcome-balance">
+                    <div class="welcome-balance balance" id="balanceText">
                         $<?php echo number_format($user['balance'], 2); ?>
                     </div>
                 </div>
@@ -717,14 +773,16 @@ foreach ($levels as $level) {
                 <div class="card current-level-card">
                     <div class="level-badge">CURRENT LEVEL</div>
                     <div class="level-header">
-                        <div class="level-name"><?php echo htmlspecialchars($user['level']); ?></div>
-                        <div class="level-progress"><?php echo $stats['completed_tasks']; ?>/<?php echo $stats['tasks_per_level']; ?> tasks</div>
+                        <div class="level-name current-level" id="currentLevelName"><?php echo htmlspecialchars($stats['current_level']); ?></div>
+                        <div class="level-category">Name Items</div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: <?php echo min(($stats['completed_tasks'] / $stats['tasks_per_level']) * 100, 100); ?>%"></div>
-                    </div>
-                    <div style="text-align: right;">
-                        <a href="#" class="level-link" onclick="openTaskModal('<?php echo htmlspecialchars($user['level']); ?>')">Start Tasks →</a>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="currentLevelProgressBar" style="width: <?php echo isset($stats['levels'][$stats['current_level']]) ? min(($stats['levels'][$stats['current_level']]['completed'] / max($stats['levels'][$stats['current_level']]['total'], 1)) * 100, 100) : 0; ?>%"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <a href="#" class="level-link" onclick="openTaskModal('<?php echo htmlspecialchars($stats['current_level']); ?>')">Start Tasks →</a>
+                        </div>
                     </div>
                 </div>
                 
@@ -732,17 +790,18 @@ foreach ($levels as $level) {
                 <div class="card">
                     <div class="today-progress">
                         <div class="today-label">Today's progress</div>
-                        <div class="today-count"><?php echo $stats['today_completed']; ?>/<?php echo $stats['max_levels_per_day']; ?> levels</div>
+                        <div class="today-count" id="todayProgressText"><?php echo $stats['today_completed']; ?>/<?php echo $stats['daily_task_limit']; ?> tasks</div>
                     </div>
                 </div>
                 
+                                
                 <!-- Stats Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon available">
                             <i class="fas fa-tasks"></i>
                         </div>
-                        <div class="stat-number"><?php echo $stats['available_tasks']; ?></div>
+                        <div class="stat-number" id="availableTasksCount"><?php echo $stats['available_tasks']; ?></div>
                         <div class="stat-label">Available Tasks</div>
                     </div>
                     
@@ -750,7 +809,7 @@ foreach ($levels as $level) {
                         <div class="stat-icon completed">
                             <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="stat-number"><?php echo $stats['completed_tasks']; ?></div>
+                        <div class="stat-number" id="completedTasksCount"><?php echo $stats['completed_tasks']; ?></div>
                         <div class="stat-label">Completed Tasks</div>
                     </div>
                     
@@ -779,7 +838,7 @@ foreach ($levels as $level) {
                     <a href="withdrawals.php" class="btn btn-secondary">
                         <i class="fas fa-money-bill-wave"></i> Request Withdrawal
                     </a>
-                    <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
+                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
                         <i class="fas fa-headset"></i> Customer Support
                     </button>
                 </div>
@@ -796,7 +855,7 @@ foreach ($levels as $level) {
                             $is_unlocked = $unlocked_levels[$level] || $is_current;
                             $level_status = $is_current ? 'current' : ($is_unlocked ? 'progress' : 'locked');
                             ?>
-                            <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" onclick="handleLevelClick('<?php echo htmlspecialchars($level); ?>', '<?php echo $level_status; ?>')">
+                            <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" data-level="<?php echo htmlspecialchars($level); ?>" onclick="handleLevelClick('<?php echo htmlspecialchars($level); ?>', '<?php echo $level_status; ?>')">
                                 <div class="level-card-header">
                                     <div class="level-card-name"><?php echo htmlspecialchars($level); ?></div>
                                     <div class="level-status <?php echo $level_status; ?>">
@@ -806,9 +865,10 @@ foreach ($levels as $level) {
                                 <div class="level-category">Name Items</div>
                                 <div class="level-progress-text">Progress</div>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: <?php echo $is_current ? min(($stats['completed_tasks'] / $stats['tasks_per_level']) * 100, 100) : 0; ?>%"></div>
+                                    <div class="progress-fill" style="width: <?php echo isset($stats['levels'][$level]) ? min(($stats['levels'][$level]['completed'] / max($stats['levels'][$level]['total'], 1)) * 100, 100) : 0; ?>%"></div>
                                 </div>
-                                <div class="level-progress-text"><?php echo $is_current ? $stats['completed_tasks'] : 0; ?>/<?php echo $stats['tasks_per_level']; ?> tasks</div>
+                                <div class="level-progress-text level-progress"><?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['completed'] : 0; ?>/<?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['total'] : 0; ?> tasks</div>
+                                <div class="available-tasks">Available: <?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['available'] : 0; ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -868,7 +928,7 @@ foreach ($levels as $level) {
                 <p>This level requires additional setup to proceed. Please contact our customer service for personal assistance to continue with this level.</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
+                <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
                     Contact Customer Service
                 </button>
                 <button class="btn btn-secondary" onclick="closeLockedModal()">Cancel</button>
@@ -922,7 +982,7 @@ foreach ($levels as $level) {
             </div>
             <div class="modal-footer">
                 <?php if ($active_combo): ?>
-                    <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
+                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
                         Deposit via Telegram
                     </button>
                 <?php endif; ?>
@@ -932,6 +992,9 @@ foreach ($levels as $level) {
     </div>
     
     <script>
+        // Support link from global function
+        window.SUPPORT_LINK = "<?php echo htmlspecialchars(getSupportLink(), ENT_QUOTES); ?>";
+        
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
@@ -1016,6 +1079,18 @@ foreach ($levels as $level) {
                                 <h4 style="margin: 16px 0 8px 0;">All Tasks Completed!</h4>
                                 <p style="color: #6b7280;">${data.message || 'No tasks available for this level'}</p>
                                 <button class="btn btn-primary" onclick="closeTaskModal()">Close</button>
+                                <button type="button" onclick="window.location.href=window.SUPPORT_LINK || 'support.php'" style="
+    margin-top:12px;
+    background:#0ea5e9;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:12px 22px;
+    font-weight:700;
+    cursor:pointer;
+">
+    Contact Customer Support
+</button>
                             </div>
                         `;
                         return;
@@ -1113,23 +1188,31 @@ foreach ($levels as $level) {
                     return;
                 }
                 
-                // Show success message
-                const body = document.getElementById('taskModalBody');
-                body.innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981;"></i>
-                        <h4 style="margin: 16px 0 8px 0;">Task Completed!</h4>
-                        <p style="color: #6b7280;">${data.message}</p>
-                        <p style="color: #10b981; font-weight: 600;">Reward: $${data.reward}</p>
-                        <p style="color: #667eea;">New Balance: $${data.new_balance}</p>
-                        <button class="btn btn-primary" onclick="closeTaskModal(); location.reload();">Continue</button>
-                    </div>
-                `;
+                // Update UI immediately
+                updateDashboardStats(data);
                 
-                // Update balance display
-                setTimeout(() => {
-                    location.reload();
-                }, 2000);
+                // Check if level is completed
+                if (data.available_tasks === 0) {
+                    // Add level completion message with two buttons
+                    const modalContent = document.querySelector('.modal-content');
+                    const completionMessage = document.createElement('div');
+                    completionMessage.style.cssText = 'text-align: center; padding: 20px; border-top: 1px solid #e5e7eb; margin-top: 10px;';
+                    completionMessage.innerHTML = `
+                        <i class="fas fa-trophy" style="font-size: 32px; color: #f59e0b; margin-bottom: 12px; display: block;"></i>
+                        <div style="color: #6b7280; font-weight: 600; margin-bottom: 8px;">All tasks completed in ${data.current_level} level!</div>
+                        <div style="color: #10b981; font-size: 14px; margin-bottom: 16px;">Need help or want to upgrade level?</div>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-secondary" onclick="closeTaskModal()">Close</button>
+                            <button type="button" id="completedSupportBtn" class="support-completed-btn">
+                                <i class="fas fa-headset"></i> Contact Customer Support
+                            </button>
+                        </div>
+                    `;
+                    modalContent.appendChild(completionMessage);
+                } else {
+                    // Load next task automatically
+                    loadTasks(data.current_level);
+                }
                 
             })
             .catch(error => {
@@ -1138,6 +1221,104 @@ foreach ($levels as $level) {
             });
         }
         
+        function updateDashboardStats(data) {
+            // Store latest data to prevent reverting to old values
+            window.latestDashboardData = data;
+            
+            // Update balance
+            const balanceText = document.getElementById('balanceText');
+            if (balanceText) {
+                balanceText.textContent = '$' + data.balance;
+            }
+            
+            // Update welcome card level text
+            const welcomeLevelText = document.getElementById('welcomeLevelText');
+            if (welcomeLevelText) {
+                welcomeLevelText.textContent = data.current_level + ' - ' + data.completed_tasks + ' tasks completed';
+            }
+            
+            // Update current level name
+            const currentLevelName = document.getElementById('currentLevelName');
+            if (currentLevelName) {
+                currentLevelName.textContent = data.current_level;
+            }
+            
+            // Update current level progress
+            const currentLevelProgressBar = document.getElementById('currentLevelProgressBar');
+            if (currentLevelProgressBar) {
+                currentLevelProgressBar.style.width = data.progress_percent + '%';
+            }
+            
+            // Update available tasks
+            const availableTasksCount = document.getElementById('availableTasksCount');
+            if (availableTasksCount) {
+                availableTasksCount.textContent = data.available_tasks;
+            }
+            
+            // Update completed tasks
+            const completedTasksCount = document.getElementById('completedTasksCount');
+            if (completedTasksCount) {
+                completedTasksCount.textContent = data.completed_tasks;
+            }
+            
+            // Update today's progress
+            const todayProgressText = document.getElementById('todayProgressText');
+            if (todayProgressText) {
+                todayProgressText.textContent = data.today_completed + '/' + data.daily_limit + ' tasks';
+            }
+            
+            // Update level cards
+            if (data.all_levels) {
+                Object.keys(data.all_levels).forEach(level => {
+                    const levelCard = document.querySelector(`[data-level="${level}"]`);
+                    if (levelCard) {
+                        const completedEl = levelCard.querySelector('.level-progress');
+                        const progressEl = levelCard.querySelector('.progress-fill');
+                        const availableEl = levelCard.querySelector('.available-tasks');
+                        
+                        if (completedEl) {
+                            completedEl.textContent = data.all_levels[level].completed + '/' + data.all_levels[level].total;
+                        }
+                        if (progressEl) {
+                            progressEl.style.width = data.all_levels[level].progress + '%';
+                        }
+                        if (availableEl) {
+                            availableEl.textContent = 'Available: ' + data.all_levels[level].available;
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Prevent page from reverting to old data on refresh
+        window.addEventListener('beforeunload', function() {
+            if (window.latestDashboardData) {
+                sessionStorage.setItem('dashboardData', JSON.stringify(window.latestDashboardData));
+            }
+        });
+        
+        // Restore latest data on page load
+        window.addEventListener('load', function() {
+            const savedData = sessionStorage.getItem('dashboardData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    // Apply saved updates to current page data
+                    updateDashboardStats(data);
+                } catch (e) {
+                    console.log('Could not restore dashboard data:', e);
+                }
+            }
+        });
+        
+        // Handle support button click
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'completedSupportBtn') {
+                window.location.href = window.SUPPORT_LINK || 'support.php';
+            }
+        });
+        
+                
         // Close modals when clicking outside
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {

@@ -78,6 +78,11 @@ try {
     
     $conn->commit();
     
+    // Get task title for activity message
+    $stmt = $conn->prepare("SELECT title FROM tasks WHERE id = ?");
+    $stmt->execute([$task_id]);
+    $task_title = $stmt->fetch()['title'] ?? 'Task completed';
+
     // Get updated statistics
     $stats = [];
     
@@ -111,23 +116,30 @@ try {
         }
     }
     
-    // Get overall completed tasks
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM completed_tasks WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $total_completed = $stmt->fetch()['total'];
+    // Get today's completed tasks
+    $today = date('Y-m-d');
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM completed_tasks WHERE user_id = ? AND DATE(completed_at) = ?");
+    $stmt->execute([$user_id, $today]);
+    $today_completed = $stmt->fetch()['count'];
+    
+    // Get daily task limit
+    $daily_limit = (int)get_setting('daily_task_limit', '40');
     
     echo json_encode([
         'success' => true,
         'message' => 'Task completed successfully!',
+        'task_title' => $task_title,
+        'reward' => number_format($reward, 2),
         'balance' => number_format($new_balance, 2),
         'current_level' => $current_level,
+        'current_level_completed' => $stats[$current_level]['completed'],
+        'current_level_total' => $stats[$current_level]['total'],
         'available_tasks' => $stats[$current_level]['available'],
-        'completed_tasks' => $total_completed,
-        'level_completed' => $stats[$current_level]['completed'],
-        'level_total' => $stats[$current_level]['total'],
-        'level_progress_text' => $stats[$current_level]['completed'] . '/' . $stats[$current_level]['total'],
-        'level_progress_percent' => round($stats[$current_level]['progress'], 1),
-        'all_levels' => $stats
+        'completed_tasks' => $stats[$current_level]['completed'],
+        'today_completed' => $today_completed,
+        'daily_limit' => $daily_limit,
+        'progress_percent' => round($stats[$current_level]['progress'], 1),
+        'live_activity_message' => "You submitted {$task_title}. Reward added: \${reward}. Current level progress: {$stats[$current_level]['completed']}/{$stats[$current_level]['total']}"
     ]);
     
 } catch(PDOException $e) {
