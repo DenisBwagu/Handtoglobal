@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -13,45 +14,6 @@ $msg = "";
 $error = "";
 
 // Handle task operations
-if (isset($_POST['add_task'])) {
-    $title = trim($_POST['title']);
-    $description = trim($_POST['description']);
-    $level = $_POST['level'];
-    $reward = (float)$_POST['reward'];
-    
-    if (empty($title) || empty($description) || empty($level) || $reward <= 0) {
-        $error = "Please fill all required fields with valid values";
-    } else {
-        try {
-            $stmt = $conn->prepare("INSERT INTO tasks (title, description, level, reward) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$title, $description, $level, $reward]);
-            $msg = "Task added successfully!";
-        } catch(PDOException $e) {
-            $error = "Failed to add task: " . $e->getMessage();
-        }
-    }
-}
-
-if (isset($_POST['edit_task'])) {
-    $id = (int)$_POST['task_id'];
-    $title = trim($_POST['title']);
-    $description = trim($_POST['description']);
-    $level = $_POST['level'];
-    $reward = (float)$_POST['reward'];
-    
-    if (empty($title) || empty($description) || empty($level) || $reward <= 0) {
-        $error = "Please fill all required fields with valid values";
-    } else {
-        try {
-            $stmt = $conn->prepare("UPDATE tasks SET title=?, description=?, level=?, reward=? WHERE id=?");
-            $stmt->execute([$title, $description, $level, $reward, $id]);
-            $msg = "Task updated successfully!";
-        } catch(PDOException $e) {
-            $error = "Failed to update task: " . $e->getMessage();
-        }
-    }
-}
-
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     try {
@@ -63,27 +25,60 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Get tasks for display
+// Pagination setup
+$limit = 15;
+$page = max(1, intval($_GET['page'] ?? 1));
+$offset = ($page - 1) * $limit;
+
+// Level filter
+$level_filter = $_GET['level'] ?? 'AllLevels';
+
+// Get total count for pagination
+$total_tasks = 0;
+try {
+    $count_sql = "SELECT COUNT(*) as total FROM tasks";
+    $params = [];
+    
+    if ($level_filter !== 'AllLevels') {
+        $count_sql .= " WHERE level = ?";
+        $params[] = $level_filter;
+    }
+    
+    $stmt = $conn->prepare($count_sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    $total_tasks = $result['total'] ?? 0;
+} catch(PDOException $e) {
+    $error = "Failed to get count: " . $e->getMessage();
+}
+
+// Get tasks with pagination and filtering
 $tasks = [];
 try {
-    $stmt = $conn->prepare("SELECT * FROM tasks ORDER BY level, id");
-    $stmt->execute();
+    $sql = "SELECT * FROM tasks";
+    $params = [];
+    
+    if ($level_filter !== 'AllLevels') {
+        $sql .= " WHERE level = ?";
+        $params[] = $level_filter;
+    }
+    
+    $sql .= " ORDER BY level, id LIMIT $limit OFFSET $offset";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
     $tasks = $stmt->fetchAll();
 } catch(PDOException $e) {
     $error = "Failed to fetch tasks: " . $e->getMessage();
 }
 
-// Get task for editing
-$edit_task = null;
-if (isset($_GET['edit'])) {
-    $id = (int)$_GET['edit'];
-    try {
-        $stmt = $conn->prepare("SELECT * FROM tasks WHERE id=?");
-        $stmt->execute([$id]);
-        $edit_task = $stmt->fetch();
-    } catch(PDOException $e) {
-        $error = "Failed to fetch task for editing: " . $e->getMessage();
-    }
+// Calculate pagination info
+$total_pages = ceil($total_tasks / $limit);
+$start_record = ($page - 1) * $limit + 1;
+$end_record = min($page * $limit, $total_tasks);
+if ($total_tasks == 0) {
+    $start_record = 0;
+    $end_record = 0;
 }
 ?>
 
@@ -92,7 +87,7 @@ if (isset($_GET['edit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasks Management - HandToGlobal Admin</title>
+    <title>Tasks - HandToGlobal Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -101,487 +96,662 @@ if (isset($_GET['edit'])) {
             box-sizing: border-box;
         }
         
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #7c3aed;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #0284c7;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f5f7fb;
+            --white: #ffffff;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
         }
         
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        /* Admin Layout */
+        .admin-layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--border);
             padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .nav-menu {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #5a6fd8;
-        }
-        
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102,126,234,0.2);
-        }
-        
-        select.form-control {
-            cursor: pointer;
-        }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .table th,
-        .table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-        }
-        
-        .table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-bronze {
-            background: #cd7f32;
-            color: white;
-        }
-        
-        .badge-silver {
-            background: #c0c0c0;
-            color: #333;
-        }
-        
-        .badge-gold {
-            background: #ffd700;
-            color: #333;
-        }
-        
-        .badge-platinum {
-            background: #e5e4e2;
-            color: #333;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .alert {
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .modal {
-            display: none;
             position: fixed;
-            top: 0;
+            top: 70px;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 900;
         }
         
-        .modal-content {
-            background: white;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-        }
-        
-        .modal-header {
+        .sidebar-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .close {
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-        }
-        
-        .close:hover {
-            color: #333;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            padding: 0 20px;
             margin-bottom: 30px;
         }
         
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .sidebar-header i {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary);
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 20px;
+        }
+        
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 2px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar-menu a:hover {
+            background: var(--bg);
+            color: var(--primary);
+        }
+        
+        .sidebar-menu a.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border-left: 3px solid var(--success);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 12px;
+            width: 16px;
+            font-size: 14px;
             text-align: center;
         }
         
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 70px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
         }
         
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .menu-icon {
+            display: none;
+            font-size: 20px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .admin-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .topbar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .topbar-icon:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .profile-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .dropdown-arrow {
+            font-size: 12px;
+            color: var(--muted);
+            opacity: 0.6;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            flex: 1;
+        }
+        
+        /* Tasks Container */
+        .tasks-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Controls Section */
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .level-filter {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--white);
+            color: var(--text);
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .add-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .add-btn:hover {
+            background: #047857;
+        }
+        
+        /* Table Card */
+        .table-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* Table Styles */
+        .tasks-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .tasks-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        
+        .tasks-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        .tasks-table tr:hover {
+            background: var(--bg);
+        }
+        
+        /* Type Badge */
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        /* Active Badge */
+        .active-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .edit-link {
+            color: #059669;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .edit-link:hover {
+            color: #047857;
+            text-decoration: underline;
+        }
+        
+        .delete-link {
+            color: var(--danger);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .delete-link:hover {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+        
+        .pagination-info {
+            font-size: 14px;
+            color: var(--muted);
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .pagination-btn {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .pagination-btn:hover {
+            background: var(--bg);
+        }
+        
+        .pagination-btn.active {
+            background: var(--warning);
+            color: white;
+            border-color: var(--warning);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        
+        .empty-state p {
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <div class="nav-menu">
-                <h1><i class="fas fa-tasks"></i> Tasks Management</h1>
-                <div class="nav-links">
-                    <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <a href="users.php"><i class="fas fa-users"></i> Users</a>
-                    <a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a>
-                    <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
-                    <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="menu-icon">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="topbar-title">Tasks</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-badge">ADMIN</div>
+            <div class="topbar-icon">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
+                </div>
+                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
+                <div class="dropdown-arrow">
+                    <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="container">
-        <?php if ($msg): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Statistics -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number"><?php echo count($tasks); ?></div>
-                <div class="stat-label">Total Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">
-                    <?php 
-                    $bronze_count = array_filter($tasks, fn($t) => $t['level'] == 'Bronze');
-                    echo count($bronze_count);
-                    ?>
-                </div>
-                <div class="stat-label">Bronze Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">
-                    <?php 
-                    $silver_count = array_filter($tasks, fn($t) => $t['level'] == 'Silver');
-                    echo count($silver_count);
-                    ?>
-                </div>
-                <div class="stat-label">Silver Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">
-                    <?php 
-                    $gold_count = array_filter($tasks, fn($t) => $t['level'] == 'Gold');
-                    echo count($gold_count);
-                    ?>
-                </div>
-                <div class="stat-label">Gold Tasks</div>
-            </div>
-        </div>
-
-        <!-- Add/Edit Task Form -->
-        <div class="card">
-            <div class="card-header">
-                <h2><?php echo $edit_task ? 'Edit Task' : 'Add New Task'; ?></h2>
-                <?php if ($edit_task): ?>
-                    <a href="tasks.php" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-times"></i> Cancel
-                    </a>
-                <?php endif; ?>
-            </div>
-            
-            <form method="POST">
-                <?php if ($edit_task): ?>
-                    <input type="hidden" name="edit_task" value="1">
-                    <input type="hidden" name="task_id" value="<?php echo $edit_task['id']; ?>">
+    
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
                 <?php else: ?>
-                    <input type="hidden" name="add_task" value="1">
+                    <i class="fas fa-hand-holding-usd"></i>
                 <?php endif; ?>
-                
-                <div class="form-group">
-                    <label for="title">Task Title *</label>
-                    <input type="text" id="title" name="title" class="form-control" 
-                           value="<?php echo $edit_task ? htmlspecialchars($edit_task['title']) : ''; ?>" 
-                           required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="description">Task Description *</label>
-                    <textarea id="description" name="description" class="form-control" required><?php 
-                        echo $edit_task ? htmlspecialchars($edit_task['description']) : ''; 
-                    ?></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="level">Task Level *</label>
-                    <select id="level" name="level" class="form-control" required>
-                        <option value="">Select Level</option>
-                        <option value="Bronze" <?php echo $edit_task && $edit_task['level'] == 'Bronze' ? 'selected' : ''; ?>>Bronze (1.80 USDT)</option>
-                        <option value="Silver" <?php echo $edit_task && $edit_task['level'] == 'Silver' ? 'selected' : ''; ?>>Silver (2.50 USDT)</option>
-                        <option value="Gold" <?php echo $edit_task && $edit_task['level'] == 'Gold' ? 'selected' : ''; ?>>Gold (3.50 USDT)</option>
-                        <option value="Platinum" <?php echo $edit_task && $edit_task['level'] == 'Platinum' ? 'selected' : ''; ?>>Platinum (5.00 USDT)</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="reward">Reward (USDT) *</label>
-                    <input type="number" id="reward" name="reward" class="form-control" 
-                           step="0.01" min="0.01" 
-                           value="<?php echo $edit_task ? $edit_task['reward'] : ''; ?>" 
-                           required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> <?php echo $edit_task ? 'Update Task' : 'Add Task'; ?>
-                </button>
-            </form>
-        </div>
-
-        <!-- Tasks List -->
-        <div class="card">
-            <div class="card-header">
-                <h2>All Tasks</h2>
-                <button class="btn btn-success btn-sm" onclick="window.location.reload()">
-                    <i class="fas fa-sync"></i> Refresh
-                </button>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
             </div>
             
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Level</th>
-                        <th>Reward</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($tasks as $task): ?>
-                        <tr>
-                            <td><?php echo $task['id']; ?></td>
-                            <td><?php echo htmlspecialchars($task['title']); ?></td>
-                            <td><?php echo htmlspecialchars(substr($task['description'], 0, 50)) . '...'; ?></td>
-                            <td>
-                                <span class="badge badge-<?php echo strtolower($task['level']); ?>">
-                                    <?php echo $task['level']; ?>
-                                </span>
-                            </td>
-                            <td>$<?php echo number_format($task['reward'], 2); ?></td>
-                            <td><?php echo date('M j, Y', strtotime($task['created_at'])); ?></td>
-                            <td>
-                                <div class="actions">
-                                    <a href="tasks.php?edit=<?php echo $task['id']; ?>" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                    <a href="tasks.php?delete=<?php echo $task['id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirm('Are you sure you want to delete this task?')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <!-- MANAGEMENT Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MANAGEMENT</div>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                </ul>
+            </div>
             
-            <?php if (empty($tasks)): ?>
-                <p style="text-align: center; padding: 40px; color: #666;">
-                    No tasks found. Add your first task above!
-                </p>
-            <?php endif; ?>
+            <!-- PLATFORM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PLATFORM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
+                    <li><a href="tasks.php" class="active"><i class="fas fa-tasks"></i> Tasks</a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                </ul>
+            </div>
+            
+            <!-- FINANCE Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FINANCE</div>
+                <ul class="sidebar-menu">
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                </ul>
+            </div>
+            
+            <!-- MONITORING Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                </ul>
+            </div>
+            
+            <!-- SYSTEM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="tasks-container">
+                <?php if ($msg): ?>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
+                    </div>
+                <?php endif; ?>
+                
+                <?php if ($error): ?>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Controls Section -->
+                <div class="controls-section">
+                    <div>
+                        <select class="level-filter" onchange="window.location.href='?level=' + this.value">
+                            <option value="AllLevels" <?php echo $level_filter === 'AllLevels' ? 'selected' : ''; ?>>AllLevels</option>
+                            <option value="Bronze" <?php echo $level_filter === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
+                            <option value="Sliver" <?php echo $level_filter === 'Sliver' ? 'selected' : ''; ?>>Sliver</option>
+                            <option value="Gold" <?php echo $level_filter === 'Gold' ? 'selected' : ''; ?>>Gold</option>
+                            <option value="VIP 1" <?php echo $level_filter === 'VIP 1' ? 'selected' : ''; ?>>VIP 1</option>
+                        </select>
+                    </div>
+                    <div>
+                        <a href="task_create.php" class="add-btn">Add</a>
+                    </div>
+                </div>
+                
+                <!-- Table Card -->
+                <div class="table-card">
+                    <table class="tasks-table">
+                        <thead>
+                            <tr>
+                                <th>TITLE</th>
+                                <th>TYPE</th>
+                                <th>LEVEL</th>
+                                <th>ACTIVE</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($tasks as $task): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($task['title']); ?></td>
+                                    <td>
+                                        <span class="type-badge"><?php echo htmlspecialchars($task['type']); ?></span>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($task['level']); ?></td>
+                                    <td>
+                                        <?php if ($task['active']): ?>
+                                            <span class="active-badge">Active</span>
+                                        <?php else: ?>
+                                            <span class="type-badge">Inactive</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="task_edit.php?id=<?= $task['id'] ?>" class="edit-link">Edit</a>
+                                            <a href="?delete=<?php echo $task['id']; ?>" class="delete-link" 
+                                               onclick="return confirm('Are you sure you want to delete this task?')">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <?php if (empty($tasks)): ?>
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No tasks found</h3>
+                            <p>No tasks match the selected criteria.</p>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Pagination -->
+                    <?php if ($total_tasks > 0): ?>
+                        <div class="pagination">
+                            <div class="pagination-info">
+                                Showing <?php echo $start_record; ?> to <?php echo $end_record; ?> of <?php echo $total_tasks; ?>
+                            </div>
+                            <div class="pagination-controls">
+                                <?php if ($page > 1): ?>
+                                    <a href="?page=<?php echo $page - 1; ?>&level=<?php echo urlencode($level_filter); ?>" class="pagination-btn">
+                                        « Previous
+                                    </a>
+                                <?php else: ?>
+                                    <button class="pagination-btn" disabled>« Previous</button>
+                                <?php endif; ?>
+                                
+                                <?php
+                                $start_page = max(1, $page - 5);
+                                $end_page = min($total_pages, $page + 5);
+                                
+                                for ($i = $start_page; $i <= $end_page; $i++):
+                                ?>
+                                    <a href="?page=<?php echo $i; ?>&level=<?php echo urlencode($level_filter); ?>" 
+                                       class="pagination-btn <?php echo $i == $page ? 'active' : ''; ?>">
+                                        <?php echo $i; ?>
+                                    </a>
+                                <?php endfor; ?>
+                                
+                                <?php if ($page < $total_pages): ?>
+                                    <a href="?page=<?php echo $page + 1; ?>&level=<?php echo urlencode($level_filter); ?>" class="pagination-btn">
+                                        Next »
+                                    </a>
+                                <?php else: ?>
+                                    <button class="pagination-btn" disabled>Next »</button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        // Auto-set reward based on level selection
-        document.getElementById('level').addEventListener('change', function() {
-            const rewardInput = document.getElementById('reward');
-            const levelRewards = {
-                'Bronze': 1.80,
-                'Silver': 2.50,
-                'Gold': 3.50,
-                'Platinum': 5.00
-            };
-            
-            if (levelRewards[this.value]) {
-                rewardInput.value = levelRewards[this.value];
-            }
-        });
-    </script>
 </body>
 </html>

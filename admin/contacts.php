@@ -1,116 +1,68 @@
 <?php
 require_once '../config.php';
+require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('admin_login.php');
 }
 
 // Get database connection
 $conn = getConnection();
 
-// Create contacts table if it doesn't exist
-try {
-    $conn->exec("
-        CREATE TABLE IF NOT EXISTS contacts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            phone VARCHAR(50),
-            subject VARCHAR(255),
-            message TEXT NOT NULL,
-            status ENUM('pending', 'read', 'replied') DEFAULT 'pending',
-            priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    ");
-} catch(PDOException $e) {
-    die("Failed to create contacts table: " . $e->getMessage());
-}
-
 $msg = "";
 $error = "";
 
 // Handle contact operations
-if (isset($_POST['add_contact'])) {
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-    $subject = trim($_POST['subject']);
-    $message = trim($_POST['message']);
-    $priority = $_POST['priority'];
+if (isset($_GET['action'])) {
+    $action = $_GET['action'];
+    $contact_id = (int)($_GET['id'] ?? 0);
     
-    if (empty($name) || empty($email) || empty($message)) {
-        $error = "Please fill all required fields";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Please enter a valid email address";
-    } else {
+    if ($contact_id > 0) {
         try {
-            $stmt = $conn->prepare("INSERT INTO contacts (name, email, phone, subject, message, priority) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $email, $phone, $subject, $message, $priority]);
-            $msg = "Contact message added successfully!";
+            switch ($action) {
+                case 'delete':
+                    $stmt = $conn->prepare("DELETE FROM contacts WHERE id = ?");
+                    $stmt->execute([$contact_id]);
+                    $msg = "Contact deleted successfully!";
+                    break;
+            }
         } catch(PDOException $e) {
-            $error = "Failed to add contact: " . $e->getMessage();
+            $error = "Failed to delete contact: " . $e->getMessage();
         }
     }
 }
 
-if (isset($_POST['update_status'])) {
-    $id = (int)$_POST['contact_id'];
-    $status = $_POST['status'];
-    
-    try {
-        $stmt = $conn->prepare("UPDATE contacts SET status=? WHERE id=?");
-        $stmt->execute([$status, $id]);
-        $msg = "Contact status updated successfully!";
-    } catch(PDOException $e) {
-        $error = "Failed to update status: " . $e->getMessage();
-    }
+// Get filter parameters
+$employee_filter = $_GET['employee'] ?? 'AllEmployees';
+$status_filter = $_GET['status'] ?? 'AllStatus';
+
+// Build query
+$where_conditions = [];
+$params = [];
+
+if ($employee_filter !== 'AllEmployees') {
+    $where_conditions[] = "c.employee_id = ?";
+    $params[] = $employee_filter;
 }
 
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    try {
-        $stmt = $conn->prepare("DELETE FROM contacts WHERE id=?");
-        $stmt->execute([$id]);
-        $msg = "Contact deleted successfully!";
-    } catch(PDOException $e) {
-        $error = "Failed to delete contact: " . $e->getMessage();
-    }
+if ($status_filter !== 'AllStatus') {
+    $where_conditions[] = "c.status = ?";
+    $params[] = $status_filter;
 }
 
-if (isset($_GET['mark_read'])) {
-    $id = (int)$_GET['mark_read'];
-    try {
-        $stmt = $conn->prepare("UPDATE contacts SET status='read' WHERE id=?");
-        $stmt->execute([$id]);
-        $msg = "Contact marked as read!";
-    } catch(PDOException $e) {
-        $error = "Failed to mark as read: " . $e->getMessage();
-    }
-}
+$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
 
-// Get contacts with filters
-$status_filter = $_GET['status'] ?? 'all';
-$priority_filter = $_GET['priority'] ?? 'all';
-
+// Get contacts with employee information
 $contacts = [];
 try {
-    $sql = "SELECT * FROM contacts WHERE 1=1";
-    $params = [];
-    
-    if ($status_filter !== 'all') {
-        $sql .= " AND status = ?";
-        $params[] = $status_filter;
-    }
-    
-    if ($priority_filter !== 'all') {
-        $sql .= " AND priority = ?";
-        $params[] = $priority_filter;
-    }
-    
-    $sql .= " ORDER BY created_at DESC";
+    $sql = "
+        SELECT c.*, e.name as employee_name
+        FROM contacts c
+        LEFT JOIN employees e ON c.employee_id = e.id
+        $where_clause
+        ORDER BY c.created_at DESC
+    ";
     
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
@@ -119,50 +71,44 @@ try {
     $error = "Failed to fetch contacts: " . $e->getMessage();
 }
 
-// Get statistics
-$stats = [];
+// Get summary data for cards
+$summary_data = [];
 try {
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM contacts");
+    // Get employees with contact counts
+    $stmt = $conn->prepare("
+        SELECT 
+            e.id,
+            e.name,
+            COUNT(c.id) as total_contacts,
+            SUM(CASE WHEN c.registered = 1 THEN 1 ELSE 0 END) as registered_count,
+            ROUND(
+                CASE 
+                    WHEN COUNT(c.id) > 0 
+                    THEN (SUM(CASE WHEN c.registered = 1 THEN 1 ELSE 0 END) / COUNT(c.id)) * 100 
+                    ELSE 0 
+                END, 1
+            ) as registration_percentage
+        FROM employees e
+        LEFT JOIN contacts c ON e.id = c.employee_id
+        GROUP BY e.id, e.name
+        ORDER BY total_contacts DESC
+        LIMIT 4
+    ");
     $stmt->execute();
-    $stats['total'] = $stmt->fetch()['total'];
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM contacts WHERE status='pending'");
-    $stmt->execute();
-    $stats['pending'] = $stmt->fetch()['count'];
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM contacts WHERE status='read'");
-    $stmt->execute();
-    $stats['read'] = $stmt->fetch()['count'];
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM contacts WHERE status='replied'");
-    $stmt->execute();
-    $stats['replied'] = $stmt->fetch()['count'];
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM contacts WHERE priority='high'");
-    $stmt->execute();
-    $stats['high_priority'] = $stmt->fetch()['count'];
-    
+    $summary_data = $stmt->fetchAll();
 } catch(PDOException $e) {
-    $error = "Failed to fetch statistics: " . $e->getMessage();
+    $error = "Failed to fetch summary data: " . $e->getMessage();
 }
 
-// Get contact for viewing
-$view_contact = null;
-if (isset($_GET['view'])) {
-    $id = (int)$_GET['view'];
-    try {
-        $stmt = $conn->prepare("SELECT * FROM contacts WHERE id=?");
-        $stmt->execute([$id]);
-        $view_contact = $stmt->fetch();
-        
-        // Mark as read if pending
-        if ($view_contact && $view_contact['status'] === 'pending') {
-            $stmt = $conn->prepare("UPDATE contacts SET status='read' WHERE id=?");
-            $stmt->execute([$id]);
-        }
-    } catch(PDOException $e) {
-        $error = "Failed to fetch contact: " . $e->getMessage();
-    }
+// Get employees for dropdown
+$employees = [];
+try {
+    $stmt = $conn->prepare("SELECT id, name FROM employees ORDER BY name");
+    $stmt->execute();
+    $employees = $stmt->fetchAll();
+} catch(PDOException $e) {
+    // Employees table might not exist, continue without it
+    $employees = [];
 }
 ?>
 
@@ -171,7 +117,7 @@ if (isset($_GET['view'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contacts Management - HandToGlobal Admin</title>
+    <title>Contacts - HandToGlobal Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -180,657 +126,671 @@ if (isset($_GET['view'])) {
             box-sizing: border-box;
         }
         
+        :root {
+            --primary: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f5f7fb;
+            --white: #ffffff;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
         }
         
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        /* Admin Layout */
+        .admin-layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--border);
             padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 70px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 900;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .nav-menu {
+        .sidebar-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            padding: 0 20px;
             margin-bottom: 30px;
         }
         
-        .nav-links {
+        .sidebar-header i {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary);
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 20px;
+        }
+        
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 2px;
+        }
+        
+        .sidebar-menu a {
             display: flex;
-            gap: 20px;
-        }
-        
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            padding: 10px 15px;
+            color: var(--text);
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            border-radius: 0;
+            transition: all 0.3s ease;
             font-size: 14px;
-            transition: all 0.3s;
+            font-weight: 500;
         }
         
-        .btn-primary {
-            background: #667eea;
-            color: white;
+        .sidebar-menu a:hover {
+            background: var(--bg);
+            color: var(--primary);
         }
         
-        .btn-primary:hover {
-            background: #5a6fd8;
+        .sidebar-menu a.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border-left: 3px solid var(--success);
+            border-radius: 0 8px 8px 0;
         }
         
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        .sidebar-menu i {
+            margin-right: 12px;
+            width: 16px;
             font-size: 14px;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102,126,234,0.2);
-        }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 120px;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .table th,
-        .table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-        }
-        
-        .table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-pending {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .badge-read {
-            background: #17a2b8;
-            color: white;
-        }
-        
-        .badge-replied {
-            background: #28a745;
-            color: white;
-        }
-        
-        .badge-high {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .badge-medium {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .badge-low {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .alert {
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
         }
         
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .filter-bar {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .contact-detail {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .contact-detail h3 {
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-        
-        .contact-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .contact-info-item {
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 70px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
         }
         
-        .contact-info-item i {
-            color: #667eea;
-            width: 20px;
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         
-        .message-content {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #667eea;
-            margin-top: 15px;
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
         }
         
-        .priority-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .admin-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            margin-right: 5px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
         }
         
-        .priority-high {
-            background: #dc3545;
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            flex: 1;
         }
         
-        .priority-medium {
-            background: #ffc107;
+        /* Header Section */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
         
-        .priority-low {
-            background: #6c757d;
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
         }
         
-        .message-preview {
-            max-width: 200px;
+        .add-contact-btn {
+            background: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .add-contact-btn:hover {
+            background: #16a34a;
+        }
+        
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        .summary-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+        
+        .summary-stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .summary-stat-label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        
+        /* Filters Section */
+        .filters-section {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--white);
+            min-width: 150px;
+        }
+        
+        /* Table Card */
+        .table-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        }
+        
+        .contacts-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .contacts-table th {
+            background: var(--bg);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .contacts-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        .contacts-table tr:hover {
+            background: var(--bg);
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-contacted {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-converted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-lost {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Registered Badge */
+        .registered-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .registered-yes {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .registered-no {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-view {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #4338ca;
+        }
+        
+        .btn-edit {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #d97706;
+        }
+        
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        
+        .empty-state p {
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <div class="nav-menu">
-                <h1><i class="fas fa-envelope"></i> Contacts Management</h1>
-                <div class="nav-links">
-                    <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <a href="users.php"><i class="fas fa-users"></i> Users</a>
-                    <a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a>
-                    <a href="combos.php"><i class="fas fa-layer-group"></i> Combos</a>
-                    <a href="invitation_codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
-                    <a href="finance_analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
-                    <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
-                    <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="contacts.php"><i class="fas fa-envelope"></i> Contacts</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-title">Contacts</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-badge">ADMIN</div>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
                 </div>
+                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
             </div>
         </div>
     </div>
-
-    <div class="container">
-        <?php if ($msg): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
+    
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
+                <?php else: ?>
+                    <i class="fas fa-hand-holding-usd"></i>
+                <?php endif; ?>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
             </div>
-        <?php endif; ?>
-        
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+            
+            <!-- MANAGEMENT Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MANAGEMENT</div>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                </ul>
             </div>
-        <?php endif; ?>
-
-        <!-- Statistics -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['total']; ?></div>
-                <div class="stat-label">Total Contacts</div>
+            
+            <!-- PLATFORM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PLATFORM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
+                    <li><a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                </ul>
             </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['pending']; ?></div>
-                <div class="stat-label">Pending</div>
+            
+            <!-- FINANCE Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FINANCE</div>
+                <ul class="sidebar-menu">
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                </ul>
             </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['read']; ?></div>
-                <div class="stat-label">Read</div>
+            
+            <!-- MONITORING Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li><a href="contacts.php" class="active"><i class="fas fa-address-book"></i> Contacts</a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                </ul>
             </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['replied']; ?></div>
-                <div class="stat-label">Replied</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['high_priority']; ?></div>
-                <div class="stat-label">High Priority</div>
+            
+            <!-- SYSTEM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                </ul>
             </div>
         </div>
-
-        <!-- Contact Detail View -->
-        <?php if ($view_contact): ?>
-            <div class="card">
-                <div class="card-header">
-                    <h2>Contact Details</h2>
-                    <a href="contacts.php" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <?php if ($msg): ?>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
                 </div>
-                
-                <div class="contact-detail">
-                    <h3><?php echo htmlspecialchars($view_contact['subject'] ?: 'No Subject'); ?></h3>
-                    
-                    <div class="contact-info">
-                        <div class="contact-info-item">
-                            <i class="fas fa-user"></i>
-                            <strong>Name:</strong> <?php echo htmlspecialchars($view_contact['name']); ?>
-                        </div>
-                        <div class="contact-info-item">
-                            <i class="fas fa-envelope"></i>
-                            <strong>Email:</strong> <?php echo htmlspecialchars($view_contact['email']); ?>
-                        </div>
-                        <?php if ($view_contact['phone']): ?>
-                            <div class="contact-info-item">
-                                <i class="fas fa-phone"></i>
-                                <strong>Phone:</strong> <?php echo htmlspecialchars($view_contact['phone']); ?>
+            <?php endif; ?>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Header Section -->
+            <div class="header-section">
+                <div class="page-title">Contacts</div>
+                <a href="contact_create.php" class="add-contact-btn">Add Contact</a>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <?php if (!empty($summary_data)): ?>
+                    <?php foreach ($summary_data as $data): ?>
+                        <div class="summary-card">
+                            <div class="summary-card-title"><?php echo htmlspecialchars($data['name'] ?? 'Unassigned'); ?></div>
+                            <div class="summary-stats">
+                                <div class="summary-stat">
+                                    <div class="summary-stat-value"><?php echo $data['total_contacts']; ?></div>
+                                    <div class="summary-stat-label">Contacts</div>
+                                </div>
+                                <div class="summary-stat">
+                                    <div class="summary-stat-value"><?php echo $data['registered_count']; ?></div>
+                                    <div class="summary-stat-label">Registered</div>
+                                </div>
+                                <div class="summary-stat">
+                                    <div class="summary-stat-value"><?php echo $data['registration_percentage']; ?>%</div>
+                                    <div class="summary-stat-label">Percentage</div>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                        <div class="contact-info-item">
-                            <i class="fas fa-flag"></i>
-                            <strong>Priority:</strong> 
-                            <span class="priority-indicator priority-<?php echo strtolower($view_contact['priority']); ?>"></span>
-                            <?php echo ucfirst($view_contact['priority']); ?>
                         </div>
-                        <div class="contact-info-item">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Status:</strong> 
-                            <span class="badge badge-<?php echo strtolower($view_contact['status']); ?>">
-                                <?php echo ucfirst($view_contact['status']); ?>
-                            </span>
-                        </div>
-                        <div class="contact-info-item">
-                            <i class="fas fa-calendar"></i>
-                            <strong>Created:</strong> <?php echo date('M j, Y H:i', strtotime($view_contact['created_at'])); ?>
-                        </div>
-                    </div>
-                    
-                    <div class="message-content">
-                        <strong>Message:</strong>
-                        <p style="margin-top: 10px; line-height: 1.6;">
-                            <?php echo nl2br(htmlspecialchars($view_contact['message'])); ?>
-                        </p>
-                    </div>
-                    
-                    <div style="margin-top: 20px; display: flex; gap: 10px;">
-                        <form method="POST" style="display: inline;">
-                            <input type="hidden" name="update_status" value="1">
-                            <input type="hidden" name="contact_id" value="<?php echo $view_contact['id']; ?>">
-                            <select name="status" class="form-control" style="width: 150px; display: inline-block;">
-                                <option value="pending" <?php echo $view_contact['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="read" <?php echo $view_contact['status'] === 'read' ? 'selected' : ''; ?>>Read</option>
-                                <option value="replied" <?php echo $view_contact['status'] === 'replied' ? 'selected' : ''; ?>>Replied</option>
-                            </select>
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="fas fa-save"></i> Update Status
-                            </button>
-                        </form>
-                        
-                        <a href="mailto:<?php echo htmlspecialchars($view_contact['email']); ?>" class="btn btn-success btn-sm">
-                            <i class="fas fa-reply"></i> Reply via Email
-                        </a>
-                        
-                        <a href="contacts.php?delete=<?php echo $view_contact['id']; ?>" 
-                           class="btn btn-danger btn-sm" 
-                           onclick="return confirm('Are you sure you want to delete this contact?')">
-                            <i class="fas fa-trash"></i> Delete
-                        </a>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Add Contact Form -->
-        <?php if (!$view_contact): ?>
-            <div class="card">
-                <div class="card-header">
-                    <h2>Add New Contact</h2>
-                </div>
-                
-                <form method="POST">
-                    <input type="hidden" name="add_contact" value="1">
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="name">Name *</label>
-                            <input type="text" id="name" name="name" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email *</label>
-                            <input type="email" id="email" name="email" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="phone">Phone</label>
-                            <input type="tel" id="phone" name="phone" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="priority">Priority</label>
-                            <select id="priority" name="priority" class="form-control">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                            </select>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <!-- Show empty summary cards -->
+                    <div class="summary-card">
+                        <div class="summary-card-title">No Data</div>
+                        <div class="summary-stats">
+                            <div class="summary-stat">
+                                <div class="summary-stat-value">0</div>
+                                <div class="summary-stat-label">Contacts</div>
+                            </div>
+                            <div class="summary-stat">
+                                <div class="summary-stat-value">0</div>
+                                <div class="summary-stat-label">Registered</div>
+                            </div>
+                            <div class="summary-stat">
+                                <div class="summary-stat-value">0%</div>
+                                <div class="summary-stat-label">Percentage</div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="subject">Subject</label>
-                        <input type="text" id="subject" name="subject" class="form-control">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="message">Message *</label>
-                        <textarea id="message" name="message" class="form-control" required></textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Contact
-                    </button>
-                </form>
-            </div>
-        <?php endif; ?>
-
-        <!-- Filter Bar -->
-        <?php if (!$view_contact): ?>
-            <div class="filter-bar">
-                <form method="GET" class="form-row">
-                    <div class="form-group">
-                        <label for="status">Status</label>
-                        <select id="status" name="status" class="form-control">
-                            <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Status</option>
-                            <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                            <option value="read" <?php echo $status_filter === 'read' ? 'selected' : ''; ?>>Read</option>
-                            <option value="replied" <?php echo $status_filter === 'replied' ? 'selected' : ''; ?>>Replied</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="priority">Priority</label>
-                        <select id="priority" name="priority" class="form-control">
-                            <option value="all" <?php echo $priority_filter === 'all' ? 'selected' : ''; ?>>All Priority</option>
-                            <option value="high" <?php echo $priority_filter === 'high' ? 'selected' : ''; ?>>High</option>
-                            <option value="medium" <?php echo $priority_filter === 'medium' ? 'selected' : ''; ?>>Medium</option>
-                            <option value="low" <?php echo $priority_filter === 'low' ? 'selected' : ''; ?>>Low</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-filter"></i> Apply Filter
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Contacts List -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>Contacts List</h2>
-                    <div>
-                        <button class="btn btn-success btn-sm" onclick="window.location.reload()">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
-                        <?php if ($stats['pending'] > 0): ?>
-                            <span class="alert alert-warning" style="display: inline-block; padding: 8px 12px; margin: 0;">
-                                <i class="fas fa-exclamation-triangle"></i> 
-                                <?php echo $stats['pending']; ?> pending contact(s)
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Subject</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($contacts as $contact): ?>
-                            <tr>
-                                <td><?php echo $contact['id']; ?></td>
-                                <td><?php echo htmlspecialchars($contact['name']); ?></td>
-                                <td><?php echo htmlspecialchars($contact['email']); ?></td>
-                                <td>
-                                    <?php 
-                                    $subject = $contact['subject'] ?: 'No Subject';
-                                    echo htmlspecialchars(substr($subject, 0, 30)) . (strlen($subject) > 30 ? '...' : '');
-                                    ?>
-                                </td>
-                                <td>
-                                    <span class="priority-indicator priority-<?php echo strtolower($contact['priority']); ?>"></span>
-                                    <span class="badge badge-<?php echo strtolower($contact['priority']); ?>">
-                                        <?php echo ucfirst($contact['priority']); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-<?php echo strtolower($contact['status']); ?>">
-                                        <?php echo ucfirst($contact['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo date('M j, Y', strtotime($contact['created_at'])); ?></td>
-                                <td>
-                                    <div class="actions">
-                                        <a href="contacts.php?view=<?php echo $contact['id']; ?>" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                        <?php if ($contact['status'] === 'pending'): ?>
-                                            <a href="contacts.php?mark_read=<?php echo $contact['id']; ?>" class="btn btn-secondary btn-sm">
-                                                <i class="fas fa-check"></i> Mark Read
-                                            </a>
-                                        <?php endif; ?>
-                                        <a href="contacts.php?delete=<?php echo $contact['id']; ?>" 
-                                           class="btn btn-danger btn-sm" 
-                                           onclick="return confirm('Are you sure you want to delete this contact?')">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                
-                <?php if (empty($contacts)): ?>
-                    <p style="text-align: center; padding: 40px; color: #666;">
-                        No contacts found for the selected criteria.
-                    </p>
                 <?php endif; ?>
             </div>
-        <?php endif; ?>
+            
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <select class="filter-select" onchange="window.location.href='?employee=' + this.value + '&status=<?php echo $status_filter; ?>'">
+                    <option value="AllEmployees" <?php echo $employee_filter === 'AllEmployees' ? 'selected' : ''; ?>>AllEmployees</option>
+                    <?php foreach ($employees as $employee): ?>
+                        <option value="<?php echo $employee['id']; ?>" <?php echo $employee_filter == $employee['id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($employee['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <select class="filter-select" onchange="window.location.href='?employee=<?php echo $employee_filter; ?>&status=' + this.value">
+                    <option value="AllStatus" <?php echo $status_filter === 'AllStatus' ? 'selected' : ''; ?>>AllStatus</option>
+                    <option value="new" <?php echo $status_filter === 'new' ? 'selected' : ''; ?>>New</option>
+                    <option value="contacted" <?php echo $status_filter === 'contacted' ? 'selected' : ''; ?>>Contacted</option>
+                    <option value="converted" <?php echo $status_filter === 'converted' ? 'selected' : ''; ?>>Converted</option>
+                    <option value="lost" <?php echo $status_filter === 'lost' ? 'selected' : ''; ?>>Lost</option>
+                </select>
+            </div>
+            
+            <!-- Table Card -->
+            <div class="table-card">
+                <?php if (!empty($contacts)): ?>
+                    <table class="contacts-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Employee</th>
+                                <th>Status</th>
+                                <th>Registered</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($contacts as $contact): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($contact['name']); ?></td>
+                                    <td><?php echo htmlspecialchars($contact['phone'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($contact['email'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($contact['employee_name'] ?? 'Unassigned'); ?></td>
+                                    <td>
+                                        <span class="status-badge status-<?php echo strtolower($contact['status']); ?>">
+                                            <?php echo htmlspecialchars($contact['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="registered-badge registered-<?php echo $contact['registered'] ? 'yes' : 'no'; ?>">
+                                            <?php echo $contact['registered'] ? 'Yes' : 'No'; ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo date('M j, Y', strtotime($contact['created_at'])); ?></td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="contact_view.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-view">View</a>
+                                            <a href="contact_edit.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-edit">Edit</a>
+                                            <a href="?action=delete&id=<?php echo $contact['id']; ?>" class="action-btn btn-delete" 
+                                               onclick="return confirm('Are you sure you want to delete this contact?')">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>No records found</h3>
+                        <p>There are no contacts to display.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </body>
 </html>

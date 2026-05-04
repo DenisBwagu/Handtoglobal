@@ -1,5 +1,9 @@
 <?php
 require_once 'config.php';
+require_once 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 requireLogin();
 

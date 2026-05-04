@@ -1,5 +1,10 @@
 <?php
-require_once 'config.php';
+session_start();
+require 'config.php';
+require 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 requireLogin();
 
@@ -230,7 +235,7 @@ $levelCompleted = $levelProgress >= 40;
                                     </div>
                                     <div class="unlock-actions">
                                         <a href="deposit.php" class="btn btn-primary">Deposit Now</a>
-                                        <a href="https://t.me/chica256" target="_blank" class="btn btn-secondary">Contact Support</a>
+                                        <a href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" class="btn btn-secondary">Contact Support</a>
                                     </div>
                                 </div>
                             <?php elseif ($nextLevel && $canAccessNext): ?>

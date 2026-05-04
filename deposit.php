@@ -1,5 +1,10 @@
 <?php
-require_once 'config.php';
+session_start();
+require 'config.php';
+require 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 requireLogin();
 
@@ -262,7 +267,7 @@ $recentDeposits = $stmt->fetchAll();
                 <div class="support-info">
                     <h2>Need Help?</h2>
                     <p>For deposit assistance or questions, contact our support team:</p>
-                    <a href="https://t.me/chica256" target="_blank" class="btn btn-outline">
+                    <a href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" class="btn btn-outline">
                         <i class="fab fa-telegram"></i>
                         Contact Support
                     </a>

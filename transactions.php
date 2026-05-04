@@ -1,6 +1,10 @@
 <?php
 session_start();
 require 'config.php';
+require 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 if (!isset($_SESSION['user'])) { header("Location: login.php"); exit(); }
 
@@ -146,7 +150,7 @@ function badge($txt){
     <div class="nav">
       <a href="dashboard.php">Dashboard</a>
       <a class="active" href="transactions.php">Transactions</a>
-      <a href="<?php echo TELEGRAM_SUPPORT; ?>" target="_blank">Customer Service</a>
+      <a href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank">Customer Service</a>
       <a href="withdraw.php">Withdraw</a>
       <a href="logout.php">Logout</a>
     </div>

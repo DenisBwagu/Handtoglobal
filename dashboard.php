@@ -1,6 +1,10 @@
 <?php
 require_once 'config.php';
-require_once 'get_site_settings.php';
+require_once 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
+require_once 'get_translation.php';
 
 requireLogin();
 
@@ -9,9 +13,6 @@ $conn = getConnection();
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
-
-// Get site settings
-$site_settings = getSiteSettings();
 
 // Get user statistics
 $stats = [];
@@ -41,16 +42,10 @@ try {
     $stats['today_completed'] = $stmt->fetch()['count'];
     
     // Max levels per day from settings
-    $stmt = $conn->prepare("SELECT value FROM settings WHERE setting_key = 'MaxLevelsPerDay'");
-    $stmt->execute();
-    $result = $stmt->fetch();
-    $stats['max_levels_per_day'] = $result ? (int)$result['value'] : 3;
+    $stats['max_levels_per_day'] = (int)get_setting('max_levels_per_day', '3');
     
     // Tasks per level (default 40)
-    $stmt = $conn->prepare("SELECT value FROM settings WHERE setting_key = 'TasksPerLevel'");
-    $stmt->execute();
-    $result = $stmt->fetch();
-    $stats['tasks_per_level'] = $result ? (int)$result['value'] : 40;
+    $stats['tasks_per_level'] = (int)get_setting('tasks_per_level', '40');
     
 } catch(PDOException $e) {
     $stats = [
@@ -67,7 +62,7 @@ try {
 // Get testimonials
 $testimonials = [];
 try {
-    $stmt = $conn->prepare("SELECT * FROM testimonials WHERE status = 'active' ORDER BY created_at DESC LIMIT 3");
+    $stmt = $conn->prepare("SELECT * FROM testimonials WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC LIMIT 3");
     $stmt->execute();
     $testimonials = $stmt->fetchAll();
 } catch(PDOException $e) {
@@ -117,7 +112,7 @@ foreach ($levels as $level) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Hand to Global</title>
+    <title>Dashboard - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -648,7 +643,13 @@ foreach ($levels as $level) {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="dashboard.php" class="sidebar-logo">
-                    <i class="fas fa-handshake"></i> Hand to Global
+                    <?php $site_logo = get_setting('site_logo'); ?>
+                    <?php if ($site_logo): ?>
+                        <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>" style="height: 32px; margin-right: 8px;">
+                    <?php else: ?>
+                        <i class="fas fa-handshake" style="margin-right: 8px;"></i>
+                    <?php endif; ?>
+                    <?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>
                 </a>
             </div>
             
@@ -671,7 +672,7 @@ foreach ($levels as $level) {
                     <a href="profile.php" class="sidebar-menu-item">
                         <i class="fas fa-user"></i> Profile
                     </a>
-                    <a href="#" class="sidebar-menu-item" onclick="window.open('<?php echo $site_settings['TelegramLink'] ?? '#'; ?>', '_blank')">
+                    <a href="#" class="sidebar-menu-item" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
                         <i class="fas fa-headset"></i> Support
                     </a>
                 </div>
@@ -686,6 +687,11 @@ foreach ($levels as $level) {
                     <button class="btn btn-secondary" onclick="toggleSidebar()" style="display: none;">
                         <i class="fas fa-bars"></i>
                     </button>
+                    <?php if (isset($_SESSION['admin_temp_id'])): ?>
+                        <a href="return_to_admin.php" class="btn btn-support" style="margin-right: 10px;">
+                            <i class="fas fa-arrow-left"></i> Return to Admin
+                        </a>
+                    <?php endif; ?>
                 </div>
                 <div class="top-bar-right">
                     <div class="user-balance">
@@ -773,7 +779,7 @@ foreach ($levels as $level) {
                     <a href="withdrawals.php" class="btn btn-secondary">
                         <i class="fas fa-money-bill-wave"></i> Request Withdrawal
                     </a>
-                    <button class="btn btn-support" onclick="window.open('<?php echo $site_settings['TelegramLink'] ?? '#'; ?>', '_blank')">
+                    <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
                         <i class="fas fa-headset"></i> Customer Support
                     </button>
                 </div>
@@ -818,12 +824,12 @@ foreach ($levels as $level) {
                             <div class="testimonial-card">
                                 <div class="testimonial-quote">
                                     <i class="fas fa-quote-left" style="color: #667eea; margin-right: 8px;"></i>
-                                    <?php echo htmlspecialchars($testimonial['message']); ?>
+                                    <?php echo htmlspecialchars($testimonial['content']); ?>
                                 </div>
                                 <div class="testimonial-author">
                                     <div>
                                         <div class="testimonial-name"><?php echo htmlspecialchars($testimonial['name']); ?></div>
-                                        <div class="testimonial-badge">Client</div>
+                                        <div class="testimonial-badge"><?php echo htmlspecialchars(ucfirst($testimonial['type'])); ?></div>
                                     </div>
                                 </div>
                             </div>
@@ -862,7 +868,7 @@ foreach ($levels as $level) {
                 <p>This level requires additional setup to proceed. Please contact our customer service for personal assistance to continue with this level.</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-support" onclick="window.open('<?php echo $site_settings['TelegramLink'] ?? '#'; ?>', '_blank')">
+                <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
                     Contact Customer Service
                 </button>
                 <button class="btn btn-secondary" onclick="closeLockedModal()">Cancel</button>
@@ -916,7 +922,7 @@ foreach ($levels as $level) {
             </div>
             <div class="modal-footer">
                 <?php if ($active_combo): ?>
-                    <button class="btn btn-support" onclick="window.open('<?php echo $site_settings['TelegramLink'] ?? '#'; ?>', '_blank')">
+                    <button class="btn btn-support" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
                         Deposit via Telegram
                     </button>
                 <?php endif; ?>

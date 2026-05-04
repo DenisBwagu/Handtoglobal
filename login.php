@@ -1,5 +1,9 @@
 <?php
 require_once 'config.php';
+require_once 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 // Redirect if already logged in
 if (isLoggedIn()) {
@@ -65,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - HandToGlobal</title>
+    <title>Login - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
     <style>
         body {
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -186,10 +190,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="login-container">
-        <h1 class="login-title">Welcome to HandToGlobal</h1>
+        <h1 class="login-title">Welcome to <?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?></h1>
         <div class="logo">
-            <i style="display: inline-block; font-size: 48px; color: #667eea;">H</i>
-            <h1>HandToGlobal</h1>
+            <?php $site_logo = get_setting('site_logo'); ?>
+            <?php if ($site_logo): ?>
+                <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>" style="height: 48px; margin-bottom: 10px;">
+            <?php else: ?>
+                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo strtoupper(substr(get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'), 0, 1)); ?></i>
+            <?php endif; ?>
+            <h1><?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?></h1>
         </div>
         
         <?php if ($error): ?>

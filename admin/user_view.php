@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -91,6 +92,16 @@ if (!$user) {
     die("User not found");
 }
 
+// Get user limits data
+$userLimits = [];
+try {
+    $stmt = $conn->prepare("SELECT * FROM user_limits WHERE user_id = ?");
+    $stmt->execute([$user['id']]);
+    $userLimits = $stmt->fetch();
+} catch(PDOException $e) {
+    // Failed to get user limits, use empty array
+}
+
 // Handle admin actions
 $success = '';
 $error = '';
@@ -103,29 +114,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             // Store admin session temporarily
             $_SESSION['admin_temp_id'] = $_SESSION['admin_id'];
             $_SESSION['admin_temp_email'] = $_SESSION['admin_email'];
+            $_SESSION['admin_temp_name'] = $_SESSION['admin_name'] ?? 'Admin';
+            
+            // Store the current user ID for return to admin functionality
+            $_SESSION['last_viewed_user_id'] = $user['id'];
             
             // Set user session
             $_SESSION['user_id'] = $user['id'];
-            unset($_SESSION['admin_id'], $_SESSION['admin_email']);
+            unset($_SESSION['admin_id'], $_SESSION['admin_email'], $_SESSION['admin_name']);
             
             redirect('../dashboard.php');
             exit;
             
         case 'reset_password':
-            $newPassword = $_POST['new_password'] ?? '';
-            if (strlen($newPassword) < 6) {
-                $error = 'Password must be at least 6 characters';
-            } else {
-                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            // Generate a random password
+            $newPassword = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            
+            try {
                 $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
                 $stmt->execute([$hashedPassword, $user['id']]);
-                $success = 'Password reset successfully!';
+                $success = "Password reset successfully! New password: <strong>$newPassword</strong>";
+            } catch(PDOException $e) {
+                $error = 'Failed to reset password: ' . $e->getMessage();
             }
             break;
             
         case 'adjust_balance':
             $amount = (float)$_POST['amount'];
             $operation = $_POST['operation'] ?? 'add';
+            $reason = $_POST['reason'] ?? 'Manual Adjustment';
             
             // Validate amount is numeric and greater than 0
             if ($amount <= 0 || !is_numeric($amount)) {
@@ -135,12 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                     if ($operation === 'add') {
                         $stmt = $conn->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
                         $stmt->execute([$amount, $user['id']]);
-                        $success = 'Balance added successfully!';
+                        $success = 'Balance credited successfully!';
                         
                         // Log balance change if balance_logs table exists
                         try {
                             $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
-                            $stmt->execute([$user['id'], $_SESSION['admin'], $amount, 'add', 'Admin manual adjustment']);
+                            $stmt->execute([$user['id'], $_SESSION['admin_id'], $amount, 'credit', $reason]);
                         } catch(PDOException $e) {
                             // Log table doesn't exist, continue without logging
                         }
@@ -153,12 +171,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         if ($currentBalance >= $amount) {
                             $stmt = $conn->prepare("UPDATE users SET balance = balance - ? WHERE id = ?");
                             $stmt->execute([$amount, $user['id']]);
-                            $success = 'Balance deducted successfully!';
+                            $success = 'Balance debited successfully!';
                             
                             // Log balance change if balance_logs table exists
                             try {
                                 $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
-                                $stmt->execute([$user['id'], $_SESSION['admin'], $amount, 'subtract', 'Admin manual adjustment']);
+                                $stmt->execute([$user['id'], $_SESSION['admin_id'], $amount, 'debit', $reason]);
                             } catch(PDOException $e) {
                                 // Log table doesn't exist, continue without logging
                             }
@@ -174,23 +192,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             
         case 'unlock_level':
             $level = $_POST['level'] ?? '';
-            $validLevels = ['bronze', 'silver', 'gold', 'platinum'];
             
-            if (!in_array(strtolower($level), $validLevels)) {
-                $error = 'Invalid level specified';
+            if (empty($level)) {
+                $error = 'Please select a level to unlock';
             } else {
                 try {
-                    // Update the correct unlock column
-                    $unlockField = strtolower($level) . '_unlocked';
-                    $stmt = $conn->prepare("UPDATE users SET $unlockField = 1 WHERE id = ?");
-                    $stmt->execute([$user['id']]);
+                    // Get all levels from database to ensure we're using real data
+                    $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
+                    $stmt->execute();
+                    $dbLevels = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     
-                    // Update user level if needed
-                    $levelHierarchy = ['bronze' => 'Bronze', 'silver' => 'Silver', 'gold' => 'Gold', 'platinum' => 'Platinum'];
-                    $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
-                    $stmt->execute([$levelHierarchy[strtolower($level)], $user['id']]);
-                    
-                    $success = ucfirst($level) . ' level unlocked successfully!';
+                    if (!in_array($level, $dbLevels)) {
+                        $error = 'Invalid level specified';
+                    } else {
+                        // Add unlocked level to user_levels table
+                        $stmt = $conn->prepare("SELECT id FROM user_levels WHERE user_id = ? AND level = ?");
+                        $stmt->execute([$user['id'], $level]);
+                        $existing = $stmt->fetch();
+                        
+                        if (!$existing) {
+                            $stmt = $conn->prepare("INSERT INTO user_levels (user_id, level, created_at) VALUES (?, ?, NOW())");
+                            $stmt->execute([$user['id'], $level]);
+                        }
+                        
+                        // Update user's current level if this is higher than their current
+                        $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ? AND (level IS NULL OR level < ?)");
+                        $stmt->execute([$level, $user['id'], $level]);
+                        
+                        $success = $level . ' level unlocked successfully!';
+                    }
                 } catch(PDOException $e) {
                     $error = 'Failed to unlock level: ' . $e->getMessage();
                 }
@@ -199,66 +229,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             
         case 'user_limits':
             // Validate and update user limits
-            $dailyLimit = !empty($_POST['daily_limit']) ? (int)$_POST['daily_limit'] : null;
-            $weeklyLimit = !empty($_POST['weekly_limit']) ? (int)$_POST['weekly_limit'] : null;
-            $monthlyLimit = !empty($_POST['monthly_limit']) ? (int)$_POST['monthly_limit'] : null;
+            $maxLevelsPerDay = !empty($_POST['max_levels_per_day']) ? (int)$_POST['max_levels_per_day'] : 3;
+            $minWithdrawalAmount = !empty($_POST['min_withdrawal_amount']) ? (float)$_POST['min_withdrawal_amount'] : 10.00;
+            $minWithdrawalLevel = !empty($_POST['min_withdrawal_level']) ? $_POST['min_withdrawal_level'] : 'Bronze';
+            $minBalanceFloor = !empty($_POST['min_balance_floor']) ? (float)$_POST['min_balance_floor'] : 0.00;
+            $customMessage = !empty($_POST['custom_message']) ? $_POST['custom_message'] : '';
             
             try {
-                // Check if limits columns exist, add them if they don't
-                $checkColumns = ['daily_task_limit', 'weekly_task_limit', 'monthly_task_limit'];
-                foreach ($checkColumns as $column) {
-                    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE '$column'");
-                    if ($check_column->rowCount() == 0) {
-                        $conn->exec("ALTER TABLE users ADD COLUMN $column INT DEFAULT 40");
-                    }
-                }
+                // Check if user_limits record exists for this user
+                $stmt = $conn->prepare("SELECT id FROM user_limits WHERE user_id = ?");
+                $stmt->execute([$user['id']]);
+                $existingRecord = $stmt->fetch();
                 
-                // Build update query dynamically based on provided values
-                $updateFields = [];
-                $updateValues = [];
-                
-                if ($dailyLimit !== null && $dailyLimit > 0) {
-                    $updateFields[] = "daily_task_limit = ?";
-                    $updateValues[] = $dailyLimit;
-                }
-                
-                if ($weeklyLimit !== null && $weeklyLimit > 0) {
-                    $updateFields[] = "weekly_task_limit = ?";
-                    $updateValues[] = $weeklyLimit;
-                }
-                
-                if ($monthlyLimit !== null && $monthlyLimit > 0) {
-                    $updateFields[] = "monthly_task_limit = ?";
-                    $updateValues[] = $monthlyLimit;
-                }
-                
-                if (!empty($updateFields)) {
-                    $updateValues[] = $user['id'];
-                    $updateSql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
-                    $stmt = $conn->prepare($updateSql);
-                    $stmt->execute($updateValues);
-                    $success = 'User limits updated successfully!';
+                if ($existingRecord) {
+                    // Update existing record
+                    $stmt = $conn->prepare("
+                        UPDATE user_limits SET 
+                        max_levels_per_day = ?, 
+                        min_withdrawal_amount = ?, 
+                        min_withdrawal_level = ?, 
+                        min_balance = ?, 
+                        custom_message = ? 
+                        WHERE user_id = ?
+                    ");
+                    $stmt->execute([$maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $customMessage, $user['id']]);
                 } else {
-                    $error = 'No valid limits provided';
+                    // Insert new record
+                    $stmt = $conn->prepare("
+                        INSERT INTO user_limits 
+                        (user_id, max_levels_per_day, min_withdrawal_amount, min_withdrawal_level, min_balance, custom_message) 
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ");
+                    $stmt->execute([$user['id'], $maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $customMessage]);
                 }
+                
+                $success = 'User limits updated successfully!';
             } catch(PDOException $e) {
                 $error = 'Failed to update user limits: ' . $e->getMessage();
             }
             break;
             
         case 'flush_levels':
-            try {
-                // Clear completed_tasks for this user only
-                $stmt = $conn->prepare("DELETE FROM completed_tasks WHERE user_id = ?");
-                $stmt->execute([$user['id']]);
-                
-                // Reset level-related fields
-                $stmt = $conn->prepare("UPDATE users SET bronze_unlocked = 1, silver_unlocked = 0, gold_unlocked = 0, platinum_unlocked = 0, level = 'Bronze', accuracy = 0, rating = 0, total_tasks = 0 WHERE id = ?");
-                $stmt->execute([$user['id']]);
-                
-                $success = 'User level progress reset successfully!';
-            } catch(PDOException $e) {
-                $error = 'Failed to flush levels: ' . $e->getMessage();
+            $selectedLevels = $_POST['flush_levels'] ?? [];
+            
+            if (empty($selectedLevels)) {
+                $error = 'Please select at least one level to flush';
+            } else {
+                try {
+                    foreach ($selectedLevels as $level) {
+                        // Delete completed tasks for this level only
+                        $stmt = $conn->prepare("
+                            DELETE FROM completed_tasks 
+                            WHERE user_id = ? AND task_id IN (
+                                SELECT id FROM tasks WHERE level = ?
+                            )
+                        ");
+                        $stmt->execute([$user['id'], $level]);
+                    }
+                    
+                    $success = 'Selected levels flushed successfully! Progress reset to 0/40.';
+                } catch(PDOException $e) {
+                    $error = 'Failed to flush levels: ' . $e->getMessage();
+                }
             }
             break;
             
@@ -1034,15 +1066,13 @@ if ($check_column->rowCount() > 0) {
                 <h3>Reset Password</h3>
                 <span class="close" onclick="closeModal('passwordModal')">&times;</span>
             </div>
+            <p style="color: #dc3545;">This will generate a new temporary password for the user.</p>
+            <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="reset_password">
-                <div class="form-group">
-                    <label>New Password (min 6 characters)</label>
-                    <input type="password" name="new_password" class="form-control" required minlength="6">
-                </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-key"></i> Reset Password
+                        <i class="fas fa-key"></i> Confirm
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">
                         Cancel
@@ -1065,15 +1095,27 @@ if ($check_column->rowCount() > 0) {
                     <label>Select Level to Unlock</label>
                     <select name="level" class="form-control" required>
                         <option value="">Select Level</option>
-                        <option value="bronze">Bronze</option>
-                        <option value="silver">Silver</option>
-                        <option value="gold">Gold</option>
-                        <option value="platinum">Platinum</option>
+                        <?php
+                        try {
+                            $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
+                            $stmt->execute();
+                            $levels = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            foreach ($levels as $level) {
+                                echo '<option value="' . htmlspecialchars($level) . '">' . htmlspecialchars($level) . '</option>';
+                            }
+                        } catch(PDOException $e) {
+                            // Fallback to hardcoded levels if query fails
+                            $defaultLevels = ['Bronze', 'Sliver', 'Gold', 'VIP 1'];
+                            foreach ($defaultLevels as $level) {
+                                echo '<option value="' . htmlspecialchars($level) . '">' . htmlspecialchars($level) . '</option>';
+                            }
+                        }
+                        ?>
                     </select>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-unlock"></i> Unlock Level
+                        <i class="fas fa-unlock"></i> Confirm
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('unlockModal')">
                         Cancel
@@ -1104,17 +1146,29 @@ if ($check_column->rowCount() > 0) {
                     <div class="radio-group">
                         <label>
                             <input type="radio" name="operation" value="add" checked>
-                            Add to Balance
+                            Credit
                         </label>
                         <label>
                             <input type="radio" name="operation" value="subtract">
-                            Subtract from Balance
+                            Debit
                         </label>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <select name="reason" class="form-control" required>
+                        <option value="">Select Reason</option>
+                        <option value="Manual Adjustment">Manual Adjustment</option>
+                        <option value="Bonus">Bonus</option>
+                        <option value="Penalty">Penalty</option>
+                        <option value="Correction">Correction</option>
+                        <option value="Refund">Refund</option>
+                        <option value="Reward">Reward</option>
+                    </select>
+                </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-dollar-sign"></i> Adjust Balance
+                        <i class="fas fa-dollar-sign"></i> Confirm
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('balanceModal')">
                         Cancel
@@ -1134,20 +1188,33 @@ if ($check_column->rowCount() > 0) {
             <form method="POST">
                 <input type="hidden" name="action" value="user_limits">
                 <div class="form-group">
-                    <label>Daily Task Limit (leave empty to keep current)</label>
-                    <input type="number" name="daily_limit" class="form-control" min="1" placeholder="40">
+                    <label>Max Levels Per Day</label>
+                    <input type="number" name="max_levels_per_day" class="form-control" min="1" value="<?php echo htmlspecialchars($userLimits['max_levels_per_day'] ?? 3); ?>">
                 </div>
                 <div class="form-group">
-                    <label>Weekly Task Limit (leave empty to keep current)</label>
-                    <input type="number" name="weekly_limit" class="form-control" min="1" placeholder="280">
+                    <label>Min Withdrawal Amount ($)</label>
+                    <input type="number" name="min_withdrawal_amount" class="form-control" step="0.01" min="0" value="<?php echo htmlspecialchars($userLimits['min_withdrawal_amount'] ?? 10.00); ?>">
                 </div>
                 <div class="form-group">
-                    <label>Monthly Task Limit (leave empty to keep current)</label>
-                    <input type="number" name="monthly_limit" class="form-control" min="1" placeholder="1200">
+                    <label>Min Withdrawal Level</label>
+                    <select name="min_withdrawal_level" class="form-control">
+                        <option value="Bronze" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
+                        <option value="Silver" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Silver' ? 'selected' : ''; ?>>Silver</option>
+                        <option value="Gold" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Gold' ? 'selected' : ''; ?>>Gold</option>
+                        <option value="Platinum" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Platinum' ? 'selected' : ''; ?>>Platinum</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Min Balance Floor ($)</label>
+                    <input type="number" name="min_balance_floor" class="form-control" step="0.01" min="0" value="<?php echo htmlspecialchars($userLimits['min_balance'] ?? 0.00); ?>">
+                </div>
+                <div class="form-group">
+                    <label>Custom Message</label>
+                    <textarea name="custom_message" class="form-control" rows="3"><?php echo htmlspecialchars($userLimits['custom_message'] ?? ''); ?></textarea>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-sliders-h"></i> Update Limits
+                        <i class="fas fa-sliders-h"></i> Save Limits
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('limitsModal')">
                         Cancel
@@ -1189,18 +1256,66 @@ if ($check_column->rowCount() > 0) {
             </div>
             <p style="color: #dc3545;">This will reset the user's level progress only.</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Clear completed tasks</li>
-                <li>Reset level unlocks to Bronze only</li>
-                <li>Reset accuracy and rating</li>
+                <li>Clear completed tasks for selected levels</li>
+                <li>Reset progress to 0/40 for selected levels</li>
                 <li>Keep balance, deposits, withdrawals</li>
                 <li>Keep login details</li>
             </ul>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="flush_levels">
+                <div class="form-group">
+                    <div style="margin-bottom: 10px;">
+                        <label>
+                            <input type="checkbox" id="selectAllLevels" onchange="toggleAllLevelCheckboxes()">
+                            Select All
+                        </label>
+                    </div>
+                    <?php
+                    try {
+                        $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
+                        $stmt->execute();
+                        $levels = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                        
+                        foreach ($levels as $level) {
+                            // Get completed tasks count for this level
+                            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM completed_tasks ct JOIN tasks t ON ct.task_id = t.id WHERE ct.user_id = ? AND t.level = ?");
+                            $stmt->execute([$user['id'], $level]);
+                            $completedCount = $stmt->fetch()['count'];
+                            
+                            // Get total tasks count for this level
+                            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE level = ?");
+                            $stmt->execute([$level]);
+                            $totalCount = $stmt->fetch()['count'];
+                            
+                            // Determine status
+                            if ($completedCount == 0) {
+                                $status = 'Not Started';
+                                $statusColor = '#6c757d';
+                            } elseif ($completedCount >= $totalCount) {
+                                $status = 'Completed';
+                                $statusColor = '#28a745';
+                            } else {
+                                $status = 'In Progress';
+                                $statusColor = '#ffc107';
+                            }
+                            
+                            echo '<div style="margin-bottom: 8px;">';
+                            echo '<label style="display: flex; align-items: center; gap: 8px;">';
+                            echo '<input type="checkbox" name="flush_levels[]" value="' . htmlspecialchars($level) . '" class="level-checkbox">';
+                            echo '<span>' . htmlspecialchars($level) . '</span>';
+                            echo '<span style="color: ' . $statusColor . '; font-size: 12px;">(' . $status . ')</span>';
+                            echo '</label>';
+                            echo '</div>';
+                        }
+                    } catch(PDOException $e) {
+                        echo '<p style="color: #dc3545;">Unable to load levels</p>';
+                    }
+                    ?>
+                </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" class="btn btn-orange-outline">
-                        <i class="fas fa-trash"></i> Flush Levels
+                    <button type="submit" class="btn btn-orange-outline" id="flushLevelsBtn">
+                        <i class="fas fa-trash"></i> FlushNLevels
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('flushLevelsModal')">
                         Cancel
@@ -1295,6 +1410,38 @@ if ($check_column->rowCount() > 0) {
                 e.preventDefault();
                 alert('Cannot subtract more than the current balance');
             }
+        });
+        
+        // Flush Levels checkbox functionality
+        function toggleAllLevelCheckboxes() {
+            const selectAll = document.getElementById('selectAllLevels');
+            const checkboxes = document.querySelectorAll('.level-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            updateFlushLevelsButton();
+        }
+        
+        function updateFlushLevelsButton() {
+            const checkboxes = document.querySelectorAll('.level-checkbox:checked');
+            const button = document.getElementById('flushLevelsBtn');
+            const count = checkboxes.length;
+            
+            if (count === 0) {
+                button.innerHTML = '<i class="fas fa-trash"></i> FlushNLevels';
+            } else if (count === 1) {
+                button.innerHTML = '<i class="fas fa-trash"></i> Flush 1 Level';
+            } else {
+                button.innerHTML = '<i class="fas fa-trash"></i> Flush ' + count + ' Levels';
+            }
+        }
+        
+        // Add event listeners to level checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.level-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateFlushLevelsButton);
+            });
         });
     </script>
 </body>

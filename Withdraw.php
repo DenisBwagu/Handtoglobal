@@ -1,6 +1,10 @@
 <?php
 session_start();
 require 'config.php';
+require 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");

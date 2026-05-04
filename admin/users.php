@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -88,14 +89,242 @@ function getUserLevel($balance) {
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: #f5f7fb;
+            color: var(--text);
+            margin: 0;
+            padding: 0;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        :root {
+            --primary: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f5f7fb;
+            --white: #ffffff;
+        }
+        
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .menu-icon {
+            cursor: pointer;
+            color: var(--text);
+            font-size: 18px;
+        }
+        
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .admin-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .topbar-icon {
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 16px;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .profile-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .dropdown-arrow {
+            color: var(--muted);
+            font-size: 12px;
+        }
+        
+        /* Admin Layout */
+        .admin-layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 900;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-header i {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary);
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 20px;
+        }
+        
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 2px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar-menu a:hover {
+            background: var(--bg);
+            color: var(--primary);
+        }
+        
+        .sidebar-menu a.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border-left: 3px solid var(--success);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 12px;
+            width: 16px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            flex: 1;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: var(--muted);
+            font-size: 14px;
         }
         
         .card {
@@ -284,21 +513,27 @@ function getUserLevel($balance) {
     </style>
 </head>
 <body>
-    <div class="container">
-        <?php if ($msg): ?>
-            <div style="background: #d1e7dd; color: #0f5132; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #badbcc;">
-                <?php echo htmlspecialchars($msg); ?>
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="menu-icon">
+                <i class="fas fa-bars"></i>
             </div>
-        <?php endif; ?>
-        
-        <?php if ($error): ?>
-            <div style="background: #f8d7da; color: #842029; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f5c2c7;">
-                <?php echo htmlspecialchars($error); ?>
+            <div class="topbar-title">Users</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-badge">ADMIN</div>
+            <div class="topbar-icon">
+                <i class="fas fa-moon"></i>
             </div>
-        <?php endif; ?>
-
-        <div class="card">
-            <div class="card-header">
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
+                </div>
+                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
+                <div class="dropdown-arrow">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
                 <h1 class="card-title">AllUsers</h1>
                 <form method="GET" style="display: flex; gap: 8px;">
                     <div class="search-container">

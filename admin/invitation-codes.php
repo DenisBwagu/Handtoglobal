@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -786,8 +787,13 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <i class="fas fa-hand-holding-usd"></i>
-                <h2>Hand to Global</h2>
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
+                <?php else: ?>
+                    <i class="fas fa-hand-holding-usd"></i>
+                <?php endif; ?>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
             </div>
             
             <!-- MANAGEMENT Section -->
@@ -815,7 +821,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
             <div class="sidebar-section">
                 <div class="sidebar-section-title">FINANCE</div>
                 <ul class="sidebar-menu">
-                    <li><a href="finance.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
                     <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
                 </ul>
             </div>

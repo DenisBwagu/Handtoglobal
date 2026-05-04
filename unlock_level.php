@@ -1,10 +1,10 @@
 <?php
 session_start();
 require 'config.php';
+require 'get_setting.php';
 
-if (!defined('TELEGRAM_SUPPORT')) {
-    define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
-}
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
@@ -77,7 +77,7 @@ if ($level === "Bronze") {
         exit();
 
     } else {
-        header("Location: " . TELEGRAM_SUPPORT);
+        header("Location: " . $supportLink);
         exit();
     }
 }
@@ -103,7 +103,7 @@ if ($level === "Silver") {
     }
 
     if ((float)$user['balance'] < 150) {
-        header("Location: " . TELEGRAM_SUPPORT);
+        header("Location: " . $supportLink);
         exit();
     }
 
@@ -141,7 +141,7 @@ if ($level === "Gold") {
     }
 
     if ((float)$user['balance'] < 500) {
-        header("Location: " . TELEGRAM_SUPPORT);
+        header("Location: " . $supportLink);
         exit();
     }
 
@@ -179,7 +179,7 @@ if ($level === "Platinum") {
     }
 
     if ((float)$user['balance'] < 800) {
-        header("Location: " . TELEGRAM_SUPPORT);
+        header("Location: " . $supportLink);
         exit();
     }
 

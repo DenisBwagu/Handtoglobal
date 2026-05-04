@@ -1,5 +1,9 @@
 <?php
 require_once 'config.php';
+require_once 'get_setting.php';
+
+// Get Telegram link from settings
+$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
 
 // Redirect if already logged in
 if (isLoggedIn()) {
@@ -110,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - HandToGlobal</title>
+    <title>Register - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
     <style>
         body {
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
@@ -240,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1 class="login-title">Create Account</h1>
         <div class="logo">
             <i style="display: inline-block; font-size: 48px; color: #667eea;">H</i>
-            <h1>HandToGlobal</h1>
+            <h1><?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
         </div>
         
         <?php if ($error): ?>
