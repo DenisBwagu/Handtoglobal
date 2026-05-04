@@ -256,23 +256,250 @@ if (empty($levels)) {
             color: #842029;
             border: 1px solid #f5c2c7;
         }
+        
+        .topbar {
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-icon {
+            margin-right: 12px;
+        }
+        
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .admin-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-right: 12px;
+        }
+        
+        .topbar-icon {
+            margin-right: 12px;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .profile-avatar {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-right: 12px;
+        }
+        
+        .profile-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 12px;
+        }
+        
+        .dropdown-arrow {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .admin-layout {
+            display: flex;
+        }
+        
+        .sidebar {
+            background: #333;
+            color: white;
+            padding: 20px;
+            width: 250px;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-header img {
+            height: 24px;
+            margin-right: 12px;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 12px;
+        }
+        
+        .sidebar-menu a {
+            text-decoration: none;
+            color: white;
+            transition: color 0.15s ease;
+        }
+        
+        .sidebar-menu a:hover {
+            color: #ccc;
+        }
+        
+        .sidebar-menu a.active {
+            color: #4CAF50;
+        }
+        
+        .main-content {
+            padding: 20px;
+            flex: 1;
+        }
+        
+        .page-header {
+            margin-bottom: 20px;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .page-header p {
+            font-size: 14px;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <?php if ($msg): ?>
-            <div class="alert alert-success">
-                <?php echo htmlspecialchars($msg); ?>
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="menu-icon">
+                <i class="fas fa-bars"></i>
             </div>
-        <?php endif; ?>
+            <div class="topbar-title">Levels</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-badge">ADMIN</div>
+            <div class="topbar-icon">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
+                </div>
+                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
+                <div class="dropdown-arrow">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
+                <?php else: ?>
+                    <i class="fas fa-hand-holding-usd"></i>
+                <?php endif; ?>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
+            </div>
+            
+            <!-- MANAGEMENT Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MANAGEMENT</div>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                </ul>
+            </div>
+            
+            <!-- PLATFORM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PLATFORM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="levels.php" class="active"><i class="fas fa-layer-group"></i> Levels</a></li>
+                    <li><a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                </ul>
+            </div>
+            
+            <!-- FINANCE Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FINANCE</div>
+                <ul class="sidebar-menu">
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                </ul>
+            </div>
+            
+            <!-- MONITORING Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                </ul>
+            </div>
+            
+            <!-- SYSTEM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                </ul>
+            </div>
+        </div>
         
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="levels-container">
+        <!-- Main Content -->
+        <div class="main-content">
             <div class="card">
                 <div class="card-header">
                     <h1 class="card-title">Levels</h1>
