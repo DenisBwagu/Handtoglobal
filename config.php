@@ -972,15 +972,15 @@ if (!function_exists('flushLevelForUser')) {
             // Ensure table exists
             createUserLevelsTable();
             
-            // Delete completed tasks for this user and level
+            // 1. Delete completed tasks for this user and level only
             $stmt = $conn->prepare("
                 DELETE ct FROM completed_tasks ct
                 INNER JOIN tasks t ON ct.task_id = t.id
-                WHERE ct.user_id = ? AND (t.level = ? OR ct.level = ?)
+                WHERE ct.user_id = ? AND t.level = ?
             ");
-            $stmt->execute([$userId, $level, $level]);
+            $stmt->execute([$userId, $level]);
             
-            // Reset user level record
+            // 2. Lock the level in user_levels table
             $stmt = $conn->prepare("
                 INSERT INTO user_levels (user_id, level, is_unlocked, completed_count, flushed_at, updated_at)
                 VALUES (?, ?, 0, 0, NOW(), NOW())
@@ -992,8 +992,20 @@ if (!function_exists('flushLevelForUser')) {
             ");
             $stmt->execute([$userId, $level]);
             
-            $stmt = $conn->prepare("UPDATE users SET level = 'Bronze' WHERE id = ? AND level = ?");
-            $stmt->execute([$userId, $level]);
+            // 3. Lock the level in users table (specific column)
+            $levelField = strtolower($level) . '_unlocked';
+            if ($level === 'Sliver') {
+                $levelField = 'silver_unlocked';
+            } elseif ($level === 'VIP 1') {
+                $levelField = 'platinum_unlocked';
+            }
+            
+            $stmt = $conn->prepare("UPDATE users SET $levelField = 0 WHERE id = ?");
+            $stmt->execute([$userId]);
+            
+            // 4. DO NOT change user balance or affect other levels
+            // DO NOT reset user to Bronze level
+            // Only the specified level is affected
             
             return true;
         } catch (PDOException $e) {

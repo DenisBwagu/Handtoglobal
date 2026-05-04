@@ -899,8 +899,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         <?php foreach ($levels as $level): ?>
                             <?php 
                             $is_current = normalizeLevelName($stats['current_level']) === normalizeLevelName($level);
-                            $is_unlocked = $unlocked_levels[$level] || $is_current;
-                            $level_status = $is_current ? 'current' : ($is_unlocked ? 'progress' : 'locked');
+                            // Check if level is actually unlocked (flushed levels should show as locked even if current)
+                            $is_unlocked = $unlocked_levels[$level];
+                            $level_status = $is_current && $is_unlocked ? 'current' : ($is_unlocked ? 'progress' : 'locked');
                             $level_data = $stats['levels'][$level] ?? ['completed' => 0, 'total' => 40, 'available' => 40, 'progress' => 0];
                             ?>
                             <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" data-level="<?php echo htmlspecialchars($level); ?>" data-unlocked="<?php echo $is_unlocked ? '1' : '0'; ?>" onclick="startLevel(this.dataset.level, this.dataset.unlocked)">
