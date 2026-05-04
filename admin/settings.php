@@ -109,6 +109,10 @@ if (isset($_POST['update_settings'])) {
                 update_setting($key, $value);
             }
             
+            // Set language in session for immediate effect
+            $_SESSION['admin_language'] = $_POST['admin_locale'] ?? 'english';
+            $_SESSION['user_language'] = $_POST['user_locale'] ?? 'english';
+            
             $msg = "Settings updated successfully!";
         }
         
