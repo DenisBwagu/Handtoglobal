@@ -534,58 +534,140 @@ function getUserLevel($balance) {
                 <div class="dropdown-arrow">
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <h1 class="card-title">AllUsers</h1>
-                <form method="GET" style="display: flex; gap: 8px;">
-                    <div class="search-container">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" name="search" class="search-input" placeholder="Search..." value="<?php echo htmlspecialchars($search); ?>">
-                    </div>
-                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
+                <?php else: ?>
+                    <i class="fas fa-hand-holding-usd"></i>
+                <?php endif; ?>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
             </div>
             
-            <div class="card-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>InvitationCode</th>
-                            <th>Level</th>
-                            <th>Balance</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $user): ?>
+            <!-- MANAGEMENT Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MANAGEMENT</div>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="users.php" class="active"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                </ul>
+            </div>
+            
+            <!-- PLATFORM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PLATFORM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
+                    <li><a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                </ul>
+            </div>
+            
+            <!-- FINANCE Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FINANCE</div>
+                <ul class="sidebar-menu">
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                </ul>
+            </div>
+            
+            <!-- MONITORING Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                </ul>
+            </div>
+            
+            <!-- SYSTEM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <?php if ($msg): ?>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="page-header">
+                <h1>Users Management</h1>
+                <p>Manage all registered users</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">All Users</h1>
+                    <form method="GET" style="display: flex; gap: 8px;">
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" name="search" class="search-input" placeholder="Search..." value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($user['fullname']); ?></td>
-                                <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                <td class="invitation-code"><?php echo $user['invite_code_used'] ? htmlspecialchars($user['invite_code_used']) : '-'; ?></td>
-                                <td class="level"><?php echo getUserLevel($user['balance']); ?></td>
-                                <td class="balance">$<?php echo number_format($user['balance'], 2); ?></td>
-                                <td>
-                                    <?php 
-                                    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
-                                    if ($check_column->rowCount() > 0) {
-                                        $is_active = $user['is_active'] ?? 1;
-                                    } else {
-                                        $is_active = 1;
-                                    }
-                                    ?>
-                                    <span class="badge <?php echo $is_active ? 'badge-active' : 'badge-blocked'; ?>">
-                                        <?php echo $is_active ? 'Active' : 'Blocked'; ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="actions">
-                                        <a href="user_view.php?id=<?php echo $user['id']; ?>" class="action-link">View</a>
-                                        <a href="users.php?delete=<?php echo $user['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
-                                    </div>
-                                </td>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>InvitationCode</th>
+                                <th>Level</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($users as $user): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($user['fullname']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                    <td class="invitation-code"><?php echo $user['invite_code_used'] ? htmlspecialchars($user['invite_code_used']) : '-'; ?></td>
+                                    <td class="level"><?php echo getUserLevel($user['balance']); ?></td>
+                                    <td class="balance">$<?php echo number_format($user['balance'], 2); ?></td>
+                                    <td>
+                                        <?php 
+                                        $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+                                        if ($check_column->rowCount() > 0) {
+                                            $is_active = $user['is_active'] ?? 1;
+                                        } else {
+                                            $is_active = 1;
+                                        }
+                                        ?>
+                                        <span class="badge <?php echo $is_active ? 'badge-active' : 'badge-blocked'; ?>">
+                                            <?php echo $is_active ? 'Active' : 'Blocked'; ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="user_view.php?id=<?php echo $user['id']; ?>" class="action-link">View</a>
+                                            <a href="users.php?delete=<?php echo $user['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                 </table>
                 
                 <?php if (empty($users)): ?>
@@ -617,6 +699,8 @@ function getUserLevel($balance) {
                     </div>
                 </div>
             <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 </body>
