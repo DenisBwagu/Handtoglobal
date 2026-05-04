@@ -190,15 +190,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="login-container">
-        <h1 class="login-title">Welcome to <?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?></h1>
+        <h1 class="login-title">Welcome to <?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
         <div class="logo">
             <?php $site_logo = get_setting('site_logo'); ?>
             <?php if ($site_logo): ?>
-                <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>" style="height: 48px; margin-bottom: 10px;">
+                <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 48px; margin-bottom: 10px;">
             <?php else: ?>
-                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo strtoupper(substr(get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'), 0, 1)); ?></i>
+                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo strtoupper(substr(get_setting('site_name', 'HandToGlobal'), 0, 1)); ?></i>
             <?php endif; ?>
-            <h1><?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?></h1>
+            <h1><?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
         </div>
         
         <?php if ($error): ?>

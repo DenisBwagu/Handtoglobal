@@ -3,13 +3,14 @@
  * Get setting value from database
  * @param string $key Setting key
  * @param mixed $default Default value if setting not found
+ * @param bool $refresh Force refresh cache
  * @return mixed Setting value or default
  */
-function get_setting($key, $default = '') {
+function get_setting($key, $default = '', $refresh = false) {
     static $settings_cache = [];
     
-    // Load settings once per request
-    if (empty($settings_cache)) {
+    // Load settings once per request or force refresh
+    if (empty($settings_cache) || $refresh) {
         try {
             $conn = getConnection();
             $stmt = $conn->prepare("SELECT setting_key, setting_value FROM settings");
@@ -30,12 +31,13 @@ function get_setting($key, $default = '') {
 
 /**
  * Get all settings as array
+ * @param bool $refresh Force refresh cache
  * @return array All settings
  */
-function get_all_settings() {
+function get_all_settings($refresh = false) {
     static $all_settings_cache = null;
     
-    if ($all_settings_cache === null) {
+    if ($all_settings_cache === null || $refresh) {
         try {
             $conn = getConnection();
             $stmt = $conn->prepare("SELECT setting_key, setting_value FROM settings");
