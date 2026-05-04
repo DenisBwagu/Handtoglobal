@@ -3,7 +3,7 @@ require_once 'config.php';
 require_once 'get_setting.php';
 
 // Get Telegram link from settings
-$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
+$supportLink = getSupportLink();
 
 // Redirect if already logged in
 if (isLoggedIn()) {
@@ -35,7 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Admin login successful
                 session_regenerate_id(true);
                 $_SESSION['admin'] = $admin['id'];
+                $_SESSION['admin_id'] = $admin['id'];
                 $_SESSION['admin_email'] = $admin['email'];
+                $_SESSION['admin_name'] = $admin['name'] ?? 'Admin';
                 redirect('admin/dashboard.php');
             } else {
                 // Check users table with LIMIT 1 for speed
@@ -45,8 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($user && password_verify($password, $user['password'])) {
                     // User login successful
-                    if ($user['is_blocked']) {
+                    if ((int)($user['is_blocked'] ?? 0) === 1 || strtolower((string)($user['status'] ?? 'active')) === 'blocked') {
                         $error = 'Your account has been blocked. Please contact support.';
+                    } elseif (isset($user['is_active']) && (int)$user['is_active'] !== 1) {
+                        $error = 'Your account is inactive. Please contact support.';
                     } else {
                         session_regenerate_id(true);
                         $_SESSION['user_id'] = $user['id'];
@@ -70,10 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
+    <link rel="stylesheet" href="assets/css/global-theme.css">
+    <script src="assets/js/theme.js" defer></script>
     <style>
         body {
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f4f6f9;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -84,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .login-container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
             padding: 40px;
             width: 100%;
             max-width: 420px;
@@ -99,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .logo i {
             font-size: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0d6efd;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
@@ -154,8 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background: #0b5ed7;
+            box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
         }
         
         .alert {

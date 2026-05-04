@@ -10,7 +10,9 @@ $userId = (int)$_SESSION['user_id'];
 $message = '';
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($requestMethod === 'POST') {
     if (isset($_POST['update_profile'])) {
         $fullname = trim($_POST['fullname'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
@@ -60,7 +62,7 @@ if (!$user) {
 
 $stats = getUserStats($userId);
 $currentLanguage = function_exists('get_current_language') ? get_current_language() : 'english';
-$availableLanguages = function_exists('get_available_languages') ? get_available_languages() : ['english' => 'English'];
+$availableLanguages = function_exists('get_frontend_languages') ? get_frontend_languages() : ['english' => 'English'];
 
 if (isset($_POST['update_language']) && empty($error)) {
     $language = $_POST['language'] ?? 'english';

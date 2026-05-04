@@ -4,7 +4,7 @@ require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('../login.php');
 }
 
 // Get database connection
@@ -12,6 +12,9 @@ $conn = getConnection();
 
 $msg = "";
 $error = "";
+if (isset($_GET['deleted'])) {
+    $msg = "Task deleted successfully!";
+}
 
 // Handle task operations
 if (isset($_GET['delete'])) {
@@ -19,7 +22,7 @@ if (isset($_GET['delete'])) {
     try {
         $stmt = $conn->prepare("DELETE FROM tasks WHERE id=?");
         $stmt->execute([$id]);
-        $msg = "Task deleted successfully!";
+        redirect('tasks.php?deleted=1');
     } catch(PDOException $e) {
         $error = "Failed to delete task: " . $e->getMessage();
     }
@@ -89,6 +92,8 @@ if ($total_tasks == 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tasks - HandToGlobal Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/global-theme.css">
+    <script src="../assets/js/theme.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -554,9 +559,21 @@ if ($total_tasks == 0) {
         </div>
         <div class="topbar-right">
             <div class="admin-badge">ADMIN</div>
-            <div class="topbar-icon">
-                <i class="fas fa-moon"></i>
+            <form class="language-form" method="post" action="../language_action.php">
+                <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/tasks.php'); ?>">
+                <input type="hidden" name="context" value="admin">
+                <select name="language" onchange="this.form.submit()">
+                    <?php foreach (['english' => 'English', 'chinese' => 'Chinese'] as $code => $label): ?>
+                        <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($_SESSION['admin_language'] ?? $_SESSION['language'] ?? 'english') === $code ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+            <div class="topbar-icon theme-toggle" id="themeToggle">
+                <i class="fas fa-moon theme-icon" id="themeIcon"></i>
             </div>
+            <a href="../admin_logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
             <div class="profile-info">
                 <div class="profile-avatar">
                     <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
@@ -628,6 +645,7 @@ if ($total_tasks == 0) {
                 <ul class="sidebar-menu">
                     <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
                     <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                    <li><a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </div>
         </div>

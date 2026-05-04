@@ -11,6 +11,8 @@ $adminId = $_SESSION['admin_id'] ?? $_SESSION['admin'] ?? null;
 
 // Get first letter for avatar
 $avatarLetter = strtoupper(substr($adminName, 0, 1));
+$currentLanguage = $_SESSION['admin_language'] ?? $_SESSION['language'] ?? get_setting('admin_locale', 'english');
+$languageOptions = ['english' => 'English', 'chinese' => 'Chinese'];
 
 // Get current page title
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
@@ -30,9 +32,8 @@ if ($currentPage === 'dashboard') {
 }
 ?>
 
-<link rel="stylesheet" href="../assets/vendor/adminlte/css/adminlte.min.css">
 <link rel="stylesheet" href="../assets/css/global-theme.css">
-<link rel="stylesheet" href="../assets/css/adminlte-temporary.css">
+<script src="../assets/js/theme.js" defer></script>
 
 <!-- Admin Topbar -->
 <div class="topbar" id="topbar">
@@ -46,10 +47,28 @@ if ($currentPage === 'dashboard') {
     </div>
     <div class="topbar-right">
         <div class="admin-badge">ADMIN</div>
+
+        <form class="language-form" method="post" action="../language_action.php">
+            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/dashboard.php'); ?>">
+            <input type="hidden" name="context" value="admin">
+            <label class="sr-only" for="adminLanguageSelect">Language</label>
+            <select id="adminLanguageSelect" name="language" onchange="this.form.submit()">
+                <?php foreach ($languageOptions as $code => $label): ?>
+                    <option value="<?php echo htmlspecialchars($code); ?>" <?php echo $currentLanguage === $code ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($label); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
         
         <div class="topbar-icon" id="themeToggle">
             <i class="fas fa-moon" id="themeIcon"></i>
         </div>
+
+        <a href="../admin_logout.php" class="topbar-logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <?php echo get_translation('logout', 'Logout'); ?>
+        </a>
         
         <div class="profile-dropdown">
             <div class="profile-info" id="profileToggle">
@@ -154,9 +173,51 @@ if ($currentPage === 'dashboard') {
     transition: all 0.2s ease;
 }
 
+.language-form select {
+    height: 34px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    padding: 0 10px;
+    background: var(--dropdown-bg, #ffffff);
+    color: var(--text-primary, #1a1a1a);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .topbar-icon:hover {
     background: var(--hover);
     color: var(--text-primary);
+}
+
+.topbar-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background: var(--danger);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.topbar-logout:hover {
+    background: var(--danger-hover, #b91c1c);
+    color: #fff;
 }
 
 .profile-dropdown {
@@ -302,8 +363,6 @@ if ($currentPage === 'dashboard') {
 <script>
 // Admin topbar functionality
 document.addEventListener('DOMContentLoaded', function() {
-    document.body.classList.add('adminlte-preview');
-
     // Profile dropdown
     const profileToggle = document.getElementById('profileToggle');
     const profileDropdown = document.getElementById('profileDropdown');

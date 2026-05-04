@@ -160,6 +160,22 @@ body {
     color: var(--text-muted);
 }
 
+.language-form select {
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 10px;
+    background: var(--dropdown-bg);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.theme-toggle,
+#themeToggle {
+    cursor: pointer;
+}
+
 /* Card Styles */
 .card,
 .card-container,
@@ -170,6 +186,61 @@ body {
     border: 1px solid var(--card-border);
     color: var(--text-primary);
     transition: all 0.3s ease;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .content-area,
+html[data-theme="dark"] .admin-layout,
+html[data-theme="dark"] .dashboard-layout,
+html[data-theme="dark"] .user-layout {
+    background-color: var(--body-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .records-table,
+html[data-theme="dark"] .withdrawals-table,
+html[data-theme="dark"] .table-container,
+html[data-theme="dark"] .filters-section,
+html[data-theme="dark"] .form-section,
+html[data-theme="dark"] .settings-card,
+html[data-theme="dark"] .section-card,
+html[data-theme="dark"] .login-container,
+html[data-theme="dark"] .register-container {
+    background-color: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .top-bar {
+    background-color: var(--topbar-bg) !important;
+    border-color: var(--topbar-border) !important;
+    color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] .sidebar {
+    background-color: var(--sidebar-bg) !important;
+    border-color: var(--sidebar-border) !important;
+}
+
+html[data-theme="dark"] table,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+    background-color: var(--table-bg) !important;
+    border-color: var(--table-border) !important;
+    color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--input-color) !important;
 }
 
 .card-header,

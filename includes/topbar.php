@@ -39,11 +39,14 @@ if ($isAdmin) {
 // Get first letter for avatar
 $avatarLetter = strtoupper(substr($userName, 0, 1));
 $assetPrefix = $isAdmin ? '../' : '';
+$currentLanguage = function_exists('get_current_language') ? get_current_language() : ($_SESSION['language'] ?? 'english');
+$languageOptions = $isAdmin
+    ? ['english' => 'English', 'chinese' => 'Chinese']
+    : ['english' => 'English', 'ukrainian' => 'Ukraine', 'greek' => 'Greek', 'german' => 'German'];
 ?>
 
-<link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/vendor/adminlte/css/adminlte.min.css">
 <link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/global-theme.css">
-<link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/adminlte-temporary.css">
+<script src="<?php echo $assetPrefix; ?>assets/js/theme.js" defer></script>
 
 <!-- Topbar Header -->
 <div class="topbar" id="topbar">
@@ -65,10 +68,28 @@ $assetPrefix = $isAdmin ? '../' : '';
         <?php if ($userBadge): ?>
             <div class="admin-badge"><?php echo $userBadge; ?></div>
         <?php endif; ?>
+
+        <form class="language-form" method="post" action="<?php echo $assetPrefix; ?>language_action.php">
+            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'dashboard.php'); ?>">
+            <input type="hidden" name="context" value="<?php echo $isAdmin ? 'admin' : 'user'; ?>">
+            <label class="sr-only" for="languageSelect">Language</label>
+            <select id="languageSelect" name="language" onchange="this.form.submit()">
+                <?php foreach ($languageOptions as $code => $label): ?>
+                    <option value="<?php echo htmlspecialchars($code); ?>" <?php echo $currentLanguage === $code ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($label); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
         
         <div class="topbar-icon" id="themeToggle">
             <i class="fas fa-moon" id="themeIcon"></i>
         </div>
+
+        <a href="<?php echo $logoutUrl; ?>" class="topbar-logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <?php echo get_translation('logout', 'Logout'); ?>
+        </a>
         
         <div class="profile-dropdown">
             <div class="profile-info" id="profileToggle">
@@ -173,9 +194,51 @@ $assetPrefix = $isAdmin ? '../' : '';
     transition: all 0.2s ease;
 }
 
+.language-form select {
+    height: 34px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    padding: 0 10px;
+    background: var(--surface, #ffffff);
+    color: var(--text, #1a1a1a);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .topbar-icon:hover {
     background: var(--hover-bg, #f3f4f6);
     color: var(--text, #1a1a1a);
+}
+
+.topbar-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background: var(--danger, #dc2626);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.topbar-logout:hover {
+    background: #b91c1c;
+    color: #fff;
 }
 
 .profile-dropdown {
@@ -342,29 +405,27 @@ $assetPrefix = $isAdmin ? '../' : '';
 <script>
 // Topbar functionality
 document.addEventListener('DOMContentLoaded', function() {
-    document.body.classList.add('adminlte-preview');
-
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
     const html = document.documentElement;
     
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    html.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-    
-    themeToggle.addEventListener('click', function() {
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    });
-    
-    function updateThemeIcon(theme) {
-        themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    if (!window.ThemeSystem && themeToggle) {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
     }
     
     // Profile dropdown

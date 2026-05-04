@@ -144,6 +144,12 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                     <?php echo get_translation('languages', 'Languages'); ?>
                 </a>
             </li>
+            <li>
+                <a href="../admin_logout.php" class="sidebar-menu-item">
+                    <i class="fas fa-sign-out-alt"></i> 
+                    <?php echo get_translation('logout', 'Logout'); ?>
+                </a>
+            </li>
         </ul>
     </div>
 </div>

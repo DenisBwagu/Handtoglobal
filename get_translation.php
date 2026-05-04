@@ -30,6 +30,10 @@ if (!function_exists('get_translation')) {
  */
 if (!function_exists('get_current_language')) {
     function get_current_language() {
+    if (isset($_SESSION['admin']) && isset($_SESSION['admin_language'])) {
+        return $_SESSION['admin_language'];
+    }
+
     // Priority: user preference > session > default setting
     if (isLoggedIn() && isset($_SESSION['user_id'])) {
         try {
@@ -125,6 +129,26 @@ if (!function_exists('get_available_languages')) {
         'greek' => 'Greek',
         'ukrainian' => 'Ukrainian'
     ];
+    }
+}
+
+if (!function_exists('get_frontend_languages')) {
+    function get_frontend_languages() {
+        return [
+            'english' => 'English',
+            'ukrainian' => 'Ukraine',
+            'greek' => 'Greek',
+            'german' => 'German'
+        ];
+    }
+}
+
+if (!function_exists('get_backend_languages')) {
+    function get_backend_languages() {
+        return [
+            'english' => 'English',
+            'chinese' => 'Chinese'
+        ];
     }
 }
 

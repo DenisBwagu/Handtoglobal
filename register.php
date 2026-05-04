@@ -3,7 +3,7 @@ require_once 'config.php';
 require_once 'get_setting.php';
 
 // Get Telegram link from settings
-$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
+$supportLink = getSupportLink();
 
 // Redirect if already logged in
 if (isLoggedIn()) {
@@ -61,17 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->exec("ALTER TABLE users ADD COLUMN employee_id INT NULL AFTER invitation_code");
             }
             
-            // Start transaction
-            $conn->beginTransaction();
-            
             // Validate invitation code with LIMIT 1 for speed
-            $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND is_active = 1 LIMIT 1");
+            $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1");
             $stmt->execute([$invitation_code]);
             $invitation = $stmt->fetch();
             
             if (!$invitation) {
                 $error = 'Invalid invitation code';
-            } elseif ($invitation['used_count'] >= $invitation['max_uses']) {
+            } elseif ((int)($invitation['used_count'] ?? 0) >= (int)($invitation['max_uses'] ?? 1)) {
                 $error = 'Invitation code has reached its usage limit';
             } else {
                 // Check if email already exists with LIMIT 1 for speed
@@ -80,31 +77,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($stmt->fetch()) {
                     $error = 'Email already exists';
                 } else {
+                    $conn->beginTransaction();
+
                     // Create user with starting balance from invitation code
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $starting_balance = $invitation['starting_balance'] > 0 ? $invitation['starting_balance'] : 20.00;
+                    $starting_balance = (float)($invitation['starting_balance'] ?? 0);
+                    if ($starting_balance <= 0 && isset($invitation['reward'])) {
+                        $starting_balance = (float)$invitation['reward'];
+                    }
                     
-                    $stmt = $conn->prepare("INSERT INTO users (fullname, email, password, balance, level, is_active, invitation_code, employee_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                    $stmt->execute([$fullname, $email, $hashed_password, $starting_balance, 'Bronze', 1, $invitation_code, $invitation['employee_id']]);
+                    $stmt = $conn->prepare("
+                        INSERT INTO users
+                            (fullname, email, password, balance, level, is_active, is_blocked, status, invitation_code, invitation_code_used, employee_id, created_at)
+                        VALUES
+                            (?, ?, ?, ?, 'Bronze', 1, 0, 'active', ?, ?, ?, NOW())
+                    ");
+                    $stmt->execute([$fullname, $email, $hashed_password, $starting_balance, $invitation_code, $invitation_code, $invitation['employee_id'] ?? null]);
                     $user_id = $conn->lastInsertId();
+
+                    $stmt = $conn->prepare("
+                        INSERT INTO user_levels (user_id, level, is_unlocked, completed_count, unlocked_at, updated_at)
+                        VALUES (?, 'Bronze', 1, 0, NOW(), NOW())
+                        ON DUPLICATE KEY UPDATE is_unlocked = 1, unlocked_at = COALESCE(unlocked_at, NOW()), updated_at = NOW()
+                    ");
+                    $stmt->execute([$user_id]);
                     
                     // Update invitation code usage
-                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = used_count + 1 WHERE code = ?");
+                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = COALESCE(used_count, 0) + 1, uses_remaining = GREATEST(COALESCE(uses_remaining, 1) - 1, 0) WHERE code = ?");
                     $stmt->execute([$invitation_code]);
                     
                     // Record finance activity if starting balance > 0
                     if ($starting_balance > 0) {
-                        $stmt = $conn->prepare("INSERT INTO finance_activities (user_id, type, category, amount, reason, balance_after, source_table, source_id) VALUES (?, 'registration_bonus', 'Initial Balance', ?, 'Registration bonus with invitation code', ?, 'users', ?)");
-                        $stmt->execute([$user_id, $starting_balance, $starting_balance, $user_id]);
+                        try {
+                            $stmt = $conn->prepare("INSERT INTO finance_activities (user_id, type, category, amount, reason, balance_after, source_table, source_id) VALUES (?, 'invitation_credit', 'Initial Balance', ?, 'Registration bonus with invitation code', ?, 'users', ?)");
+                            $stmt->execute([$user_id, $starting_balance, $starting_balance, $user_id]);
+                        } catch (Throwable $activityError) {
+                            // Finance logging should not block account creation.
+                        }
                     }
                     
                     $conn->commit();
-                    $success = 'Registration successful! You can now login with your credentials.';
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['user_fullname'] = $fullname;
+                    redirect('dashboard.php');
                 }
             }
-        } catch(PDOException $e) {
-            $conn->rollback();
-            $error = 'Registration failed. Please try again.';
+        } catch(Throwable $e) {
+            if (isset($conn) && $conn instanceof PDO && $conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            error_log('Registration failed: ' . $e->getMessage());
+            $error = 'Registration failed. Please check your details and try again.';
         }
     }
 }
@@ -115,10 +140,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
+    <link rel="stylesheet" href="assets/css/global-theme.css">
+    <script src="assets/js/theme.js" defer></script>
     <style>
         body {
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f4f6f9;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -129,8 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .register-container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
             padding: 40px;
             width: 100%;
             max-width: 420px;
@@ -144,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .logo i {
             font-size: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0d6efd;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
@@ -199,8 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background: #0b5ed7;
+            box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
         }
         
         .alert {
