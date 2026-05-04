@@ -278,6 +278,15 @@ try {
             background: #c82333;
         }
         
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
         .btn-sm {
             padding: 6px 12px;
             font-size: 12px;
@@ -457,11 +466,11 @@ try {
                     <a href="users.php"><i class="fas fa-users"></i> Users</a>
                     <a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a>
                     <a href="combos.php"><i class="fas fa-layer-group"></i> Combos</a>
-                    <a href="invitation_codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
-                    <a href="finance_analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
+                    <a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
+                    <a href="finance-analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
                     <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
                     <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>

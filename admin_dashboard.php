@@ -169,7 +169,7 @@ if (empty($_SESSION['admin'])) { header("Location: admin_login.php"); exit(); }
       <a href="#">Dashboard</a>
       <a href="admin_deposits.php">Deposits</a>
       <a href="admin_withdrawals.php">Withdrawals</a>
-      <a href="admin_logout.php">Logout</a>
+      <a href="/handtoglobal/admin/logout.php">Logout</a>
     </div>
   </aside>
 
@@ -203,7 +203,7 @@ if (empty($_SESSION['admin'])) { header("Location: admin_login.php"); exit(); }
       <a class="btn" href="admin_deposits.php">Approve Deposits</a>
       <a class="btn" href="admin_withdrawals.php">Approve Withdrawals</a>
       <a href="admin_users.php">Manage Users</a>
-      <a class="btn" href="admin_logout.php">Logout</a>
+      <a class="btn" href="/handtoglobal/admin/logout.php">Logout</a>
     </div>
 
   </main>

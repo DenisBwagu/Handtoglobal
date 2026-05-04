@@ -562,7 +562,7 @@ if (isset($_GET['edit_balance'])) {
                     <a href="testimonials.php"><i class="fas fa-quote-left"></i> Testimonials</a>
                     <a href="settings.php"><i class="fas fa-cog"></i> Settings</a>
                     <a href="languages.php"><i class="fas fa-language"></i> Languages</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>
@@ -837,3 +837,4 @@ if (isset($_GET['edit_balance'])) {
     </script>
 </body>
 </html>
+

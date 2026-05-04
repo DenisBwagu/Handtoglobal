@@ -106,40 +106,27 @@ if (!function_exists('getAppLevelNames')) {
     }
 }
 
-if (!function_exists('getConnection')) {
+if (!function_exists('getConnection')) 
+    if (!function_exists('getConnection')) {
     function getConnection() {
-        static $pdo = null;
+        static $conn = null;
 
-        if ($pdo instanceof PDO) {
-            return $pdo;
+        if ($conn !== null) {
+            return $conn;
         }
 
-        $configs = [
-            ['host' => 'localhost', 'port' => 3307, 'pass' => ''],
-            ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
-            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => ''],
-            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
-            ['host' => 'localhost', 'port' => 3307, 'pass' => 'root'],
-            ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
-            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => 'root'],
-            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => 'root'],
-        ];
-
-        foreach ($configs as $config) {
-            try {
-                $dsn = "mysql:host={$config['host']};port={$config['port']};dbname=" . DB_NAME . ";charset=utf8mb4";
-                $pdo = new PDO($dsn, DB_USER, $config['pass'], [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]);
-                return $pdo;
-            } catch (PDOException $e) {
-                continue;
-            }
+        try {
+            $conn = new PDO(
+                "mysql:host=127.0.0.1;port=3306;dbname=handtoglobal;charset=utf8mb4",
+                "root",
+                ""
+            );
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            return $conn;
+        } catch (PDOException $e) {
+            die("Database connection failed: " . $e->getMessage());
         }
-
-        die("Database connection failed. Please check XAMPP MySQL and config.php.");
     }
 }
     
@@ -161,7 +148,7 @@ function isLoggedIn() {
 }
 
 function isAdminLoggedIn() {
-    return isset($_SESSION['admin_id']) && ($_SESSION['role'] ?? '') === 'admin';
+    return isset($_SESSION['admin_id']) || isset($_SESSION['admin_logged_in']);
 }
 
 function requireLogin() {

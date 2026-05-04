@@ -465,7 +465,7 @@ try {
                     <a href="finance_analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
                     <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
                     <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>

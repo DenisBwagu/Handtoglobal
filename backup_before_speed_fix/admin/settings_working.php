@@ -12,6 +12,22 @@ $conn = getConnection();
 $msg = "";
 $error = "";
 
+// Create settings table if it doesn't exist
+try {
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            setting_key VARCHAR(255) NOT NULL UNIQUE,
+            setting_value TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    ");
+} catch(PDOException $e) {
+    // Table creation failed, continue without it
+    $error = "Database error: " . $e->getMessage();
+}
+
 // Handle settings update
 if (isset($_POST['update_settings'])) {
     try {
@@ -26,8 +42,19 @@ if (isset($_POST['update_settings'])) {
         ];
         
         foreach ($general_settings as $key => $value) {
-            $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-            $stmt->execute([$key, $value, $value]);
+            // Check if setting exists
+            $stmt = $conn->prepare("SELECT id FROM settings WHERE setting_key = ?");
+            $stmt->execute([$key]);
+            
+            if ($stmt->fetch()) {
+                // Update existing setting
+                $stmt = $conn->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+                $stmt->execute([$value, $key]);
+            } else {
+                // Insert new setting
+                $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+                $stmt->execute([$key, $value]);
+            }
         }
         
         // Update financial settings
@@ -47,8 +74,19 @@ if (isset($_POST['update_settings'])) {
         ];
         
         foreach ($financial_settings as $key => $value) {
-            $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-            $stmt->execute([$key, $value, $value]);
+            // Check if setting exists
+            $stmt = $conn->prepare("SELECT id FROM settings WHERE setting_key = ?");
+            $stmt->execute([$key]);
+            
+            if ($stmt->fetch()) {
+                // Update existing setting
+                $stmt = $conn->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+                $stmt->execute([$value, $key]);
+            } else {
+                // Insert new setting
+                $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+                $stmt->execute([$key, $value]);
+            }
         }
         
         // Update system settings
@@ -66,8 +104,19 @@ if (isset($_POST['update_settings'])) {
         ];
         
         foreach ($system_settings as $key => $value) {
-            $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-            $stmt->execute([$key, $value, $value]);
+            // Check if setting exists
+            $stmt = $conn->prepare("SELECT id FROM settings WHERE setting_key = ?");
+            $stmt->execute([$key]);
+            
+            if ($stmt->fetch()) {
+                // Update existing setting
+                $stmt = $conn->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+                $stmt->execute([$value, $key]);
+            } else {
+                // Insert new setting
+                $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+                $stmt->execute([$key, $value]);
+            }
         }
         
         $msg = "Settings updated successfully!";
@@ -230,6 +279,11 @@ function getSetting($key, $default = '') {
             background: #5a6268;
         }
         
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
@@ -281,12 +335,6 @@ function getSetting($key, $default = '') {
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
-        }
-        
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
         }
         
         .tabs {
@@ -382,14 +430,15 @@ function getSetting($key, $default = '') {
                     <a href="users.php"><i class="fas fa-users"></i> Users</a>
                     <a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a>
                     <a href="combos.php"><i class="fas fa-layer-group"></i> Combos</a>
-                    <a href="invitation_codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
-                    <a href="finance_analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
+                    <a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
+                    <a href="finance-analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
                     <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
                     <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
                     <a href="contacts.php"><i class="fas fa-envelope"></i> Contacts</a>
                     <a href="testimonials.php"><i class="fas fa-quote-left"></i> Testimonials</a>
                     <a href="settings.php"><i class="fas fa-cog"></i> Settings</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="languages.php"><i class="fas fa-language"></i> Languages</a>
+                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>

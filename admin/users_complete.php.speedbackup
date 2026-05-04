@@ -9,6 +9,25 @@ if (!isAdminLoggedIn()) {
 // Get database connection
 $conn = getConnection();
 
+// Create balance_logs table if it doesn't exist
+try {
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS balance_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            admin_id INT,
+            amount DECIMAL(10,2) NOT NULL,
+            action_type ENUM('add', 'subtract', 'withdrawal', 'deposit', 'task_reward') NOT NULL,
+            reason VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (admin_id) REFERENCES admins(id)
+        )
+    ");
+} catch(PDOException $e) {
+    // Table creation failed, continue without it
+}
+
 $msg = "";
 $error = "";
 
@@ -27,6 +46,12 @@ if (isset($_GET['delete'])) {
 if (isset($_GET['toggle_status'])) {
     $id = (int)$_GET['toggle_status'];
     try {
+        // Check if is_active column exists, if not add it
+        $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+        if ($check_column->rowCount() == 0) {
+            $conn->exec("ALTER TABLE users ADD COLUMN is_active TINYINT(1) DEFAULT 1");
+        }
+        
         $stmt = $conn->prepare("UPDATE users SET is_active = NOT is_active WHERE id=?");
         $stmt->execute([$id]);
         $msg = "User status updated successfully!";
@@ -60,8 +85,12 @@ if (isset($_POST['update_balance'])) {
             
             // Log balance change
             if ($msg) {
-                $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$user_id, $_SESSION['admin'], $amount, $action, 'Admin manual adjustment']);
+                try {
+                    $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$user_id, $_SESSION['admin'], $amount, $action, 'Admin manual adjustment']);
+                } catch(PDOException $e) {
+                    // Log table doesn't exist, continue without logging
+                }
             }
         } catch(PDOException $e) {
             $error = "Failed to update balance: " . $e->getMessage();
@@ -86,8 +115,12 @@ if (!empty($search)) {
 }
 
 if ($status_filter !== 'all') {
-    $whereClause .= " AND u.is_active = ?";
-    $params[] = $status_filter === 'active' ? '1' : '0';
+    // Check if is_active column exists
+    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+    if ($check_column->rowCount() > 0) {
+        $whereClause .= " AND u.is_active = ?";
+        $params[] = $status_filter === 'active' ? '1' : '0';
+    }
 }
 
 // Get total users count
@@ -115,13 +148,20 @@ try {
     $stmt->execute();
     $stats['total'] = $stmt->fetch()['total'];
     
-    $stmt = $conn->prepare("SELECT COUNT(*) as active FROM users WHERE is_active = 1");
-    $stmt->execute();
-    $stats['active'] = $stmt->fetch()['active'];
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as inactive FROM users WHERE is_active = 0");
-    $stmt->execute();
-    $stats['inactive'] = $stmt->fetch()['inactive'];
+    // Check if is_active column exists
+    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+    if ($check_column->rowCount() > 0) {
+        $stmt = $conn->prepare("SELECT COUNT(*) as active FROM users WHERE is_active = 1");
+        $stmt->execute();
+        $stats['active'] = $stmt->fetch()['active'];
+        
+        $stmt = $conn->prepare("SELECT COUNT(*) as inactive FROM users WHERE is_active = 0");
+        $stmt->execute();
+        $stats['inactive'] = $stmt->fetch()['inactive'];
+    } else {
+        $stats['active'] = $stats['total'];
+        $stats['inactive'] = 0;
+    }
     
     $stmt = $conn->prepare("SELECT SUM(balance) as total_balance FROM users");
     $stmt->execute();
@@ -522,7 +562,7 @@ if (isset($_GET['edit_balance'])) {
                     <a href="testimonials.php"><i class="fas fa-quote-left"></i> Testimonials</a>
                     <a href="settings.php"><i class="fas fa-cog"></i> Settings</a>
                     <a href="languages.php"><i class="fas fa-language"></i> Languages</a>
-                    <a href="../admin_logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>
@@ -636,9 +676,18 @@ if (isset($_GET['edit_balance'])) {
                             </td>
                             <td><?php echo $user['tasks_completed']; ?></td>
                             <td>
-                                <span class="badge badge-<?php echo $user['is_active'] ? 'active' : 'inactive'; ?>">
-                                    <?php echo $user['is_active'] ? 'Active' : 'Inactive'; ?>
-                                </span>
+                                <?php 
+                                // Check if is_active column exists
+                                $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+                                if ($check_column->rowCount() > 0) {
+                                    $is_active = $user['is_active'] ?? 1;
+                                ?>
+                                    <span class="badge badge-<?php echo $is_active ? 'active' : 'inactive'; ?>">
+                                        <?php echo $is_active ? 'Active' : 'Inactive'; ?>
+                                    </span>
+                                <?php } else { ?>
+                                    <span class="badge badge-active">Active</span>
+                                <?php } ?>
                             </td>
                             <td><?php echo date('M j, Y', strtotime($user['created_at'])); ?></td>
                             <td>
@@ -648,11 +697,17 @@ if (isset($_GET['edit_balance'])) {
                                        onclick="showBalanceModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['fullname']); ?>', <?php echo $user['balance']; ?>); return false;">
                                         <i class="fas fa-dollar-sign"></i> Balance
                                     </a>
-                                    <a href="users.php?toggle_status=<?php echo $user['id']; ?>" 
-                                       class="btn btn-secondary btn-sm" 
-                                       onclick="return confirm('Are you sure you want to <?php echo $user['is_active'] ? 'deactivate' : 'activate'; ?> this user?')">
-                                        <i class="fas fa-<?php echo $user['is_active'] ? 'pause' : 'play'; ?>"></i>
-                                    </a>
+                                    <?php 
+                                    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'is_active'");
+                                    if ($check_column->rowCount() > 0) {
+                                        $is_active = $user['is_active'] ?? 1;
+                                    ?>
+                                        <a href="users.php?toggle_status=<?php echo $user['id']; ?>" 
+                                           class="btn btn-secondary btn-sm" 
+                                           onclick="return confirm('Are you sure you want to <?php echo $is_active ? 'deactivate' : 'activate'; ?> this user?')">
+                                            <i class="fas fa-<?php echo $is_active ? 'pause' : 'play'; ?>"></i>
+                                        </a>
+                                    <?php } ?>
                                     <a href="users.php?delete=<?php echo $user['id']; ?>" 
                                        class="btn btn-danger btn-sm" 
                                        onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
