@@ -105,19 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
     
     switch ($action) {
         case 'login_as':
-            // Store admin session temporarily
-            $_SESSION['admin_temp_id'] = $adminId;
-            $_SESSION['admin_temp_email'] = $_SESSION['admin_email'];
-            $_SESSION['admin_temp_name'] = $_SESSION['admin_name'] ?? 'Admin';
-            
-            // Store the current user ID for return to admin functionality
-            $_SESSION['last_viewed_user_id'] = $user['id'];
-            
-            // Set user session
-            $_SESSION['user_id'] = $user['id'];
-            unset($_SESSION['admin_id'], $_SESSION['admin_email'], $_SESSION['admin_name']);
-            
-            redirect('../dashboard.php');
+            // Redirect to the direct user dashboard handler
+            redirect('direct_user_dashboard.php?user_id=' . $user['id']);
             exit;
             
         case 'reset_password':

@@ -152,6 +152,11 @@ function isAdminLoggedIn() {
 }
 
 function requireLogin() {
+    // Allow bypass if impersonating
+    if (!empty($_SESSION['bypass_login']) && !empty($_SESSION['is_impersonating'])) {
+        return; // Skip login check for admin impersonation
+    }
+    
     if (!isLoggedIn()) {
         redirect('login.php');
     }

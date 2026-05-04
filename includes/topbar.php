@@ -50,7 +50,17 @@ $languageOptions = $isAdmin
 
 <!-- Topbar Header -->
 <div class="topbar" id="topbar">
-    <div class="topbar-left">
+    <?php if (!empty($_SESSION['is_impersonating'])): ?>
+        <div style="background:#ff9800; color:#fff; padding:8px; text-align:center; width:100%; position:absolute; top:0; left:0; right:0; z-index:1001;">
+            You are viewing as user
+            <a href="/handtoglobal/admin/return_to_admin.php" style="color:#fff; font-weight:bold; margin-left:10px; text-decoration:none;">
+                Return to Admin
+            </a>
+        </div>
+        <div class="topbar-left" style="margin-top:32px;">
+    <?php else: ?>
+        <div class="topbar-left">
+    <?php endif; ?>
         <div class="menu-icon" id="menuToggle">
             <i class="fas fa-bars"></i>
         </div>
