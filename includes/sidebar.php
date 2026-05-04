@@ -37,6 +37,8 @@ if ($userId) {
 // Get site logo and name
 $siteLogo = get_setting('site_logo');
 $siteName = get_setting('site_name', 'HandToGlobal');
+$supportLink = getSupportLink();
+$levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
 ?>
 
 <!-- User Sidebar -->
@@ -55,7 +57,7 @@ $siteName = get_setting('site_name', 'HandToGlobal');
         <div class="balance-label"><?php echo get_translation('current_balance', 'Current Balance'); ?></div>
         <div class="balance-amount">$<?php echo number_format($userBalance, 2); ?></div>
         <div class="user-level">
-            <span class="level-badge level-<?php echo strtolower($userLevel); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
+            <span class="level-badge level-<?php echo htmlspecialchars($levelClass); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
         </div>
     </div>
     
@@ -70,15 +72,9 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 </a>
             </li>
             <li>
-                <a href="tasks.php" class="sidebar-menu-item <?php echo isUserMenuActive('tasks', $currentPage) ? 'active' : ''; ?>">
-                    <i class="fas fa-tasks"></i> 
-                    <?php echo get_translation('tasks', 'Tasks'); ?>
-                </a>
-            </li>
-            <li>
-                <a href="combos.php" class="sidebar-menu-item <?php echo isUserMenuActive('combos', $currentPage) ? 'active' : ''; ?>">
-                    <i class="fas fa-link"></i> 
-                    <?php echo get_translation('combos', 'Combos'); ?>
+                <a href="task_history.php" class="sidebar-menu-item <?php echo (isUserMenuActive('task_history', $currentPage) || isUserMenuActive('records', $currentPage)) ? 'active' : ''; ?>">
+                    <i class="fas fa-history"></i> 
+                    <?php echo get_translation('task_history', 'Task History'); ?>
                 </a>
             </li>
         </ul>
@@ -95,21 +91,15 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 </a>
             </li>
             <li>
-                <a href="deposits.php" class="sidebar-menu-item <?php echo isUserMenuActive('deposits', $currentPage) ? 'active' : ''; ?>">
-                    <i class="fas fa-arrow-down"></i> 
-                    <?php echo get_translation('deposits', 'Deposits'); ?>
-                </a>
-            </li>
-            <li>
                 <a href="profile.php" class="sidebar-menu-item <?php echo isUserMenuActive('profile', $currentPage) ? 'active' : ''; ?>">
                     <i class="fas fa-user"></i> 
                     <?php echo get_translation('profile', 'Profile'); ?>
                 </a>
             </li>
             <li>
-                <a href="history.php" class="sidebar-menu-item <?php echo isUserMenuActive('history', $currentPage) ? 'active' : ''; ?>">
-                    <i class="fas fa-history"></i> 
-                    <?php echo get_translation('history', 'History'); ?>
+                <a href="logout.php" class="sidebar-menu-item">
+                    <i class="fas fa-sign-out-alt"></i> 
+                    <?php echo get_translation('logout', 'Logout'); ?>
                 </a>
             </li>
         </ul>
@@ -120,15 +110,9 @@ $siteName = get_setting('site_name', 'HandToGlobal');
         <div class="sidebar-section-title"><?php echo get_translation('support', 'SUPPORT'); ?></div>
         <ul class="sidebar-menu">
             <li>
-                <a href="#" class="sidebar-menu-item" onclick="window.open('<?php echo get_setting('telegram_link', '#'); ?>', '_blank')">
+                <a href="<?php echo htmlspecialchars($supportLink); ?>" class="sidebar-menu-item" target="_blank" rel="noopener">
                     <i class="fas fa-headset"></i> 
                     <?php echo get_translation('support', 'Support'); ?>
-                </a>
-            </li>
-            <li>
-                <a href="help.php" class="sidebar-menu-item <?php echo isUserMenuActive('help', $currentPage) ? 'active' : ''; ?>">
-                    <i class="fas fa-question-circle"></i> 
-                    <?php echo get_translation('help', 'Help'); ?>
                 </a>
             </li>
         </ul>

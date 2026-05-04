@@ -1,0 +1,48 @@
+/*
+ * Temporary AdminLTE bridge.
+ * Keep this small so the project can preview the supplied AdminLTE package
+ * without rewriting the existing dashboard/admin screens.
+ */
+:root {
+    --adminlte-primary: #0d6efd;
+    --adminlte-sidebar: #212529;
+    --adminlte-body: #f4f6f9;
+}
+
+body.adminlte-preview,
+.adminlte-preview body {
+    background: var(--adminlte-body);
+}
+
+.adminlte-preview .topbar {
+    min-height: 57px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+
+.adminlte-preview .sidebar {
+    background: var(--adminlte-sidebar);
+    color: #c2c7d0;
+}
+
+.adminlte-preview .sidebar-header,
+.adminlte-preview .sidebar-section-title,
+.adminlte-preview .sidebar-menu-item {
+    color: #c2c7d0;
+}
+
+.adminlte-preview .sidebar-menu-item:hover,
+.adminlte-preview .sidebar-menu-item.active {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    border-left-color: var(--adminlte-primary);
+}
+
+.adminlte-preview .user-balance-card {
+    background: rgba(255, 255, 255, .06);
+    border-color: rgba(255, 255, 255, .12);
+}
+
+.adminlte-preview .main-content,
+.adminlte-preview .content-area {
+    background: var(--adminlte-body);
+}

@@ -7,7 +7,7 @@
 // Get admin data from session
 $adminName = $_SESSION['admin_name'] ?? 'Admin';
 $adminEmail = $_SESSION['admin_email'] ?? 'admin@handtoglobal.com';
-$adminId = $_SESSION['admin_id'] ?? null;
+$adminId = $_SESSION['admin_id'] ?? $_SESSION['admin'] ?? null;
 
 // Get first letter for avatar
 $avatarLetter = strtoupper(substr($adminName, 0, 1));
@@ -29,6 +29,10 @@ if ($currentPage === 'dashboard') {
     $pageTitle = get_translation('withdrawals_management', 'Withdrawals Management');
 }
 ?>
+
+<link rel="stylesheet" href="../assets/vendor/adminlte/css/adminlte.min.css">
+<link rel="stylesheet" href="../assets/css/global-theme.css">
+<link rel="stylesheet" href="../assets/css/adminlte-temporary.css">
 
 <!-- Admin Topbar -->
 <div class="topbar" id="topbar">
@@ -298,6 +302,8 @@ if ($currentPage === 'dashboard') {
 <script>
 // Admin topbar functionality
 document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('adminlte-preview');
+
     // Profile dropdown
     const profileToggle = document.getElementById('profileToggle');
     const profileDropdown = document.getElementById('profileDropdown');

@@ -33,12 +33,17 @@ if ($isAdmin) {
         $userEmail = 'user@handtoglobal.com';
     }
     $userBadge = '';
-    $logoutUrl = 'login.php';
+    $logoutUrl = 'logout.php';
 }
 
 // Get first letter for avatar
 $avatarLetter = strtoupper(substr($userName, 0, 1));
+$assetPrefix = $isAdmin ? '../' : '';
 ?>
+
+<link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/vendor/adminlte/css/adminlte.min.css">
+<link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/global-theme.css">
+<link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/adminlte-temporary.css">
 
 <!-- Topbar Header -->
 <div class="topbar" id="topbar">
@@ -87,6 +92,10 @@ $avatarLetter = strtoupper(substr($userName, 0, 1));
                     </div>
                 </div>
                 <div class="dropdown-divider"></div>
+                <a href="profile.php" class="dropdown-item">
+                    <i class="fas fa-user"></i>
+                    <?php echo get_translation('profile', 'Profile'); ?>
+                </a>
                 <a href="<?php echo $logoutUrl; ?>" class="dropdown-item logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <?php echo get_translation('logout', 'Logout'); ?>
@@ -333,6 +342,8 @@ $avatarLetter = strtoupper(substr($userName, 0, 1));
 <script>
 // Topbar functionality
 document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('adminlte-preview');
+
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
