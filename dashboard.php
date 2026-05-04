@@ -3,7 +3,7 @@ require_once 'config.php';
 require_once 'get_setting.php';
 
 // Get Telegram link from settings
-$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
+$supportLink = getSupportLink();
 require_once 'get_translation.php';
 
 requireLogin();
@@ -20,7 +20,8 @@ $user = $stmt->fetch();
 $stats = [];
 try {
     // Determine current level based on completion
-    $levels = ['Bronze', 'Silver', 'Gold', 'VIP'];
+    $levelRecords = getAppLevels();
+    $levels = array_column($levelRecords, 'name');
     
     // Get user's stored level or calculate it
     $current_level = $user['level'] ?? 'Bronze';
@@ -111,7 +112,7 @@ try {
 // Get tasks for current level
 $tasks = [];
 try {
-    $stmt = $conn->prepare("SELECT * FROM tasks WHERE level = ? AND status = 'active' ORDER BY id LIMIT 40");
+    $stmt = $conn->prepare("SELECT * FROM tasks WHERE level = ? AND active = 1 ORDER BY id LIMIT 40");
     $stmt->execute([$user['level']]);
     $tasks = $stmt->fetchAll();
 } catch(PDOException $e) {
@@ -130,7 +131,8 @@ try {
 }
 
 // Get available levels with unlock status from database
-$levels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
+$levelRecords = getAppLevels();
+$levels = array_column($levelRecords, 'name');
 $unlocked_levels = [];
 foreach ($levels as $level) {
     $unlocked_levels[$level] = isLevelUnlockedForUser($_SESSION['user_id'], $level);
@@ -779,7 +781,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             ?>%"></div>
                         </div>
                         <div style="text-align: right;">
-                            <a href="#" class="level-link" onclick="openTaskModal('<?php echo htmlspecialchars($stats['current_level']); ?>')">Start Tasks →</a>
+                            <a href="#" class="level-link" onclick="handleLevelClick('<?php echo htmlspecialchars($stats['current_level']); ?>', 'current')">Start Tasks →</a>
                         </div>
                     </div>
                 </div>
@@ -830,7 +832,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="openTaskModal('<?php echo htmlspecialchars($user['level']); ?>')">
+                    <button class="btn btn-primary" onclick="handleLevelClick('<?php echo htmlspecialchars($stats['current_level']); ?>', 'current')">
                         <i class="fas fa-play"></i> Start Tasks
                     </button>
                     <a href="withdrawals.php" class="btn btn-secondary">
@@ -849,7 +851,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <div class="levels-grid">
                         <?php foreach ($levels as $level): ?>
                             <?php 
-                            $is_current = $user['level'] === $level;
+                            $is_current = normalizeLevelName($stats['current_level']) === normalizeLevelName($level);
                             $is_unlocked = $unlocked_levels[$level] || $is_current;
                             $level_status = $is_current ? 'current' : ($is_unlocked ? 'progress' : 'locked');
                             $level_data = $stats['levels'][$level] ?? ['completed' => 0, 'total' => 40, 'available' => 40, 'progress' => 0];
@@ -1301,27 +1303,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 });
             }
         }
-        
-        // Prevent page from reverting to old data on refresh
-        window.addEventListener('beforeunload', function() {
-            if (window.latestDashboardData) {
-                sessionStorage.setItem('dashboardData', JSON.stringify(window.latestDashboardData));
-            }
-        });
-        
-        // Restore latest data on page load
-        window.addEventListener('load', function() {
-            const savedData = sessionStorage.getItem('dashboardData');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    // Apply saved updates to current page data
-                    updateDashboardStats(data);
-                } catch (e) {
-                    console.log('Could not restore dashboard data:', e);
-                }
-            }
-        });
         
         // Handle support button click
         document.addEventListener('click', function(e) {

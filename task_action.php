@@ -17,12 +17,18 @@ if (empty($task_id) || empty($answer) || empty($level)) {
     echo json_encode(['error' => 'Missing required data']);
     exit;
 }
+$level = normalizeLevelName($level);
 
 // Get database connection
 $conn = getConnection();
 $user_id = $_SESSION['user_id'];
 
 try {
+    if (!isLevelUnlockedForUser($user_id, $level)) {
+        echo json_encode(['error' => 'This level is locked. Please contact support to unlock it.']);
+        exit;
+    }
+
     // Check if task was already completed by this user
     $stmt = $conn->prepare("SELECT id FROM completed_tasks WHERE user_id = ? AND task_id = ?");
     $stmt->execute([$user_id, $task_id]);
@@ -40,15 +46,21 @@ try {
         echo json_encode(['error' => 'Task not found']);
         exit;
     }
+
+    $taskLevel = normalizeLevelName($task['level'] ?? $level);
+    if ($taskLevel !== $level) {
+        echo json_encode(['error' => 'Task does not belong to the selected level']);
+        exit;
+    }
     
     // Get reward amount (default to level reward or task reward)
     $reward = $task['reward'] ?? 0;
     if (empty($reward)) {
         $level_rewards = [
             'Bronze' => 0.10,
-            'Silver' => 0.20,
+            'Sliver' => 0.20,
             'Gold' => 0.30,
-            'VIP' => 0.50
+            'VIP 1' => 0.50
         ];
         $reward = $level_rewards[$level] ?? 0.10;
     }
@@ -87,7 +99,7 @@ try {
     $stats = [];
     
     // Get current level based on completion
-    $levels = ['Bronze', 'Silver', 'Gold', 'VIP'];
+    $levels = getAppLevelNames();
     $current_level = $level;
     
     foreach ($levels as $lvl) {
@@ -139,6 +151,7 @@ try {
         'today_completed' => $today_completed,
         'daily_limit' => $daily_limit,
         'progress_percent' => round($stats[$current_level]['progress'], 1),
+        'all_levels' => $stats,
         'live_activity_message' => "You submitted {$task_title}. Reward added: \${reward}. Current level progress: {$stats[$current_level]['completed']}/{$stats[$current_level]['total']}"
     ]);
     

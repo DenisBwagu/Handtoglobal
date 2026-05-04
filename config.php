@@ -22,6 +22,76 @@ if (!defined('DB_PASS')) define('DB_PASS', '');
 if (!defined('TELEGRAM_SUPPORT')) define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
 if (!defined('DAILY_TASK_LIMIT')) define('DAILY_TASK_LIMIT', 40);
 
+if (!function_exists('normalizeLevelName')) {
+    function normalizeLevelName($level) {
+        $value = trim((string)$level);
+        $lower = strtolower($value);
+
+        if ($lower === 'silver' || $lower === 'sliver') {
+            return 'Sliver';
+        }
+
+        if ($lower === 'vip' || $lower === 'vip / platinum' || $lower === 'platinum') {
+            return 'VIP 1';
+        }
+
+        if ($lower === 'vip 1') {
+            return 'VIP 1';
+        }
+
+        if ($lower === 'bronze') {
+            return 'Bronze';
+        }
+
+        if ($lower === 'gold') {
+            return 'Gold';
+        }
+
+        return $value;
+    }
+}
+
+if (!function_exists('getAppLevels')) {
+    function getAppLevels() {
+        try {
+            $conn = getConnection();
+            $stmt = $conn->query("
+                SELECT id, name, sort_order, task_reward, reward, tasks, daily_task_limit, deposit_amount, task_type, icon
+                FROM levels
+                WHERE COALESCE(is_active, active, 1) = 1
+                ORDER BY sort_order ASC, id ASC
+            ");
+            $levels = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($levels) {
+                return array_map(function ($level) {
+                    $level['name'] = normalizeLevelName($level['name']);
+                    $level['number_of_tasks'] = (int)($level['tasks'] ?? 40);
+                    $level['task_reward'] = (float)($level['task_reward'] ?: ($level['reward'] ?? 0));
+                    return $level;
+                }, $levels);
+            }
+        } catch (Throwable $e) {
+            // Fall through to defaults.
+        }
+
+        return [
+            ['id' => null, 'name' => 'Bronze', 'sort_order' => 1, 'task_reward' => 1.20, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
+            ['id' => null, 'name' => 'Sliver', 'sort_order' => 2, 'task_reward' => 1.50, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
+            ['id' => null, 'name' => 'Gold', 'sort_order' => 3, 'task_reward' => 2.50, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
+            ['id' => null, 'name' => 'VIP 1', 'sort_order' => 4, 'task_reward' => 4.00, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
+        ];
+    }
+}
+
+if (!function_exists('getAppLevelNames')) {
+    function getAppLevelNames() {
+        return array_values(array_map(function ($level) {
+            return $level['name'];
+        }, getAppLevels()));
+    }
+}
+
 if (!function_exists('getConnection')) {
     function getConnection() {
         $configs = [
@@ -641,6 +711,7 @@ function formatBalance($amount) {
 
 function getLevelProgress($userId, $level) {
     $conn = getConnection();
+    $level = normalizeLevelName($level);
     $stmt = $conn->prepare("SELECT COUNT(*) as completed FROM completed_tasks WHERE user_id = ? AND level = ?");
     $stmt->execute([$userId, $level]);
     $result = $stmt->fetch();
@@ -650,15 +721,15 @@ function getLevelProgress($userId, $level) {
 function canAccessLevel($userId, $level) {
     $user = getUserById($userId);
     $conn = getConnection();
+    $level = normalizeLevelName($level);
     
     // Check if level is unlocked
-    $unlockField = strtolower($level) . '_unlocked';
-    if ($user[$unlockField] != 1) {
+    if (!isLevelUnlockedForUser($userId, $level)) {
         return false;
     }
     
     // Check if previous level is completed
-    $levels = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    $levels = getAppLevelNames();
     $currentIndex = array_search($level, $levels);
     
     if ($currentIndex > 0) {
@@ -674,10 +745,11 @@ function canAccessLevel($userId, $level) {
 
 function getNextUncompletedTask($userId, $level) {
     $conn = getConnection();
+    $level = normalizeLevelName($level);
     
     $stmt = $conn->prepare("SELECT t.* FROM tasks t 
                            LEFT JOIN completed_tasks ct ON t.id = ct.task_id AND ct.user_id = ?
-                           WHERE t.level = ? AND ct.id IS NULL 
+                           WHERE t.level = ? AND t.active = 1 AND ct.id IS NULL 
                            ORDER BY t.id LIMIT 1");
     $stmt->execute([$userId, $level]);
     return $stmt->fetch();
@@ -719,9 +791,9 @@ function getUserStats($userId) {
     // Level progress
     $user = getUserById($userId);
     $bronzeProgress = getLevelProgress($userId, 'Bronze');
-    $silverProgress = getLevelProgress($userId, 'Silver');
+    $silverProgress = getLevelProgress($userId, 'Sliver');
     $goldProgress = getLevelProgress($userId, 'Gold');
-    $platinumProgress = getLevelProgress($userId, 'Platinum');
+    $platinumProgress = getLevelProgress($userId, 'VIP 1');
     
     return [
         'total_tasks' => $totalStats['total'],
@@ -779,6 +851,17 @@ if (!function_exists('createUserLevelsTable')) {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ";
             $conn->exec($sql);
+            $conn->exec("
+                DELETE ul1 FROM user_levels ul1
+                INNER JOIN user_levels ul2
+                    ON ul1.user_id = ul2.user_id
+                    AND ul1.level = ul2.level
+                    AND ul1.id < ul2.id
+            ");
+            $indexes = $conn->query("SHOW INDEX FROM user_levels WHERE Key_name = 'unique_user_level'")->fetchAll();
+            if (!$indexes) {
+                $conn->exec("ALTER TABLE user_levels ADD UNIQUE KEY unique_user_level (user_id, level)");
+            }
             return true;
         } catch (PDOException $e) {
             error_log("Error creating user_levels table: " . $e->getMessage());
@@ -791,6 +874,7 @@ if (!function_exists('unlockLevelForUser')) {
     function unlockLevelForUser($userId, $level) {
         try {
             $conn = getConnection();
+            $level = normalizeLevelName($level);
             
             // DEBUG: Log the unlock attempt
             error_log("DEBUG: Attempting to unlock level $level for user_id: $userId");
@@ -821,6 +905,11 @@ if (!function_exists('unlockLevelForUser')) {
                 error_log("DEBUG: Failed to unlock level $level for user_id: $userId");
             }
             
+            if ($result) {
+                $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
+                $stmt->execute([$level, $userId]);
+            }
+
             return $result;
         } catch (PDOException $e) {
             error_log("DEBUG: Error unlocking level: " . $e->getMessage());
@@ -833,6 +922,7 @@ if (!function_exists('flushLevelForUser')) {
     function flushLevelForUser($userId, $level) {
         try {
             $conn = getConnection();
+            $level = normalizeLevelName($level);
             
             // Ensure table exists
             createUserLevelsTable();
@@ -841,9 +931,9 @@ if (!function_exists('flushLevelForUser')) {
             $stmt = $conn->prepare("
                 DELETE ct FROM completed_tasks ct
                 INNER JOIN tasks t ON ct.task_id = t.id
-                WHERE ct.user_id = ? AND t.level = ?
+                WHERE ct.user_id = ? AND (t.level = ? OR ct.level = ?)
             ");
-            $stmt->execute([$userId, $level]);
+            $stmt->execute([$userId, $level, $level]);
             
             // Reset user level record
             $stmt = $conn->prepare("
@@ -855,6 +945,9 @@ if (!function_exists('flushLevelForUser')) {
                 flushed_at = NOW(),
                 updated_at = NOW()
             ");
+            $stmt->execute([$userId, $level]);
+            
+            $stmt = $conn->prepare("UPDATE users SET level = 'Bronze' WHERE id = ? AND level = ?");
             $stmt->execute([$userId, $level]);
             
             return true;
@@ -869,6 +962,7 @@ if (!function_exists('isLevelUnlockedForUser')) {
     function isLevelUnlockedForUser($userId, $level) {
         try {
             $conn = getConnection();
+            $level = normalizeLevelName($level);
             
             // DEBUG: Log the check
             error_log("DEBUG: Checking unlock status for user_id: $userId, level: $level");
@@ -890,6 +984,11 @@ if (!function_exists('isLevelUnlockedForUser')) {
             
             // Fallback to users table for backward compatibility
             $levelField = strtolower($level) . '_unlocked';
+            if ($level === 'Sliver') {
+                $levelField = 'silver_unlocked';
+            } elseif ($level === 'VIP 1') {
+                $levelField = 'platinum_unlocked';
+            }
             $stmt = $conn->prepare("
                 SELECT {$levelField} as unlocked FROM users 
                 WHERE id = ? LIMIT 1
@@ -920,21 +1019,22 @@ if (!function_exists('getLevelProgressForUser')) {
     function getLevelProgressForUser($userId, $level) {
         try {
             $conn = getConnection();
+            $level = normalizeLevelName($level);
             
             // Get completed tasks count
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as completed
                 FROM completed_tasks ct
                 INNER JOIN tasks t ON ct.task_id = t.id
-                WHERE ct.user_id = ? AND t.level = ?
+                WHERE ct.user_id = ? AND (t.level = ? OR ct.level = ?)
             ");
-            $stmt->execute([$userId, $level]);
+            $stmt->execute([$userId, $level, $level]);
             $result = $stmt->fetch();
             $completed = $result['completed'] ?? 0;
             
             // Get total tasks for level
             $stmt = $conn->prepare("
-                SELECT COUNT(*) as total FROM tasks WHERE level = ?
+                SELECT COUNT(*) as total FROM tasks WHERE level = ? AND active = 1
             ");
             $stmt->execute([$level]);
             $result = $stmt->fetch();
@@ -1012,3 +1112,36 @@ if (!function_exists('refreshUserDashboardCache')) {
         }
     }
 }
+
+if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
+    function ensureHandToGlobalRuntimeSchema() {
+        static $done = false;
+
+        if ($done) {
+            return;
+        }
+
+        $done = true;
+
+        try {
+            $conn = getConnection();
+            createUserLevelsTable();
+
+            $columns = $conn->query("SHOW COLUMNS FROM withdrawals")->fetchAll(PDO::FETCH_COLUMN);
+            $addColumn = function ($name, $definition) use ($conn, $columns) {
+                if (!in_array($name, $columns, true)) {
+                    $conn->exec("ALTER TABLE withdrawals ADD COLUMN {$name} {$definition}");
+                }
+            };
+
+            $addColumn('admin_note', 'TEXT NULL');
+            $addColumn('recipient_name', 'VARCHAR(255) NULL');
+            $addColumn('processed_at', 'DATETIME NULL');
+            $addColumn('processed_by', 'INT NULL');
+        } catch (Throwable $e) {
+            error_log('Runtime schema check failed: ' . $e->getMessage());
+        }
+    }
+}
+
+ensureHandToGlobalRuntimeSchema();

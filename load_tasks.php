@@ -14,12 +14,18 @@ if (empty($level)) {
     echo json_encode(['error' => 'Level not specified']);
     exit;
 }
+$level = normalizeLevelName($level);
 
 // Get database connection
 $conn = getConnection();
 $user_id = $_SESSION['user_id'];
 
 try {
+    if (!isLevelUnlockedForUser($user_id, $level)) {
+        echo json_encode(['locked' => true, 'error' => 'Level is locked. Please contact support to unlock this level.']);
+        exit;
+    }
+
     // Get available tasks for this level that user hasn't completed
     $stmt = $conn->prepare("
         SELECT t.* FROM tasks t 
@@ -40,6 +46,11 @@ try {
         ");
         $stmt->execute([$level]);
         $total_tasks = $stmt->fetch()['total'];
+
+        if ((int)$total_tasks === 0) {
+            echo json_encode(['completed' => true, 'message' => 'No active tasks are available for this level yet.']);
+            exit;
+        }
         
         $stmt = $conn->prepare("
             SELECT COUNT(*) as completed FROM completed_tasks ct

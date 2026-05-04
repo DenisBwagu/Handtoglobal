@@ -9,6 +9,7 @@ if (!isAdminLoggedIn()) {
 
 // Get database connection
 $conn = getConnection();
+$adminId = $_SESSION['admin_id'] ?? $_SESSION['admin'] ?? null;
 
 $msg = "";
 $error = "";
@@ -33,8 +34,8 @@ if (isset($_GET['approve'])) {
                 $conn->beginTransaction();
                 
                 // Update withdrawal status
-                $stmt = $conn->prepare("UPDATE withdrawals SET status='Approved', approved_by=?, approved_at=NOW() WHERE id=?");
-                $stmt->execute([$_SESSION['admin_id'], $id]);
+                $stmt = $conn->prepare("UPDATE withdrawals SET status='Approved', approved_by=?, approved_at=NOW(), processed_by=?, processed_at=NOW() WHERE id=?");
+                $stmt->execute([$adminId, $adminId, $id]);
                 
                 // Deduct from user balance
                 $new_balance = $user['balance'] - $withdrawal['amount'];
@@ -45,7 +46,7 @@ if (isset($_GET['approve'])) {
                 require_once '../recordFinanceActivity.php';
                 recordFinanceActivity(
                     $withdrawal['user_id'],
-                    $_SESSION['admin_id'],
+                    $adminId,
                     'withdrawal_debit',
                     'withdrawal',
                     $withdrawal['amount'],
@@ -69,14 +70,19 @@ if (isset($_GET['approve'])) {
     }
 }
 
-if (isset($_GET['reject'])) {
-    $id = (int)$_GET['reject'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reject_withdrawal') {
+    $id = (int)($_POST['withdrawal_id'] ?? 0);
+    $reason = trim($_POST['reject_reason'] ?? '');
+    if ($reason === '') {
+        $error = "Rejection reason is required.";
+    } else {
     try {
-        $stmt = $conn->prepare("UPDATE withdrawals SET status='Rejected', rejected_by=?, rejected_at=NOW() WHERE id=? AND status='Pending'");
-        $stmt->execute([$_SESSION['admin_id'], $id]);
+        $stmt = $conn->prepare("UPDATE withdrawals SET status='Rejected', rejected_by=?, rejected_at=NOW(), processed_by=?, processed_at=NOW(), admin_note=? WHERE id=? AND status='Pending'");
+        $stmt->execute([$adminId, $adminId, $reason, $id]);
         $msg = "Withdrawal rejected successfully!";
     } catch(PDOException $e) {
         $error = "Failed to reject withdrawal: " . $e->getMessage();
+    }
     }
 }
 
@@ -110,7 +116,7 @@ $page = max(1, intval($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
 
 // Status filter
-$status_filter = $_GET['status'] ?? 'all';
+$status_filter = $_GET['status'] ?? 'Pending';
 
 // Get total count for pagination
 $total_withdrawals = 0;
@@ -1011,6 +1017,14 @@ if ($total_withdrawals == 0) {
                                         <button class="btn-view" onclick="viewWithdrawal(<?php echo $withdrawal['id']; ?>)">
                                             View
                                         </button>
+                                        <?php if ($withdrawal['status'] === 'Pending'): ?>
+                                            <button class="btn-view" onclick="approveWithdrawal(<?php echo $withdrawal['id']; ?>)">
+                                                Approve
+                                            </button>
+                                            <button class="btn-delete" onclick="rejectWithdrawal(<?php echo $withdrawal['id']; ?>)">
+                                                Reject
+                                            </button>
+                                        <?php endif; ?>
                                         <a href="?delete=<?php echo $withdrawal['id']; ?>" class="btn-delete" 
                                            onclick="return confirm('Are you sure you want to delete this withdrawal?')">
                                             Delete
@@ -1191,8 +1205,17 @@ if ($total_withdrawals == 0) {
         }
         
         function rejectWithdrawal(id) {
-            if (confirm('Are you sure you want to reject this withdrawal?')) {
-                window.location.href = '?reject=' + id;
+            const reason = prompt('Enter rejection reason for the user:');
+            if (reason && reason.trim()) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="action" value="reject_withdrawal">
+                    <input type="hidden" name="withdrawal_id" value="${id}">
+                    <input type="hidden" name="reject_reason" value="${reason.replace(/"/g, '&quot;')}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
             }
         }
         

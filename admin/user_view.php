@@ -16,6 +16,7 @@ if (!$userId || !is_numeric($userId)) {
 
 // Get database connection
 $conn = getConnection();
+$adminId = $_SESSION['admin_id'] ?? $_SESSION['admin'] ?? null;
 
 // Create necessary tables if they don't exist
 try {
@@ -105,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
     switch ($action) {
         case 'login_as':
             // Store admin session temporarily
-            $_SESSION['admin_temp_id'] = $_SESSION['admin_id'];
+            $_SESSION['admin_temp_id'] = $adminId;
             $_SESSION['admin_temp_email'] = $_SESSION['admin_email'];
             $_SESSION['admin_temp_name'] = $_SESSION['admin_name'] ?? 'Admin';
             
@@ -155,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         // Log balance change if balance_logs table exists
                         try {
                             $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
-                            $stmt->execute([$user['id'], $_SESSION['admin_id'], $amount, 'credit', $reason]);
+                            $stmt->execute([$user['id'], $adminId, $amount, 'credit', $reason]);
                         } catch(PDOException $e) {
                             // Log table doesn't exist, continue without logging
                         }
@@ -177,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                             // Log balance change if balance_logs table exists
                             try {
                                 $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
-                                $stmt->execute([$user['id'], $_SESSION['admin_id'], $amount, 'debit', $reason]);
+                                $stmt->execute([$user['id'], $adminId, $amount, 'debit', $reason]);
                             } catch(PDOException $e) {
                                 // Log table doesn't exist, continue without logging
                             }
@@ -192,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             break;
             
         case 'unlock_level':
-            $level = $_POST['level'] ?? '';
+            $level = normalizeLevelName($_POST['level'] ?? '');
             
             error_log("DEBUG: Admin unlock attempt - user_id: " . $user['id'] . ", level: $level");
             
@@ -201,9 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             } else {
                 try {
                     // Get all levels from database to ensure we're using real data
-                    $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
-                    $stmt->execute();
-                    $dbLevels = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    $dbLevels = getAppLevelNames();
                     
                     if (!in_array($level, $dbLevels)) {
                         $error = 'Invalid level specified';
@@ -218,8 +217,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                             $error = 'Failed to unlock level - please try again';
                         } else {
                             // Update user's current level if this is higher than their current
-                            $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ? AND (level IS NULL OR level < ?)");
-                            $stmt->execute([$level, $user['id'], $level]);
+                            $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
+                            $stmt->execute([$level, $user['id']]);
                             error_log("DEBUG: Updated user level in users table to: $level");
                             
                             // Update user session data for real-time effect
@@ -292,6 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                 try {
                     require_once '../config.php';
                     foreach ($selectedLevels as $level) {
+                        $level = normalizeLevelName($level);
                         $flushResult = flushLevelForUser($user['id'], $level);
                         if (!$flushResult) {
                             $error = 'Failed to flush level: ' . $level;
@@ -317,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                 require_once '../config.php';
                 
                 // Flush all levels using the proper function
-                $allLevels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
+                $allLevels = getAppLevelNames();
                 foreach ($allLevels as $level) {
                     flushLevelForUser($user['id'], $level);
                 }
@@ -414,9 +414,9 @@ if ($user) {
 
 // Helper function to get user level based on balance
 function getUserLevel($balance) {
-    if ($balance >= 500) return 'Platinum';
+    if ($balance >= 500) return 'VIP 1';
     if ($balance >= 250) return 'Gold';
-    if ($balance >= 150) return 'Silver';
+    if ($balance >= 150) return 'Sliver';
     if ($balance >= 100) return 'Bronze';
     return 'Bronze';
 }
@@ -1128,9 +1128,7 @@ if ($check_column->rowCount() > 0) {
                         <option value="">Select Level</option>
                         <?php
                         try {
-                            $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
-                            $stmt->execute();
-                            $levels = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            $levels = getAppLevelNames();
                             foreach ($levels as $level) {
                                 echo '<option value="' . htmlspecialchars($level) . '">' . htmlspecialchars($level) . '</option>';
                             }
@@ -1304,9 +1302,7 @@ if ($check_column->rowCount() > 0) {
                     </div>
                     <?php
                     try {
-                        $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks ORDER BY level");
-                        $stmt->execute();
-                        $levels = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                            $levels = getAppLevelNames();
                         
                         foreach ($levels as $level) {
                             // Get completed tasks count for this level

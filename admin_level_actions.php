@@ -6,7 +6,7 @@ require_once 'get_setting.php';
 header('Content-Type: application/json');
 
 // Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin'])) {
+if (!isset($_SESSION['admin'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized access']);
     exit;
 }
@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin'])) {
 $action = $_POST['action'] ?? '';
 $userId = $_POST['user_id'] ?? '';
 $level = $_POST['level'] ?? '';
+$level = normalizeLevelName($level);
 
 if (empty($action) || empty($userId) || empty($level)) {
     echo json_encode(['success' => false, 'error' => 'Missing required parameters']);
@@ -22,7 +23,7 @@ if (empty($action) || empty($userId) || empty($level)) {
 }
 
 // Validate level
-$valid_levels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
+$valid_levels = getAppLevelNames();
 if (!in_array($level, $valid_levels)) {
     echo json_encode(['success' => false, 'error' => 'Invalid level']);
     exit;

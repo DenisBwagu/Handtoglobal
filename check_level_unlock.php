@@ -17,9 +17,10 @@ if (empty($level)) {
     echo json_encode(['unlocked' => false, 'error' => 'Level not specified']);
     exit;
 }
+$level = normalizeLevelName($level);
 
 // Validate level
-$valid_levels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
+$valid_levels = getAppLevelNames();
 if (!in_array($level, $valid_levels)) {
     echo json_encode(['unlocked' => false, 'error' => 'Invalid level']);
     exit;
