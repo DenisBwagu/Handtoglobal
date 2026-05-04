@@ -41,7 +41,7 @@ if (isset($_GET['approve'])) {
                 $conn->beginTransaction();
                 
                 // Update withdrawal status
-                $stmt = $conn->prepare("UPDATE withdrawals SET status='Approved', approved_by=?, approved_at=NOW(), processed_by=?, processed_at=NOW() WHERE id=?");
+                $stmt = $conn->prepare("UPDATE withdrawals SET status='Approved', approved_by=?, approved_at=NOW(), processed_by=?, processed_at=NOW(), note=NULL, updated_at=NOW() WHERE id=?");
                 $stmt->execute([$adminId, $adminId, $id]);
                 
                 // Deduct from user balance
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rejec
         $error = "Rejection reason is required.";
     } else {
     try {
-        $stmt = $conn->prepare("UPDATE withdrawals SET status='Rejected', rejected_by=?, rejected_at=NOW(), processed_by=?, processed_at=NOW(), admin_note=? WHERE id=? AND status='Pending'");
+        $stmt = $conn->prepare("UPDATE withdrawals SET status='Rejected', rejected_by=?, rejected_at=NOW(), processed_by=?, processed_at=NOW(), note=?, updated_at=NOW() WHERE id=? AND status='Pending'");
         $stmt->execute([$adminId, $adminId, $reason, $id]);
         redirect('withdrawals.php?rejected=1');
     } catch(PDOException $e) {

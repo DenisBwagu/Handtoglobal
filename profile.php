@@ -5,6 +5,9 @@ require_once 'get_translation.php';
 
 requireLogin();
 
+// Hide balance card from Profile page
+$hideBalanceCard = true;
+
 $conn = getConnection();
 $userId = (int)$_SESSION['user_id'];
 $message = '';

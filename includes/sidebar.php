@@ -53,13 +53,15 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     </div>
     
     <!-- User Balance Card -->
-    <div class="user-balance-card">
-        <div class="balance-label"><?php echo get_translation('current_balance', 'Current Balance'); ?></div>
-        <div class="balance-amount">$<?php echo number_format($userBalance, 2); ?></div>
-        <div class="user-level">
-            <span class="level-badge level-<?php echo htmlspecialchars($levelClass); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
+    <?php if (!isset($hideBalanceCard)) : ?>
+        <div class="user-balance-card">
+            <div class="balance-label"><?php echo get_translation('current_balance', 'Current Balance'); ?></div>
+            <div class="balance-amount">$<?php echo number_format($userBalance, 2); ?></div>
+            <div class="user-level">
+                <span class="level-badge level-<?php echo htmlspecialchars($levelClass); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
     
     <!-- MAIN Section -->
     <div class="sidebar-section">

@@ -5,10 +5,11 @@ require_once 'get_translation.php';
 
 requireLogin();
 
+// Hide balance card from Withdrawals page
+$hideBalanceCard = true;
+
 $conn = getConnection();
 $userId = (int)$_SESSION['user_id'];
-$message = '';
-$error = '';
 
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
@@ -19,42 +20,18 @@ if (!$user) {
     redirect('login.php');
 }
 
-$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-if ($requestMethod === 'POST') {
-    $amount = (float)($_POST['amount'] ?? 0);
-    $asset = trim($_POST['asset'] ?? 'USDT');
-    $network = trim($_POST['network'] ?? 'TRC20');
-    $walletAddress = trim($_POST['wallet_address'] ?? '');
-    $memoTag = trim($_POST['memo_tag'] ?? '');
-    $recipientName = trim($_POST['recipient_name'] ?? '');
-    $minWithdrawal = (float)get_setting('min_withdrawal_amount', '0');
-    $minBalance = (float)($user['min_balance'] ?? get_setting('min_balance', '0'));
-    $withdrawableBalance = max(0, (float)$user['balance'] - $minBalance);
-
-    if ($amount <= 0) {
-        $error = 'Enter a valid withdrawal amount.';
-    } elseif ($amount < $minWithdrawal) {
-        $error = 'Minimum withdrawal amount is $' . number_format($minWithdrawal, 2) . '.';
-    } elseif ($amount > $withdrawableBalance) {
-        $error = 'Insufficient withdrawable balance.';
-    } elseif ($walletAddress === '') {
-        $error = 'Wallet address is required.';
-    } else {
-        $stmt = $conn->prepare("
-            INSERT INTO withdrawals (user_id, amount, asset, network, wallet_address, memo_tag, recipient_name, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
-        ");
-        $stmt->execute([$userId, $amount, $asset ?: 'USDT', $network ?: 'TRC20', $walletAddress, $memoTag ?: null, $recipientName ?: null]);
-        $message = 'Withdrawal request submitted successfully.';
-    }
-
-    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
-}
-
+// Get withdrawal history from database
 $stmt = $conn->prepare("
-    SELECT *
+    SELECT 
+        id,
+        amount,
+        COALESCE(coin_asset, asset, 'USDT') as coin_asset,
+        network,
+        wallet_address,
+        memo_tag,
+        status,
+        note,
+        created_at
     FROM withdrawals
     WHERE user_id = ?
     ORDER BY created_at DESC, id DESC
@@ -62,20 +39,6 @@ $stmt = $conn->prepare("
 $stmt->execute([$userId]);
 $withdrawals = $stmt->fetchAll();
 
-$summaryStmt = $conn->prepare("
-    SELECT
-        SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending_count,
-        SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) AS approved_count,
-        SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) AS rejected_count,
-        COALESCE(SUM(CASE WHEN status = 'Approved' THEN amount ELSE 0 END), 0) AS approved_amount
-    FROM withdrawals
-    WHERE user_id = ?
-");
-$summaryStmt->execute([$userId]);
-$summary = $summaryStmt->fetch();
-
-$minBalance = (float)($user['min_balance'] ?? get_setting('min_balance', '0'));
-$withdrawableBalance = max(0, (float)$user['balance'] - $minBalance);
 $supportLink = getSupportLink();
 $siteName = get_setting('site_name', 'HandToGlobal');
 ?>
@@ -138,65 +101,14 @@ $siteName = get_setting('site_name', 'HandToGlobal');
             <div class="page-header">
                 <div>
                     <h1>Withdrawals</h1>
-                    <p>Requests are saved as pending and stay visible here after approval or rejection.</p>
+                    <p>View your withdrawal requests and their approval status.</p>
                 </div>
                 <div class="actions" style="margin-top:0">
+                    <a class="btn btn-primary" href="request_withdrawal.php"><i class="fas fa-plus"></i> Request Withdrawal</a>
                     <a class="btn btn-secondary" href="dashboard.php"><i class="fas fa-arrow-left"></i> Dashboard</a>
                     <a class="btn btn-support" href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" rel="noopener"><i class="fas fa-headset"></i> Support</a>
                 </div>
             </div>
-
-            <?php if ($message): ?><div class="notice success"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?></div><?php endif; ?>
-            <?php if ($error): ?><div class="notice error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
-
-            <section class="stats-grid">
-                <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value">$<?php echo number_format((float)$user['balance'], 2); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Withdrawable</div><div class="stat-value">$<?php echo number_format($withdrawableBalance, 2); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value"><?php echo (int)($summary['pending_count'] ?? 0); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Approved Paid</div><div class="stat-value">$<?php echo number_format((float)($summary['approved_amount'] ?? 0), 2); ?></div></div>
-            </section>
-
-            <section class="panel">
-                <h2>Request Withdrawal</h2>
-                <form method="post" class="form-grid">
-                    <div class="form-group">
-                        <label>Amount</label>
-                        <input type="number" step="0.01" min="0" name="amount" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Asset</label>
-                        <select name="asset">
-                            <option>USDT</option>
-                            <option>BTC</option>
-                            <option>ETH</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Network</label>
-                        <select name="network">
-                            <option>TRC20</option>
-                            <option>ERC20</option>
-                            <option>BEP20</option>
-                            <option>BTC</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Recipient optional</label>
-                        <input type="text" name="recipient_name">
-                    </div>
-                    <div class="form-group full">
-                        <label>Wallet Address</label>
-                        <input type="text" name="wallet_address" required>
-                    </div>
-                    <div class="form-group full">
-                        <label>Memo / Tag optional</label>
-                        <input type="text" name="memo_tag">
-                    </div>
-                    <div class="form-group full actions">
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Submit Withdrawal</button>
-                    </div>
-                </form>
-            </section>
 
             <section class="panel">
                 <h2>Withdrawal History</h2>
@@ -204,31 +116,44 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                     <table>
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Asset / Network</th>
-                                <th>Wallet</th>
-                                <th>Status</th>
-                                <th>Note</th>
+                                <th>AMOUNT</th>
+                                <th>ASSET/NETWORK</th>
+                                <th>WALLET</th>
+                                <th>MEMO</th>
+                                <th>STATUS</th>
+                                <th>NOTE</th>
+                                <th>DATE</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($withdrawals as $withdrawal): ?>
-                                <?php $statusClass = strtolower(preg_replace('/[^a-z]+/i', '', $withdrawal['status'] ?? 'Pending')); ?>
+                                <?php 
+                                $statusClass = strtolower($withdrawal['status'] ?? 'pending');
+                                if ($statusClass === 'pending') {
+                                    $badgeClass = 'pending';
+                                } elseif ($statusClass === 'approved') {
+                                    $badgeClass = 'approved';
+                                } elseif ($statusClass === 'rejected') {
+                                    $badgeClass = 'rejected';
+                                } else {
+                                    $badgeClass = 'pending';
+                                }
+                                ?>
                                 <tr>
+                                    <td><strong>$<?php echo number_format((float)$withdrawal['amount'], 2); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($withdrawal['coin_asset'] ?? 'USDT'); ?> / <?php echo htmlspecialchars($withdrawal['network'] ?? 'TRC20'); ?></td>
+                                    <td><div class="wallet"><?php echo htmlspecialchars($withdrawal['wallet_address'] ?? ''); ?></div></td>
+                                    <td><?php echo htmlspecialchars($withdrawal['memo_tag'] ?? ''); ?></td>
+                                    <td><span class="badge <?php echo htmlspecialchars($badgeClass); ?>"><?php echo htmlspecialchars($withdrawal['status'] ?? 'Pending'); ?></span></td>
+                                    <td><?php echo htmlspecialchars($withdrawal['note'] ?? ''); ?></td>
                                     <td>
                                         <?php echo htmlspecialchars(date('M j, Y', strtotime($withdrawal['created_at']))); ?>
                                         <div class="muted"><?php echo htmlspecialchars(date('g:i A', strtotime($withdrawal['created_at']))); ?></div>
                                     </td>
-                                    <td><strong>$<?php echo number_format((float)$withdrawal['amount'], 2); ?></strong></td>
-                                    <td><?php echo htmlspecialchars(($withdrawal['asset'] ?? 'USDT') . ' / ' . ($withdrawal['network'] ?? 'TRC20')); ?></td>
-                                    <td><div class="wallet"><?php echo htmlspecialchars($withdrawal['wallet_address'] ?? ''); ?></div></td>
-                                    <td><span class="badge <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($withdrawal['status'] ?? 'Pending'); ?></span></td>
-                                    <td><?php echo htmlspecialchars($withdrawal['admin_note'] ?? ''); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                             <?php if (!$withdrawals): ?>
-                                <tr><td colspan="6" class="muted">No withdrawals yet.</td></tr>
+                                <tr><td colspan="7" class="muted">No withdrawals yet.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>

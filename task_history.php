@@ -5,6 +5,9 @@ require_once 'get_translation.php';
 
 requireLogin();
 
+// Hide balance card from TaskHistory page
+$hideBalanceCard = true;
+
 $conn = getConnection();
 $userId = (int)$_SESSION['user_id'];
 $user = getUserById($userId);
@@ -14,12 +17,12 @@ if (!$user) {
     redirect('login.php');
 }
 
-$levels = getAppLevelNames();
-$requestedLevel = trim($_GET['level'] ?? '');
+$levels = ['AllLevels', 'Bronze', 'Silver', 'Gold', 'VIP 1'];
+$selectedLevel = $_GET['level'] ?? 'AllLevels';
 $filterLevel = '';
-if ($requestedLevel !== '') {
-    $normalized = normalizeLevelName($requestedLevel);
-    if (in_array($normalized, $levels, true)) {
+if ($selectedLevel !== 'AllLevels') {
+    $normalized = normalizeLevelName($selectedLevel);
+    if (in_array($normalized, ['Bronze', 'Silver', 'Gold', 'VIP 1'], true)) {
         $filterLevel = $normalized;
     }
 }
@@ -55,17 +58,18 @@ $offsetSql = (int)$offset;
 $historyStmt = $conn->prepare("
     SELECT
         ct.id,
+        ct.user_id,
         ct.task_id,
         ct.completed_at,
-        ct.reward,
-        ct.status,
-        COALESCE(NULLIF(ct.level, ''), t.level, 'Bronze') AS level_name,
-        COALESCE(NULLIF(t.title, ''), CONCAT('Task #', ct.task_id)) AS title,
+        t.title,
+        t.level,
+        t.reward,
+        'Completed' AS status,
         t.description
     FROM completed_tasks ct
-    LEFT JOIN tasks t ON t.id = ct.task_id
+    JOIN tasks t ON t.id = ct.task_id
     WHERE $where
-    ORDER BY ct.completed_at DESC, ct.id DESC
+    ORDER BY ct.completed_at DESC
     LIMIT $limitSql OFFSET $offsetSql
 ");
 $historyStmt->execute($params);
@@ -149,8 +153,8 @@ function historyQuery(array $overrides = []) {
         <div class="content-area">
             <div class="page-header">
                 <div>
-                    <h1>Task History</h1>
-                    <p>Completed tasks, rewards, and levels are read directly from the database.</p>
+                    <h1>TaskHistory</h1>
+                    <p>Subtitle</p>
                 </div>
                 <a class="btn btn-primary" href="dashboard.php"><i class="fas fa-play"></i> Start Tasks</a>
             </div>
@@ -164,9 +168,8 @@ function historyQuery(array $overrides = []) {
 
             <section class="panel">
                 <div class="filter-row">
-                    <a href="task_history.php" class="filter-btn <?php echo $filterLevel === '' ? 'active' : ''; ?>">All Levels</a>
                     <?php foreach ($levels as $level): ?>
-                        <a href="<?php echo historyQuery(['level' => $level, 'page' => 1]); ?>" class="filter-btn <?php echo $filterLevel === $level ? 'active' : ''; ?>">
+                        <a href="task_history.php?level=<?php echo urlencode($level); ?>" class="filter-btn <?php echo $selectedLevel === $level ? 'active' : ''; ?>">
                             <?php echo htmlspecialchars($level); ?>
                         </a>
                     <?php endforeach; ?>
@@ -188,27 +191,27 @@ function historyQuery(array $overrides = []) {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Level</th>
                                     <th>Task</th>
+                                    <th>Level</th>
                                     <th>Reward</th>
                                     <th>Status</th>
+                                    <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($completedTasks as $task): ?>
                                     <tr>
-                                        <td class="date-cell">
-                                            <?php echo htmlspecialchars(date('M j, Y', strtotime($task['completed_at']))); ?>
-                                            <small><?php echo htmlspecialchars(date('g:i A', strtotime($task['completed_at']))); ?></small>
-                                        </td>
-                                        <td><span class="badge level-badge"><?php echo htmlspecialchars(normalizeLevelName($task['level_name'])); ?></span></td>
                                         <td>
                                             <div class="task-title"><?php echo htmlspecialchars($task['title']); ?></div>
                                             <?php if (!empty($task['description'])): ?><div class="task-description"><?php echo htmlspecialchars($task['description']); ?></div><?php endif; ?>
                                         </td>
+                                        <td><span class="badge level-badge"><?php echo htmlspecialchars(normalizeLevelName($task['level'])); ?></span></td>
                                         <td><span class="reward">+$<?php echo number_format((float)$task['reward'], 2); ?></span></td>
-                                        <td><span class="badge completed"><i class="fas fa-check"></i> <?php echo htmlspecialchars($task['status'] ?: 'Completed'); ?></span></td>
+                                        <td><span class="badge completed">✓ Completed</span></td>
+                                        <td class="date-cell">
+                                            <?php echo htmlspecialchars(date('M j, Y', strtotime($task['completed_at']))); ?>
+                                            <small><?php echo htmlspecialchars(date('g:i A', strtotime($task['completed_at']))); ?></small>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
