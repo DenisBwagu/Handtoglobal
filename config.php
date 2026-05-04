@@ -12,11 +12,16 @@ if (defined('HANDTOGLOBAL_CONFIG_LOADED')) {
 define('HANDTOGLOBAL_CONFIG_LOADED', true);
 
 // Database constants
-if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
-if (!defined('DB_PORT')) define('DB_PORT', '3306');
-if (!defined('DB_NAME')) define('DB_NAME', 'handtoglobal');
-if (!defined('DB_USER')) define('DB_USER', 'root');
-if (!defined('DB_PASS')) define('DB_PASS', '');
+function getConnection() {
+    try {
+        $dsn = "mysql:host=127.0.0.1;port=3306;dbname=handtoglobal;charset=utf8mb4";
+        $pdo = new PDO($dsn, "root", "");
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $pdo;
+    } catch (PDOException $e) {
+        die("Setup Error<br>Error: " . $e->getMessage());
+    }
+}
 
 // App constants
 if (!defined('TELEGRAM_SUPPORT')) define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
@@ -96,11 +101,11 @@ if (!function_exists('getConnection')) {
     function getConnection() {
         $configs = [
             ['host' => DB_HOST, 'port' => DB_PORT, 'pass' => DB_PASS],
-            ['host' => 'localhost', 'port' => 3307, 'pass' => ''],
             ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
-            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => ''],
+            ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
             ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
-            ['host' => 'localhost', 'port' => 3307, 'pass' => 'root'],
+            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
+            ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
             ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
         ];
 
