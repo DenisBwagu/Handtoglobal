@@ -55,31 +55,9 @@ function countCompleted($conn, $user_id, $level) {
 
 /* ================= BRONZE ================= */
 if ($level === "Bronze") {
-
-    if ((int)$user['bronze_unlocked'] === 1) {
-        header("Location: dashboard.php?level=Bronze");
-        exit();
-    }
-
-    if ((float)$user['balance'] >= 100) {
-
-        $stmt = $conn->prepare("
-            UPDATE users
-            SET balance = balance - 100,
-                bronze_unlocked = 1,
-                level = 'Bronze'
-            WHERE id=?
-        ");
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-
-        header("Location: dashboard.php?level=Bronze");
-        exit();
-
-    } else {
-        header("Location: " . $supportLink);
-        exit();
-    }
+    // Bronze is always unlocked - redirect directly to tasks
+    header("Location: dashboard.php?level=Bronze");
+    exit();
 }
 
 /* ================= SILVER ================= */

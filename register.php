@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          is_blocked, is_active, status, role, created_at)
                     VALUES
                         (?, ?, ?, ?, 'Bronze', 0, 0, 0,
-                         0, 0, 0, 0,
+                         1, 0, 0, 0,
                          ?, ?, ?, ?,
                          0, 1, 'active', 'user', NOW())
                 ");

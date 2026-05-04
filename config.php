@@ -980,11 +980,20 @@ if (!function_exists('flushLevelForUser')) {
 if (!function_exists('isLevelUnlockedForUser')) {
     function isLevelUnlockedForUser($userId, $level) {
         try {
-            $conn = getConnection();
             $level = normalizeLevelName($level);
+            
+            // Bronze is always unlocked for all users - check first
+            if ($level === 'Bronze') {
+                error_log("DEBUG: Bronze level - always unlocked for user_id: $userId");
+                return true;
+            }
+            
+            $conn = getConnection();
             
             // DEBUG: Log the check
             error_log("DEBUG: Checking unlock status for user_id: $userId, level: $level");
+            
+            $isUnlocked = false;
             
             // Check user_levels table first
             $stmt = $conn->prepare("
@@ -993,42 +1002,41 @@ if (!function_exists('isLevelUnlockedForUser')) {
                 LIMIT 1
             ");
             $stmt->execute([$userId, $level]);
-            $result = $stmt->fetch();
+            $userLevelResult = $stmt->fetch();
             
-            if ($result !== false) {
-                $isUnlocked = (bool)$result['is_unlocked'];
-                error_log("DEBUG: Found in user_levels table - is_unlocked: " . ($isUnlocked ? '1' : '0'));
-                return $isUnlocked;
+            if ($userLevelResult !== false && (int)$userLevelResult['is_unlocked'] === 1) {
+                $isUnlocked = true;
+                error_log("DEBUG: Found unlocked in user_levels table for $level");
             }
             
-            // Fallback to users table for backward compatibility
-            $levelField = strtolower($level) . '_unlocked';
-            if ($level === 'Sliver') {
-                $levelField = 'silver_unlocked';
-            } elseif ($level === 'VIP 1') {
-                $levelField = 'platinum_unlocked';
+            // Also check users table for backward compatibility
+            if (!$isUnlocked) {
+                $levelField = strtolower($level) . '_unlocked';
+                if ($level === 'Sliver') {
+                    $levelField = 'silver_unlocked';
+                } elseif ($level === 'VIP 1') {
+                    $levelField = 'platinum_unlocked';
+                }
+                
+                $stmt = $conn->prepare("
+                    SELECT {$levelField} as unlocked FROM users 
+                    WHERE id = ? LIMIT 1
+                ");
+                $stmt->execute([$userId]);
+                $user = $stmt->fetch();
+                
+                if ($user && isset($user['unlocked']) && (int)$user['unlocked'] === 1) {
+                    $isUnlocked = true;
+                    error_log("DEBUG: Found unlocked in users table - $levelField: 1");
+                }
             }
-            $stmt = $conn->prepare("
-                SELECT {$levelField} as unlocked FROM users 
-                WHERE id = ? LIMIT 1
-            ");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch();
             
-            if ($user && isset($user['unlocked'])) {
-                $isUnlocked = (bool)$user['unlocked'];
-                error_log("DEBUG: Fallback to users table - $levelField: " . ($isUnlocked ? '1' : '0'));
-                return $isUnlocked;
-            }
-            
-            // Default: Bronze is unlocked for all users
-            $defaultUnlocked = $level === 'Bronze';
-            error_log("DEBUG: Default unlock for $level: " . ($defaultUnlocked ? '1' : '0'));
-            return $defaultUnlocked;
+            error_log("DEBUG: Final unlock status for $level: " . ($isUnlocked ? 'UNLOCKED' : 'LOCKED'));
+            return $isUnlocked;
             
         } catch (PDOException $e) {
             error_log("DEBUG: Error checking level unlock status: " . $e->getMessage());
-            // Default to Bronze unlocked on error
+            // Default to Bronze unlocked on error, others locked
             return $level === 'Bronze';
         }
     }

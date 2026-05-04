@@ -24,9 +24,8 @@ if (!$user) exit("User not found.");
 /* Get requested level */
 $level = $_GET['level'] ?? 'Bronze';
 
-/* Check if level unlocked */
+/* Check if level unlocked - Bronze is always unlocked */
 if (
-    ($level == 'Bronze' && !$user['bronze_unlocked']) ||
     ($level == 'Silver' && !$user['silver_unlocked']) ||
     ($level == 'Gold' && !$user['gold_unlocked']) ||
     ($level == 'Platinum' && !$user['platinum_unlocked'])

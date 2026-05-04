@@ -135,8 +135,14 @@ $levelRecords = getAppLevels();
 $levels = array_column($levelRecords, 'name');
 $unlocked_levels = [];
 foreach ($levels as $level) {
-    $unlocked_levels[$level] = isLevelUnlockedForUser($_SESSION['user_id'], $level);
-    error_log("DEBUG: Dashboard - Level $level unlock status: " . ($unlocked_levels[$level] ? 'UNLOCKED' : 'LOCKED'));
+    // Bronze is always unlocked, check others normally
+    if ($level === 'Bronze') {
+        $unlocked_levels[$level] = true;
+        error_log("DEBUG: Dashboard - Bronze level: ALWAYS UNLOCKED");
+    } else {
+        $unlocked_levels[$level] = isLevelUnlockedForUser($_SESSION['user_id'], $level);
+        error_log("DEBUG: Dashboard - Level $level unlock status: " . ($unlocked_levels[$level] ? 'UNLOCKED' : 'LOCKED'));
+    }
 }
 
 // DEBUG: Log user balance from database
@@ -661,6 +667,27 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             justify-content: flex-end;
         }
         
+        /* Level Completed Modal */
+        .completed-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .completed-modal {
+            background: #fff;
+            width: 420px;
+            max-width: 92%;
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -1012,6 +1039,23 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         </div>
     </div>
     
+    <!-- Level Completed Modal -->
+    <div class="completed-modal-overlay" id="completedModal" style="display: none;">
+        <div class="completed-modal">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-trophy" style="font-size: 48px; color: #f59e0b;"></i>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: #333; text-align: center;" id="completedModalTitle">All tasks completed in Bronze level!</h3>
+            <p style="margin: 0 0 24px 0; color: #6b7280; text-align: center; font-size: 14px;">Need help or want to upgrade level?</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn btn-secondary" onclick="closeCompletedModal()">Close</button>
+                <button type="button" class="btn btn-primary" id="completedSupportBtn">
+                    <i class="fas fa-headset"></i> Contact Customer Support
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Support link from global function
         window.SUPPORT_LINK = "<?php echo htmlspecialchars(getSupportLink(), ENT_QUOTES); ?>";
@@ -1067,7 +1111,34 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             document.getElementById('comboModal').classList.remove('active');
         }
         
+        function openCompletedModal(levelName) {
+            const modal = document.getElementById('completedModal');
+            const title = document.getElementById('completedModalTitle');
+            const supportBtn = document.getElementById('completedSupportBtn');
+            
+            // Update title with dynamic level name
+            title.textContent = `All tasks completed in ${levelName} level!`;
+            
+            // Update support button link
+            supportBtn.onclick = function() {
+                window.open(window.SUPPORT_LINK || 'support.php', '_blank');
+            };
+            
+            // Show modal
+            modal.style.display = 'flex';
+        }
+        
+        function closeCompletedModal() {
+            document.getElementById('completedModal').style.display = 'none';
+        }
+        
         function handleLevelClick(level, status) {
+            // Bronze is always unlocked - allow immediate access
+            if (level === 'Bronze') {
+                openTaskModal(level);
+                return;
+            }
+            
             if (status === 'locked') {
                 openLockedModal(level);
             } else {
@@ -1183,7 +1254,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 ${task.image ? `
                     <div style="margin-bottom: 20px; text-align: center;">
-                        <img src="admin/uploads/${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <img src="uploads/tasks/${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
                     </div>
                 ` : ''}
                 
@@ -1227,22 +1298,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 // Check if level is completed
                 if (data.available_tasks === 0) {
-                    // Add level completion message with two buttons
-                    const modalContent = document.querySelector('.modal-content');
-                    const completionMessage = document.createElement('div');
-                    completionMessage.style.cssText = 'text-align: center; padding: 20px; border-top: 1px solid #e5e7eb; margin-top: 10px;';
-                    completionMessage.innerHTML = `
-                        <i class="fas fa-trophy" style="font-size: 32px; color: #f59e0b; margin-bottom: 12px; display: block;"></i>
-                        <div style="color: #6b7280; font-weight: 600; margin-bottom: 8px;">All tasks completed in ${data.current_level} level!</div>
-                        <div style="color: #10b981; font-size: 14px; margin-bottom: 16px;">Need help or want to upgrade level?</div>
-                        <div style="display: flex; gap: 12px; justify-content: center;">
-                            <button class="btn btn-secondary" onclick="closeTaskModal()">Close</button>
-                            <button type="button" id="completedSupportBtn" class="support-completed-btn">
-                                <i class="fas fa-headset"></i> Contact Customer Support
-                            </button>
-                        </div>
-                    `;
-                    modalContent.appendChild(completionMessage);
+                    // Close task modal and show completion modal
+                    closeTaskModal();
+                    openCompletedModal(data.current_level);
                 } else {
                     // Load next task automatically
                     loadTasks(data.current_level);

@@ -4,7 +4,7 @@ require_once '../get_setting.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('../login.php');
 }
 
 // Get database connection
@@ -100,19 +100,236 @@ if ($total_tasks == 0) {
             padding: 0;
             box-sizing: border-box;
         }
-                 
-       .main-content {
-    margin-left: 260px;
-    padding: 30px;
-    min-height: calc(100vh - 56px);
-    background: #f5f7fb;
-}
         
- .tasks-container {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-}
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #7c3aed;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #0284c7;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f5f7fb;
+            --white: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        /* Admin Layout */
+        .admin-layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 900;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-header i {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary);
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 20px;
+        }
+        
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 2px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar-menu a:hover {
+            background: var(--bg);
+            color: var(--primary);
+        }
+        
+        .sidebar-menu a.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border-left: 3px solid var(--success);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 12px;
+            width: 16px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 70px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .menu-icon {
+            display: none;
+            font-size: 20px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .admin-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .topbar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .topbar-icon:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .profile-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .dropdown-arrow {
+            font-size: 12px;
+            color: var(--muted);
+            opacity: 0.6;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            flex: 1;
+        }
+        
+        /* Tasks Container */
+        .tasks-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
         
         /* Controls Section */
         .controls-section {
@@ -151,13 +368,12 @@ if ($total_tasks == 0) {
         
         /* Table Card */
         .table-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    overflow: hidden;
-    width: 100%;
-}
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
         
         /* Table Styles */
         .tasks-table {
@@ -166,23 +382,23 @@ if ($total_tasks == 0) {
         }
         
         .tasks-table th {
-    padding: 14px 16px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f8fafc;
-}
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
         
         .tasks-table td {
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    vertical-align: middle;
-}
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            vertical-align: middle;
+        }
         
         .tasks-table tr:hover {
             background: var(--bg);
@@ -333,24 +549,111 @@ if ($total_tasks == 0) {
     </style>
 </head>
 <body>
-<?php require_once 'includes/topbar.php'; ?>
-<?php require_once 'includes/sidebar.php'; ?>
-
-<div class="main-content">
-    <div class="tasks-container">
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="menu-icon">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="topbar-title">Tasks</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-badge">ADMIN</div>
+            <form class="language-form" method="post" action="../language_action.php">
+                <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/tasks.php'); ?>">
+                <input type="hidden" name="context" value="admin">
+                <select name="language" onchange="this.form.submit()">
+                    <?php foreach (['english' => 'English', 'chinese' => 'Chinese'] as $code => $label): ?>
+                        <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($_SESSION['admin_language'] ?? $_SESSION['language'] ?? 'english') === $code ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+            <div class="topbar-icon theme-toggle" id="themeToggle">
+                <i class="fas fa-moon theme-icon" id="themeIcon"></i>
+            </div>
+            <a href="/handtoglobal/admin/logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
+                </div>
+                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
+                <div class="dropdown-arrow">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Admin Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <?php $site_logo = get_setting('site_logo'); ?>
+                <?php if ($site_logo): ?>
+                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
+                <?php else: ?>
+                    <i class="fas fa-hand-holding-usd"></i>
+                <?php endif; ?>
+                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
+            </div>
             
+            <!-- MANAGEMENT Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MANAGEMENT</div>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                </ul>
+            </div>
+            
+            <!-- PLATFORM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">PLATFORM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
+                    <li><a href="tasks.php" class="active"><i class="fas fa-tasks"></i> Tasks</a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                </ul>
+            </div>
+            
+            <!-- FINANCE Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">FINANCE</div>
+                <ul class="sidebar-menu">
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                </ul>
+            </div>
+            
+            <!-- MONITORING Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">MONITORING</div>
+                <ul class="sidebar-menu">
+                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                </ul>
+            </div>
+            
+            <!-- SYSTEM Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">SYSTEM</div>
+                <ul class="sidebar-menu">
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                    <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        
         <!-- Main Content -->
         <div class="main-content">
-    <div class="tasks-container">
-
-        <!-- Page Header -->
-        <div style="margin-bottom: 28px;">
-    <h1 style="font-size: 26px; font-weight: 700; margin: 0 0 8px;">Tasks Management</h1>
-    <p style="color: #6b7280; font-size: 14px; margin: 0;">Manage all tasks</p>
-</div>
-
-        <?php if ($msg): ?>
+            <div class="tasks-container">
+                <?php if ($msg): ?>
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
                     </div>

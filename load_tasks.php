@@ -28,7 +28,7 @@ try {
 
     // Get available tasks for this level that user hasn't completed
     $stmt = $conn->prepare("
-        SELECT t.* FROM tasks t 
+        SELECT t.*, t.image as task_image FROM tasks t 
         LEFT JOIN completed_tasks ct ON t.id = ct.task_id AND ct.user_id = ?
         WHERE t.level = ? AND t.active = 1 
         AND ct.id IS NULL
