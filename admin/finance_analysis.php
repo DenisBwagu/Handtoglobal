@@ -40,22 +40,22 @@ try {
     $stats['withdrawals_count'] = $withdrawals['count'] ?? 0;
     $stats['withdrawals_total'] = $withdrawals['total'] ?? 0;
     
-    // Total bonuses paid (bonus_credit from finance_activities)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM finance_activities WHERE type='bonus_credit' AND DATE(created_at) BETWEEN ? AND ?");
+    // Total bonuses paid (bonus_credit from balance_adjustments)
+    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type='bonus_credit' AND DATE(created_at) BETWEEN ? AND ?");
     $stmt->execute([$date_from, $date_to]);
     $bonuses = $stmt->fetch();
     $stats['bonuses_count'] = $bonuses['count'] ?? 0;
     $stats['bonuses_total'] = $bonuses['total'] ?? 0;
     
-    // Total deductions (manual_debit from finance_activities)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM finance_activities WHERE type='manual_debit' AND DATE(created_at) BETWEEN ? AND ?");
+    // Total deductions (manual_debit from balance_adjustments)
+    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type='manual_debit' AND DATE(created_at) BETWEEN ? AND ?");
     $stmt->execute([$date_from, $date_to]);
     $deductions = $stmt->fetch();
     $stats['deductions_count'] = $deductions['count'] ?? 0;
     $stats['deductions_total'] = $deductions['total'] ?? 0;
     
-    // Total task rewards (task_reward_credit + combo_credit from finance_activities)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM finance_activities WHERE type IN ('task_reward_credit', 'combo_credit') AND DATE(created_at) BETWEEN ? AND ?");
+    // Total task rewards (task_reward_credit + combo_credit from balance_adjustments)
+    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type IN ('task_reward_credit', 'combo_credit') AND DATE(created_at) BETWEEN ? AND ?");
     $stmt->execute([$date_from, $date_to]);
     $tasks = $stmt->fetch();
     $stats['tasks_completed'] = $tasks['count'] ?? 0;
@@ -89,6 +89,26 @@ try {
     $error = "Failed to fetch financial statistics: " . $e->getMessage();
 }
 
+// Add default values to prevent undefined array key warnings
+$stats = array_merge([
+    'deposits_total' => 0,
+    'withdrawals_total' => 0,
+    'bonuses_total' => 0,
+    'deductions_total' => 0,
+    'tasks_earnings' => 0,
+    'platform_net' => 0,
+    'outstanding_balances' => 0,
+    'deposits_count' => 0,
+    'withdrawals_count' => 0,
+    'bonuses_count' => 0,
+    'deductions_count' => 0,
+    'tasks_completed' => 0,
+    'pending_deposits_count' => 0,
+    'pending_deposits_total' => 0,
+    'pending_withdrawals_count' => 0,
+    'pending_withdrawals_total' => 0
+], $stats);
+
 // Get balance adjustments (all admin/manual balance changes)
 $balance_adjustments = [];
 try {
@@ -102,7 +122,7 @@ try {
                 WHEN fa.type IN ('deposit_debit', 'withdrawal_debit', 'bonus_debit', 'invitation_debit', 'manual_debit', 'task_reward_debit', 'combo_debit') THEN 'Debit'
                 ELSE 'Unknown'
             END as transaction_type
-        FROM finance_activities fa
+        FROM balance_adjustments fa
         LEFT JOIN users u ON fa.user_id = u.id
         LEFT JOIN admins a ON fa.admin_id = a.id
         WHERE DATE(fa.created_at) BETWEEN ? AND ?

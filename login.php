@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $conn = getConnection();
+            ensureAuthSchema();
             
             // Check admins table with LIMIT 1 for speed
             $stmt = $conn->prepare("SELECT * FROM admins WHERE email = ? LIMIT 1");
@@ -38,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_id'] = $admin['id'];
                 $_SESSION['admin_email'] = $admin['email'];
                 $_SESSION['admin_name'] = $admin['name'] ?? 'Admin';
+                $_SESSION['role'] = 'admin';
                 redirect('admin/dashboard.php');
             } else {
                 // Check users table with LIMIT 1 for speed
@@ -54,15 +56,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         session_regenerate_id(true);
                         $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['user_name'] = $user['fullname'];
                         $_SESSION['user_email'] = $user['email'];
                         $_SESSION['user_fullname'] = $user['fullname'];
+                        $_SESSION['role'] = 'user';
                         redirect('dashboard.php');
                     }
                 } else {
-                    $error = 'Invalid email or password';
+                    $error = 'Invalid email or password.';
                 }
             }
         } catch(PDOException $e) {
+            error_log('Login failed: ' . $e->getMessage());
             $error = 'Login failed. Please try again.';
         }
     }

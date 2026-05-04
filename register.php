@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_password = $_POST['confirm_password'] ?? '';
     $invitation_code = sanitize($_POST['invitation_code'] ?? '');
     
-    if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password) || empty($invitation_code)) {
+    if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Please fill in all required fields';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match';
@@ -30,98 +30,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $conn = getConnection();
-            
-            // Ensure users table has required columns
-            $conn->exec("
-                CREATE TABLE IF NOT EXISTS users (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    fullname VARCHAR(255) NOT NULL,
-                    email VARCHAR(255) NOT NULL UNIQUE,
-                    password VARCHAR(255) NOT NULL,
-                    balance DECIMAL(10,2) DEFAULT 0.00,
-                    level ENUM('Bronze', 'Silver', 'Gold', 'Platinum') DEFAULT 'Bronze',
-                    is_active TINYINT(1) DEFAULT 1,
-                    invitation_code VARCHAR(50) NULL,
-                    employee_id INT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    INDEX idx_email (email),
-                    INDEX idx_invitation (invitation_code),
-                    INDEX idx_employee (employee_id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-            ");
-            
-            // Add missing columns if they don't exist
-            $columns = $conn->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN);
-            
-            if (!in_array('invitation_code', $columns)) {
-                $conn->exec("ALTER TABLE users ADD COLUMN invitation_code VARCHAR(50) NULL AFTER is_active");
-            }
-            if (!in_array('employee_id', $columns)) {
-                $conn->exec("ALTER TABLE users ADD COLUMN employee_id INT NULL AFTER invitation_code");
-            }
-            
-            // Validate invitation code with LIMIT 1 for speed
-            $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1");
-            $stmt->execute([$invitation_code]);
-            $invitation = $stmt->fetch();
-            
-            if (!$invitation) {
-                $error = 'Invalid invitation code';
-            } elseif ((int)($invitation['used_count'] ?? 0) >= (int)($invitation['max_uses'] ?? 1)) {
-                $error = 'Invitation code has reached its usage limit';
+            ensureAuthSchema();
+
+            $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+            $stmt->execute([$email]);
+            if ($stmt->fetch()) {
+                $error = 'Email already exists';
             } else {
-                // Check if email already exists with LIMIT 1 for speed
-                $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
-                $stmt->execute([$email]);
-                if ($stmt->fetch()) {
-                    $error = 'Email already exists';
-                } else {
-                    $conn->beginTransaction();
+                $invitation = null;
+                $starting_balance = 0.00;
+                $referredBy = null;
 
-                    // Create user with starting balance from invitation code
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $starting_balance = (float)($invitation['starting_balance'] ?? 0);
-                    if ($starting_balance <= 0 && isset($invitation['reward'])) {
-                        $starting_balance = (float)$invitation['reward'];
-                    }
-                    
-                    $stmt = $conn->prepare("
-                        INSERT INTO users
-                            (fullname, email, password, balance, level, is_active, is_blocked, status, invitation_code, invitation_code_used, employee_id, created_at)
-                        VALUES
-                            (?, ?, ?, ?, 'Bronze', 1, 0, 'active', ?, ?, ?, NOW())
-                    ");
-                    $stmt->execute([$fullname, $email, $hashed_password, $starting_balance, $invitation_code, $invitation_code, $invitation['employee_id'] ?? null]);
-                    $user_id = $conn->lastInsertId();
-
-                    $stmt = $conn->prepare("
-                        INSERT INTO user_levels (user_id, level, is_unlocked, completed_count, unlocked_at, updated_at)
-                        VALUES (?, 'Bronze', 1, 0, NOW(), NOW())
-                        ON DUPLICATE KEY UPDATE is_unlocked = 1, unlocked_at = COALESCE(unlocked_at, NOW()), updated_at = NOW()
-                    ");
-                    $stmt->execute([$user_id]);
-                    
-                    // Update invitation code usage
-                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = COALESCE(used_count, 0) + 1, uses_remaining = GREATEST(COALESCE(uses_remaining, 1) - 1, 0) WHERE code = ?");
+                if ($invitation_code !== '') {
+                    $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1");
                     $stmt->execute([$invitation_code]);
-                    
-                    // Record finance activity if starting balance > 0
-                    if ($starting_balance > 0) {
-                        try {
-                            $stmt = $conn->prepare("INSERT INTO finance_activities (user_id, type, category, amount, reason, balance_after, source_table, source_id) VALUES (?, 'invitation_credit', 'Initial Balance', ?, 'Registration bonus with invitation code', ?, 'users', ?)");
-                            $stmt->execute([$user_id, $starting_balance, $starting_balance, $user_id]);
-                        } catch (Throwable $activityError) {
-                            // Finance logging should not block account creation.
-                        }
+                    $invitation = $stmt->fetch();
+
+                    if (!$invitation) {
+                        $error = 'Invalid invitation code';
+                    } elseif ((int)($invitation['used_count'] ?? 0) >= (int)($invitation['max_uses'] ?? 1)) {
+                        $error = 'Invitation code has already been used';
+                    } else {
+                        $starting_balance = 20.00;
+                        $referredBy = $invitation['employee_id'] ?? null;
                     }
-                    
-                    $conn->commit();
-                    session_regenerate_id(true);
-                    $_SESSION['user_id'] = $user_id;
-                    $_SESSION['user_email'] = $email;
-                    $_SESSION['user_fullname'] = $fullname;
-                    redirect('dashboard.php');
+                }
+
+                if (!$error) {
+                $conn->beginTransaction();
+
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("
+                    INSERT INTO users
+                        (fullname, email, password, balance, level, rating, accuracy, total_tasks,
+                         bronze_unlocked, silver_unlocked, gold_unlocked, platinum_unlocked,
+                         invite_code_used, invitation_code, invitation_code_used, referred_by,
+                         is_blocked, is_active, status, role, created_at)
+                    VALUES
+                        (?, ?, ?, ?, 'Bronze', 0, 0, 0,
+                         0, 0, 0, 0,
+                         ?, ?, ?, ?,
+                         0, 1, 'active', 'user', NOW())
+                ");
+                $stmt->execute([
+                    $fullname,
+                    $email,
+                    $hashed_password,
+                    $starting_balance,
+                    $invitation_code ?: null,
+                    $invitation_code ?: null,
+                    $invitation_code ?: null,
+                    $referredBy
+                ]);
+                $user_id = $conn->lastInsertId();
+
+                if ($invitation) {
+                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = COALESCE(used_count, 0) + 1, uses_remaining = GREATEST(COALESCE(uses_remaining, 1) - 1, 0) WHERE id = ?");
+                    $stmt->execute([$invitation['id']]);
+                }
+
+                if ($starting_balance > 0) {
+                    try {
+                        $stmt = $conn->prepare("INSERT INTO finance_activities (user_id, type, category, amount, reason, balance_after, source_table, source_id) VALUES (?, 'invitation_credit', 'Initial Balance', ?, 'Registration bonus with invitation code', ?, 'users', ?)");
+                        $stmt->execute([$user_id, $starting_balance, $starting_balance, $user_id]);
+                    } catch (Throwable $activityError) {
+                        // Finance logging should not block account creation.
+                    }
+                }
+
+                $conn->commit();
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['user_name'] = $fullname;
+                $_SESSION['user_email'] = $email;
+                $_SESSION['user_fullname'] = $fullname;
+                $_SESSION['role'] = 'user';
+                redirect('dashboard.php');
                 }
             }
         } catch(Throwable $e) {
@@ -308,8 +292,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <div class="form-group">
-                <label for="invitation_code">Invitation Code</label>
-                <input type="text" id="invitation_code" name="invitation_code" placeholder="Enter invitation code" required>
+                <label for="invitation_code">Invitation Code (Optional)</label>
+                <input type="text" id="invitation_code" name="invitation_code" placeholder="Enter invitation code">
             </div>
             
             <button type="submit" class="btn">Create Account</button>

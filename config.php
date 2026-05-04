@@ -1,6 +1,20 @@
 <?php
 // Start session first
 if (session_status() == PHP_SESSION_NONE) {
+    $sessionCandidates = [
+        sys_get_temp_dir(),
+        __DIR__ . DIRECTORY_SEPARATOR . 'tmp_sessions',
+        'C:\\xampp\\tmp',
+    ];
+    foreach ($sessionCandidates as $fallbackSessionPath) {
+        if (!is_dir($fallbackSessionPath)) {
+            @mkdir($fallbackSessionPath, 0777, true);
+        }
+        if (is_dir($fallbackSessionPath) && is_writable($fallbackSessionPath)) {
+            session_save_path($fallbackSessionPath);
+            break;
+        }
+    }
     session_start();
 }
 
@@ -12,16 +26,11 @@ if (defined('HANDTOGLOBAL_CONFIG_LOADED')) {
 define('HANDTOGLOBAL_CONFIG_LOADED', true);
 
 // Database constants
-function getConnection() {
-    try {
-        $dsn = "mysql:host=127.0.0.1;port=3306;dbname=handtoglobal;charset=utf8mb4";
-        $pdo = new PDO($dsn, "root", "");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $pdo;
-    } catch (PDOException $e) {
-        die("Setup Error<br>Error: " . $e->getMessage());
-    }
-}
+if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+if (!defined('DB_PORT')) define('DB_PORT', '3307');
+if (!defined('DB_NAME')) define('DB_NAME', 'handtoglobal');
+if (!defined('DB_USER')) define('DB_USER', 'root');
+if (!defined('DB_PASS')) define('DB_PASS', '');
 
 // App constants
 if (!defined('TELEGRAM_SUPPORT')) define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
@@ -99,21 +108,31 @@ if (!function_exists('getAppLevelNames')) {
 
 if (!function_exists('getConnection')) {
     function getConnection() {
+        static $pdo = null;
+
+        if ($pdo instanceof PDO) {
+            return $pdo;
+        }
+
         $configs = [
-            ['host' => DB_HOST, 'port' => DB_PORT, 'pass' => DB_PASS],
+            ['host' => 'localhost', 'port' => 3307, 'pass' => ''],
             ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
-            ['host' => 'localhost', 'port' => 3306, 'pass' => ''],
+            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => ''],
             ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
-            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => ''],
+            ['host' => 'localhost', 'port' => 3307, 'pass' => 'root'],
             ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
-            ['host' => 'localhost', 'port' => 3306, 'pass' => 'root'],
+            ['host' => '127.0.0.1', 'port' => 3307, 'pass' => 'root'],
+            ['host' => '127.0.0.1', 'port' => 3306, 'pass' => 'root'],
         ];
 
         foreach ($configs as $config) {
             try {
                 $dsn = "mysql:host={$config['host']};port={$config['port']};dbname=" . DB_NAME . ";charset=utf8mb4";
-                $pdo = new PDO($dsn, DB_USER, $config['pass']);
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo = new PDO($dsn, DB_USER, $config['pass'], [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]);
                 return $pdo;
             } catch (PDOException $e) {
                 continue;
@@ -138,11 +157,11 @@ function redirect($url) {
 }
 
 function isLoggedIn() {
-    return isset($_SESSION['user_id']);
+    return isset($_SESSION['user_id']) && ($_SESSION['role'] ?? 'user') === 'user';
 }
 
 function isAdminLoggedIn() {
-    return isset($_SESSION['admin']);
+    return isset($_SESSION['admin_id']) && ($_SESSION['role'] ?? '') === 'admin';
 }
 
 function requireLogin() {
@@ -153,7 +172,7 @@ function requireLogin() {
 
 function requireAdminLogin() {
     if (!isAdminLoggedIn()) {
-        redirect('admin_login.php');
+        redirect('../login.php');
     }
 }
 
@@ -855,6 +874,14 @@ if (!function_exists('createUserLevelsTable')) {
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ";
+            $tableExists = (bool)$conn->query("SHOW TABLES LIKE 'user_levels'")->fetchColumn();
+            if ($tableExists) {
+                try {
+                    $conn->query("SELECT id FROM user_levels LIMIT 1");
+                } catch (Throwable $brokenUserLevelsTable) {
+                    $conn->exec("DROP TABLE IF EXISTS user_levels");
+                }
+            }
             $conn->exec($sql);
             $conn->exec("
                 DELETE ul1 FROM user_levels ul1
@@ -1119,6 +1146,149 @@ if (!function_exists('refreshUserDashboardCache')) {
 }
 
 if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
+    function ensureColumnExists(PDO $conn, $table, $column, $definition) {
+        $quotedColumn = $conn->quote($column);
+        $stmt = $conn->query("SHOW COLUMNS FROM `$table` LIKE {$quotedColumn}");
+        if (!$stmt->fetch()) {
+            $conn->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+        }
+    }
+
+    function ensureAuthSchema() {
+        static $done = false;
+
+        if ($done) {
+            return;
+        }
+
+        $done = true;
+        $conn = getConnection();
+
+        $createAdminsSql = "
+            CREATE TABLE IF NOT EXISTS admins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NULL,
+                email VARCHAR(150) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+
+        $conn->exec($createAdminsSql);
+
+        try {
+            $conn->query("SELECT id FROM admins LIMIT 1");
+        } catch (Throwable $brokenAdminsTable) {
+            $conn->exec("DROP TABLE IF EXISTS admins");
+            $conn->exec($createAdminsSql);
+        }
+
+        ensureColumnExists($conn, 'admins', 'name', 'VARCHAR(100) NULL');
+        ensureColumnExists($conn, 'admins', 'email', 'VARCHAR(150) NOT NULL UNIQUE');
+        ensureColumnExists($conn, 'admins', 'password', 'VARCHAR(255) NOT NULL');
+        ensureColumnExists($conn, 'admins', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+
+        $stmt = $conn->prepare("SELECT id, password FROM admins WHERE email = ? LIMIT 1");
+        $stmt->execute(['admin@handtoglobal.com']);
+        $admin = $stmt->fetch();
+        if (!$admin) {
+            $stmt = $conn->prepare("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)");
+            $stmt->execute(['Admin', 'admin@handtoglobal.com', password_hash('admin123', PASSWORD_DEFAULT)]);
+        } elseif (!password_verify('admin123', $admin['password'])) {
+            $stmt = $conn->prepare("UPDATE admins SET name = COALESCE(NULLIF(name, ''), 'Admin'), password = ? WHERE email = ?");
+            $stmt->execute([password_hash('admin123', PASSWORD_DEFAULT), 'admin@handtoglobal.com']);
+        }
+
+        $createUsersSql = "
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                fullname VARCHAR(255) NOT NULL,
+                email VARCHAR(150) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                balance DECIMAL(10,2) DEFAULT 0.00,
+                level VARCHAR(50) DEFAULT 'Bronze',
+                rating DECIMAL(5,2) DEFAULT 0.00,
+                accuracy DECIMAL(5,2) DEFAULT 0.00,
+                total_tasks INT DEFAULT 0,
+                bronze_unlocked TINYINT(1) DEFAULT 0,
+                silver_unlocked TINYINT(1) DEFAULT 0,
+                gold_unlocked TINYINT(1) DEFAULT 0,
+                platinum_unlocked TINYINT(1) DEFAULT 0,
+                invite_code_used VARCHAR(50) NULL,
+                referred_by INT NULL,
+                is_blocked TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+
+        $usersExists = (bool)$conn->query("SHOW TABLES LIKE 'users'")->fetchColumn();
+        if ($usersExists) {
+            try {
+                $conn->query("SELECT id FROM users LIMIT 1");
+            } catch (Throwable $brokenUsersTable) {
+                $conn->exec("DROP TABLE IF EXISTS users");
+            }
+        }
+        $conn->exec($createUsersSql);
+
+        ensureColumnExists($conn, 'users', 'fullname', 'VARCHAR(255) NOT NULL');
+        ensureColumnExists($conn, 'users', 'email', 'VARCHAR(150) NOT NULL UNIQUE');
+        ensureColumnExists($conn, 'users', 'password', 'VARCHAR(255) NOT NULL');
+        ensureColumnExists($conn, 'users', 'balance', 'DECIMAL(10,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'users', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
+        ensureColumnExists($conn, 'users', 'rating', 'DECIMAL(5,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'users', 'accuracy', 'DECIMAL(5,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'users', 'total_tasks', 'INT DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'bronze_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'silver_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'gold_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'platinum_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'invite_code_used', 'VARCHAR(50) NULL');
+        ensureColumnExists($conn, 'users', 'referred_by', 'INT NULL');
+        ensureColumnExists($conn, 'users', 'is_blocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        ensureColumnExists($conn, 'users', 'is_active', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'users', 'status', "VARCHAR(20) DEFAULT 'active'");
+        ensureColumnExists($conn, 'users', 'role', "VARCHAR(30) DEFAULT 'user'");
+        ensureColumnExists($conn, 'users', 'invitation_code', 'VARCHAR(50) NULL');
+        ensureColumnExists($conn, 'users', 'invitation_code_used', 'VARCHAR(50) NULL');
+        ensureColumnExists($conn, 'users', 'employee_id', 'INT NULL');
+
+        $createInvitationCodesSql = "
+            CREATE TABLE IF NOT EXISTS invitation_codes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) NOT NULL UNIQUE,
+                reward DECIMAL(10,2) DEFAULT 0.00,
+                starting_balance DECIMAL(10,2) DEFAULT 0.00,
+                used_count INT DEFAULT 0,
+                max_uses INT DEFAULT 1,
+                uses_remaining INT DEFAULT 1,
+                is_active TINYINT(1) DEFAULT 1,
+                active TINYINT(1) DEFAULT 1,
+                employee_id INT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+
+        $invitationExists = (bool)$conn->query("SHOW TABLES LIKE 'invitation_codes'")->fetchColumn();
+        if ($invitationExists) {
+            try {
+                $conn->query("SELECT id FROM invitation_codes LIMIT 1");
+            } catch (Throwable $brokenInvitationTable) {
+                $conn->exec("DROP TABLE IF EXISTS invitation_codes");
+            }
+        }
+        $conn->exec($createInvitationCodesSql);
+
+        ensureColumnExists($conn, 'invitation_codes', 'starting_balance', 'DECIMAL(10,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'invitation_codes', 'used_count', 'INT DEFAULT 0');
+        ensureColumnExists($conn, 'invitation_codes', 'max_uses', 'INT DEFAULT 1');
+        ensureColumnExists($conn, 'invitation_codes', 'uses_remaining', 'INT DEFAULT 1');
+        ensureColumnExists($conn, 'invitation_codes', 'is_active', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'invitation_codes', 'active', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'invitation_codes', 'employee_id', 'INT NULL');
+    }
+
     function ensureHandToGlobalRuntimeSchema() {
         static $done = false;
 
@@ -1130,7 +1300,37 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
 
         try {
             $conn = getConnection();
+            ensureAuthSchema();
             createUserLevelsTable();
+
+            $withdrawalsExists = (bool)$conn->query("SHOW TABLES LIKE 'withdrawals'")->fetchColumn();
+            if ($withdrawalsExists) {
+                try {
+                    $conn->query("SELECT id FROM withdrawals LIMIT 1");
+                } catch (Throwable $brokenWithdrawalsTable) {
+                    $conn->exec("DROP TABLE IF EXISTS withdrawals");
+                }
+            }
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS withdrawals (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    amount DECIMAL(10,2) NOT NULL,
+                    wallet_address TEXT NOT NULL,
+                    status ENUM('Pending','Approved','Rejected','Completed') DEFAULT 'Pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    asset VARCHAR(20) DEFAULT 'USDT',
+                    network VARCHAR(20) DEFAULT 'TRC20',
+                    memo_tag VARCHAR(255) NULL,
+                    approved_by INT NULL,
+                    approved_at DATETIME NULL,
+                    rejected_by INT NULL,
+                    rejected_at DATETIME NULL,
+                    deleted_at DATETIME NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
 
             $columns = $conn->query("SHOW COLUMNS FROM withdrawals")->fetchAll(PDO::FETCH_COLUMN);
             $addColumn = function ($name, $definition) use ($conn, $columns) {
