@@ -901,7 +901,9 @@ if (!function_exists('unlockLevelForUser')) {
             // Ensure table exists
             createUserLevelsTable();
             
-            // Insert or update user level record
+            $result = true;
+            
+            // 1. Update user_levels table
             $stmt = $conn->prepare("
                 INSERT INTO user_levels (user_id, level, is_unlocked, unlocked_at, updated_at)
                 VALUES (?, ?, 1, NOW(), NOW())
@@ -910,26 +912,45 @@ if (!function_exists('unlockLevelForUser')) {
                 unlocked_at = NOW(),
                 updated_at = NOW()
             ");
-            $result = $stmt->execute([$userId, $level]);
+            $userLevelsResult = $stmt->execute([$userId, $level]);
             
-            if ($result) {
-                error_log("DEBUG: Successfully unlocked level $level for user_id: $userId");
-                
-                // Verify the unlock was saved
-                $verifyStmt = $conn->prepare("SELECT is_unlocked FROM user_levels WHERE user_id = ? AND level = ?");
-                $verifyStmt->execute([$userId, $level]);
-                $verifyResult = $verifyStmt->fetch();
-                error_log("DEBUG: Verification - is_unlocked in database: " . ($verifyResult['is_unlocked'] ?? 'null'));
+            if ($userLevelsResult) {
+                error_log("DEBUG: Successfully unlocked level $level in user_levels table for user_id: $userId");
             } else {
-                error_log("DEBUG: Failed to unlock level $level for user_id: $userId");
+                error_log("DEBUG: Failed to unlock level $level in user_levels table for user_id: $userId");
+                $result = false;
             }
             
-            if ($result) {
+            // 2. Update users table columns for backward compatibility
+            if ($userLevelsResult) {
+                $levelField = strtolower($level) . '_unlocked';
+                if ($level === 'Sliver') {
+                    $levelField = 'silver_unlocked';
+                } elseif ($level === 'VIP 1') {
+                    $levelField = 'platinum_unlocked';
+                }
+                
+                $stmt = $conn->prepare("UPDATE users SET $levelField = 1 WHERE id = ?");
+                $usersResult = $stmt->execute([$userId]);
+                
+                if ($usersResult) {
+                    error_log("DEBUG: Successfully unlocked level $level in users table ($levelField) for user_id: $userId");
+                } else {
+                    error_log("DEBUG: Failed to unlock level $level in users table ($levelField) for user_id: $userId");
+                    // Don't fail the whole operation if users table update fails
+                }
+            }
+            
+            // 3. Update user's current level if this is higher than their current
+            if ($result && $userLevelsResult) {
                 $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
                 $stmt->execute([$level, $userId]);
+                error_log("DEBUG: Updated user's current level to $level for user_id: $userId");
             }
-
+            
+            error_log("DEBUG: Final unlock result for level $level, user_id: $userId: " . ($result ? 'SUCCESS' : 'FAILED'));
             return $result;
+            
         } catch (PDOException $e) {
             error_log("DEBUG: Error unlocking level: " . $e->getMessage());
             return false;

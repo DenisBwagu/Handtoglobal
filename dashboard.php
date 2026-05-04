@@ -828,7 +828,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             ?>%"></div>
                         </div>
                         <div style="text-align: right;">
-                            <a href="#" class="level-link" onclick="handleLevelClick('<?php echo htmlspecialchars($stats['current_level']); ?>', 'current')">Start Tasks →</a>
+                            <a href="#" class="level-link" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')">Start Tasks →</a>
                         </div>
                     </div>
                 </div>
@@ -879,7 +879,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="handleLevelClick('<?php echo htmlspecialchars($stats['current_level']); ?>', 'current')">
+                    <button class="btn btn-primary" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')"
                         <i class="fas fa-play"></i> Start Tasks
                     </button>
                     <a href="withdrawals.php" class="btn btn-secondary">
@@ -903,7 +903,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             $level_status = $is_current ? 'current' : ($is_unlocked ? 'progress' : 'locked');
                             $level_data = $stats['levels'][$level] ?? ['completed' => 0, 'total' => 40, 'available' => 40, 'progress' => 0];
                             ?>
-                            <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" data-level="<?php echo htmlspecialchars($level); ?>" onclick="handleLevelClick('<?php echo htmlspecialchars($level); ?>', '<?php echo $level_status; ?>')">
+                            <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" data-level="<?php echo htmlspecialchars($level); ?>" data-unlocked="<?php echo $is_unlocked ? '1' : '0'; ?>" onclick="startLevel(this.dataset.level, this.dataset.unlocked)">
                                 <div class="level-card-header">
                                     <div class="level-card-name"><?php echo htmlspecialchars($level); ?></div>
                                     <div class="level-status <?php echo $level_status; ?>">
@@ -1130,6 +1130,25 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         
         function closeCompletedModal() {
             document.getElementById('completedModal').style.display = 'none';
+        }
+        
+        function startLevel(levelName, unlocked) {
+            unlocked = String(unlocked);
+
+            if (
+                levelName === 'Bronze' ||
+                unlocked === '1' ||
+                unlocked === 'true'
+            ) {
+                openTaskModal(levelName);
+                return;
+            }
+
+            showUnlockModal(levelName);
+        }
+        
+        function showUnlockModal(levelName) {
+            openLockedModal(levelName);
         }
         
         function handleLevelClick(level, status) {
