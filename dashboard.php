@@ -645,11 +645,11 @@ foreach ($levels as $level) {
                 <a href="dashboard.php" class="sidebar-logo">
                     <?php $site_logo = get_setting('site_logo'); ?>
                     <?php if ($site_logo): ?>
-                        <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>" style="height: 32px; margin-right: 8px;">
+                        <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 32px; margin-right: 8px;">
                     <?php else: ?>
                         <i class="fas fa-handshake" style="margin-right: 8px;"></i>
                     <?php endif; ?>
-                    <?php echo get_setting('site_name', '<?php echo get_setting('site_name', 'HandToGlobal'); ?>'); ?>
+                    <?php echo get_setting('site_name', 'HandToGlobal'); ?>
                 </a>
             </div>
             

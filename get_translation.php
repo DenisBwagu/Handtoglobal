@@ -6,7 +6,8 @@
  * @param string $default Default value if translation not found
  * @return string Translation
  */
-function get_translation($key, $language = 'english', $default = '') {
+if (!function_exists('get_translation')) {
+    function get_translation($key, $language = 'english', $default = '') {
     static $translations_cache = [];
     
     // Load translations once per language
@@ -20,13 +21,15 @@ function get_translation($key, $language = 'english', $default = '') {
     }
     
     return $translations_cache[$language][$key] ?? $default;
+    }
 }
 
 /**
  * Get current user language
  * @return string Language code
  */
-function get_current_language() {
+if (!function_exists('get_current_language')) {
+    function get_current_language() {
     // Priority: user preference > session > default setting
     if (isLoggedIn() && isset($_SESSION['user_id'])) {
         try {
@@ -50,6 +53,7 @@ function get_current_language() {
     
     // Use default user locale from settings
     return get_setting('user_locale', 'english');
+    }
 }
 
 /**
@@ -57,7 +61,8 @@ function get_current_language() {
  * @param string $language Language code
  * @return bool Success
  */
-function set_user_language($language) {
+if (!function_exists('set_user_language')) {
+    function set_user_language($language) {
     if (!in_array($language, ['english', 'chinese', 'german', 'greek', 'ukrainian'])) {
         return false;
     }
@@ -91,6 +96,7 @@ function set_user_language($language) {
     }
     
     return true;
+    }
 }
 
 /**
@@ -99,16 +105,19 @@ function set_user_language($language) {
  * @param string $default Default value
  * @return string Translation
  */
-function __($key, $default = '') {
+if (!function_exists('__')) {
+    function __($key, $default = '') {
     $language = get_current_language();
     return get_translation($key, $language, $default ?: $key);
+    }
 }
 
 /**
  * Get available languages
  * @return array Available languages
  */
-function get_available_languages() {
+if (!function_exists('get_available_languages')) {
+    function get_available_languages() {
     return [
         'english' => 'English',
         'chinese' => 'Chinese',
@@ -116,6 +125,7 @@ function get_available_languages() {
         'greek' => 'Greek',
         'ukrainian' => 'Ukrainian'
     ];
+    }
 }
 
 /**
@@ -123,7 +133,9 @@ function get_available_languages() {
  * @param string $language Language code
  * @return bool Supported
  */
-function is_language_supported($language) {
-    return in_array($language, ['english', 'chinese', 'german', 'greek', 'ukrainian']);
+if (!function_exists('is_language_supported')) {
+    function is_language_supported($language) {
+        return in_array($language, ['english', 'chinese', 'german', 'greek', 'ukrainian']);
+    }
 }
 ?>
