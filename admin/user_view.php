@@ -49,16 +49,9 @@ try {
 }
 
 try {
-    $conn->exec("
-        CREATE TABLE IF NOT EXISTS user_levels (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            level VARCHAR(50) DEFAULT 'Bronze',
-            score DECIMAL(10,2) DEFAULT 0.00,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    ");
+    // Use the correct user_levels table structure with is_unlocked field
+    require_once '../config.php';
+    createUserLevelsTable();
 } catch(PDOException $e) {
     // Table creation failed, continue without it
 }
@@ -155,6 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         $stmt->execute([$amount, $user['id']]);
                         $success = 'Balance credited successfully!';
                         
+                        // Update user session data for real-time effect
+                        updateUserSessionData($user['id']);
+                        refreshUserDashboardCache($user['id']);
+                        
                         // Log balance change if balance_logs table exists
                         try {
                             $stmt = $conn->prepare("INSERT INTO balance_logs (user_id, admin_id, amount, action_type, reason) VALUES (?, ?, ?, ?, ?)");
@@ -172,6 +169,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                             $stmt = $conn->prepare("UPDATE users SET balance = balance - ? WHERE id = ?");
                             $stmt->execute([$amount, $user['id']]);
                             $success = 'Balance debited successfully!';
+                            
+                            // Update user session data for real-time effect
+                            updateUserSessionData($user['id']);
+                            refreshUserDashboardCache($user['id']);
                             
                             // Log balance change if balance_logs table exists
                             try {
@@ -193,6 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
         case 'unlock_level':
             $level = $_POST['level'] ?? '';
             
+            error_log("DEBUG: Admin unlock attempt - user_id: " . $user['id'] . ", level: $level");
+            
             if (empty($level)) {
                 $error = 'Please select a level to unlock';
             } else {
@@ -205,23 +208,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                     if (!in_array($level, $dbLevels)) {
                         $error = 'Invalid level specified';
                     } else {
-                        // Add unlocked level to user_levels table
-                        $stmt = $conn->prepare("SELECT id FROM user_levels WHERE user_id = ? AND level = ?");
-                        $stmt->execute([$user['id'], $level]);
-                        $existing = $stmt->fetch();
+                        // Add unlocked level to user_levels table using the proper function
+                        require_once '../config.php';
+                        error_log("DEBUG: Admin calling unlockLevelForUser for user_id: " . $user['id'] . ", level: $level");
+                        $unlockResult = unlockLevelForUser($user['id'], $level);
+                        error_log("DEBUG: Admin unlock result: " . ($unlockResult ? 'SUCCESS' : 'FAILED'));
                         
-                        if (!$existing) {
-                            $stmt = $conn->prepare("INSERT INTO user_levels (user_id, level, created_at) VALUES (?, ?, NOW())");
-                            $stmt->execute([$user['id'], $level]);
+                        if (!$unlockResult) {
+                            $error = 'Failed to unlock level - please try again';
+                        } else {
+                            // Update user's current level if this is higher than their current
+                            $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ? AND (level IS NULL OR level < ?)");
+                            $stmt->execute([$level, $user['id'], $level]);
+                            error_log("DEBUG: Updated user level in users table to: $level");
+                            
+                            // Update user session data for real-time effect
+                            updateUserSessionData($user['id']);
+                            refreshUserDashboardCache($user['id']);
+                            
+                            $success = $level . ' level unlocked successfully!';
+                            error_log("DEBUG: Admin unlock completed successfully");
                         }
-                        
-                        // Update user's current level if this is higher than their current
-                        $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ? AND (level IS NULL OR level < ?)");
-                        $stmt->execute([$level, $user['id'], $level]);
-                        
-                        $success = $level . ' level unlocked successfully!';
                     }
                 } catch(PDOException $e) {
+                    error_log("DEBUG: Admin unlock exception: " . $e->getMessage());
                     $error = 'Failed to unlock level: ' . $e->getMessage();
                 }
             }
@@ -263,6 +273,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                     $stmt->execute([$user['id'], $maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $customMessage]);
                 }
                 
+                // Update user session data for real-time effect
+                updateUserSessionData($user['id']);
+                refreshUserDashboardCache($user['id']);
+                
                 $success = 'User limits updated successfully!';
             } catch(PDOException $e) {
                 $error = 'Failed to update user limits: ' . $e->getMessage();
@@ -276,18 +290,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                 $error = 'Please select at least one level to flush';
             } else {
                 try {
+                    require_once '../config.php';
                     foreach ($selectedLevels as $level) {
-                        // Delete completed tasks for this level only
-                        $stmt = $conn->prepare("
-                            DELETE FROM completed_tasks 
-                            WHERE user_id = ? AND task_id IN (
-                                SELECT id FROM tasks WHERE level = ?
-                            )
-                        ");
-                        $stmt->execute([$user['id'], $level]);
+                        $flushResult = flushLevelForUser($user['id'], $level);
+                        if (!$flushResult) {
+                            $error = 'Failed to flush level: ' . $level;
+                            break;
+                        }
                     }
                     
-                    $success = 'Selected levels flushed successfully! Progress reset to 0/40.';
+                    if (empty($error)) {
+                        // Update user session data for real-time effect
+                        updateUserSessionData($user['id']);
+                        refreshUserDashboardCache($user['id']);
+                        
+                        $success = 'Selected levels flushed successfully! Progress reset to 0/40.';
+                    }
                 } catch(PDOException $e) {
                     $error = 'Failed to flush levels: ' . $e->getMessage();
                 }
@@ -296,15 +314,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             
         case 'flush_account':
             try {
-                // Clear completed_tasks
-                $stmt = $conn->prepare("DELETE FROM completed_tasks WHERE user_id = ?");
+                require_once '../config.php';
+                
+                // Flush all levels using the proper function
+                $allLevels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
+                foreach ($allLevels as $level) {
+                    flushLevelForUser($user['id'], $level);
+                }
+                
+                // Reset user to Bronze level
+                $stmt = $conn->prepare("UPDATE users SET level = 'Bronze', accuracy = 0, rating = 0, total_tasks = 0, balance = 0 WHERE id = ?");
                 $stmt->execute([$user['id']]);
                 
-                // Reset level-related fields
-                $stmt = $conn->prepare("UPDATE users SET bronze_unlocked = 1, silver_unlocked = 0, gold_unlocked = 0, platinum_unlocked = 0, level = 'Bronze', accuracy = 0, rating = 0, total_tasks = 0, balance = 0 WHERE id = ?");
-                $stmt->execute([$user['id']]);
+                // Update user session data for real-time effect
+                updateUserSessionData($user['id']);
+                refreshUserDashboardCache($user['id']);
                 
-                $success = 'User account reset successfully!';
+                $success = 'User account reset successfully! All levels flushed and progress reset.';
             } catch(PDOException $e) {
                 $error = 'Failed to flush account: ' . $e->getMessage();
             }
@@ -320,6 +346,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                 
                 $stmt = $conn->prepare("UPDATE users SET is_active = NOT is_active WHERE id = ?");
                 $stmt->execute([$user['id']]);
+                
+                // Update user session data for real-time effect
+                updateUserSessionData($user['id']);
+                refreshUserDashboardCache($user['id']);
+                
                 $success = 'User status updated successfully!';
             } catch(PDOException $e) {
                 $error = 'Failed to update user status: ' . $e->getMessage();

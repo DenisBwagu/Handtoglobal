@@ -758,3 +758,257 @@ if (!function_exists('getSupportLink')) {
         return $support_link;
     }
 }
+
+// Level management functions
+if (!function_exists('createUserLevelsTable')) {
+    function createUserLevelsTable() {
+        try {
+            $conn = getConnection();
+            $sql = "
+                CREATE TABLE IF NOT EXISTS user_levels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    level VARCHAR(50) NOT NULL,
+                    is_unlocked TINYINT(1) DEFAULT 0,
+                    completed_count INT DEFAULT 0,
+                    flushed_at TIMESTAMP NULL,
+                    unlocked_at TIMESTAMP NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_user_level (user_id, level),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ";
+            $conn->exec($sql);
+            return true;
+        } catch (PDOException $e) {
+            error_log("Error creating user_levels table: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+if (!function_exists('unlockLevelForUser')) {
+    function unlockLevelForUser($userId, $level) {
+        try {
+            $conn = getConnection();
+            
+            // DEBUG: Log the unlock attempt
+            error_log("DEBUG: Attempting to unlock level $level for user_id: $userId");
+            
+            // Ensure table exists
+            createUserLevelsTable();
+            
+            // Insert or update user level record
+            $stmt = $conn->prepare("
+                INSERT INTO user_levels (user_id, level, is_unlocked, unlocked_at, updated_at)
+                VALUES (?, ?, 1, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE 
+                is_unlocked = 1,
+                unlocked_at = NOW(),
+                updated_at = NOW()
+            ");
+            $result = $stmt->execute([$userId, $level]);
+            
+            if ($result) {
+                error_log("DEBUG: Successfully unlocked level $level for user_id: $userId");
+                
+                // Verify the unlock was saved
+                $verifyStmt = $conn->prepare("SELECT is_unlocked FROM user_levels WHERE user_id = ? AND level = ?");
+                $verifyStmt->execute([$userId, $level]);
+                $verifyResult = $verifyStmt->fetch();
+                error_log("DEBUG: Verification - is_unlocked in database: " . ($verifyResult['is_unlocked'] ?? 'null'));
+            } else {
+                error_log("DEBUG: Failed to unlock level $level for user_id: $userId");
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("DEBUG: Error unlocking level: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+if (!function_exists('flushLevelForUser')) {
+    function flushLevelForUser($userId, $level) {
+        try {
+            $conn = getConnection();
+            
+            // Ensure table exists
+            createUserLevelsTable();
+            
+            // Delete completed tasks for this user and level
+            $stmt = $conn->prepare("
+                DELETE ct FROM completed_tasks ct
+                INNER JOIN tasks t ON ct.task_id = t.id
+                WHERE ct.user_id = ? AND t.level = ?
+            ");
+            $stmt->execute([$userId, $level]);
+            
+            // Reset user level record
+            $stmt = $conn->prepare("
+                INSERT INTO user_levels (user_id, level, is_unlocked, completed_count, flushed_at, updated_at)
+                VALUES (?, ?, 0, 0, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE 
+                is_unlocked = 0,
+                completed_count = 0,
+                flushed_at = NOW(),
+                updated_at = NOW()
+            ");
+            $stmt->execute([$userId, $level]);
+            
+            return true;
+        } catch (PDOException $e) {
+            error_log("Error flushing level: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+if (!function_exists('isLevelUnlockedForUser')) {
+    function isLevelUnlockedForUser($userId, $level) {
+        try {
+            $conn = getConnection();
+            
+            // DEBUG: Log the check
+            error_log("DEBUG: Checking unlock status for user_id: $userId, level: $level");
+            
+            // Check user_levels table first
+            $stmt = $conn->prepare("
+                SELECT is_unlocked FROM user_levels 
+                WHERE user_id = ? AND level = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$userId, $level]);
+            $result = $stmt->fetch();
+            
+            if ($result !== false) {
+                $isUnlocked = (bool)$result['is_unlocked'];
+                error_log("DEBUG: Found in user_levels table - is_unlocked: " . ($isUnlocked ? '1' : '0'));
+                return $isUnlocked;
+            }
+            
+            // Fallback to users table for backward compatibility
+            $levelField = strtolower($level) . '_unlocked';
+            $stmt = $conn->prepare("
+                SELECT {$levelField} as unlocked FROM users 
+                WHERE id = ? LIMIT 1
+            ");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch();
+            
+            if ($user && isset($user['unlocked'])) {
+                $isUnlocked = (bool)$user['unlocked'];
+                error_log("DEBUG: Fallback to users table - $levelField: " . ($isUnlocked ? '1' : '0'));
+                return $isUnlocked;
+            }
+            
+            // Default: Bronze is unlocked for all users
+            $defaultUnlocked = $level === 'Bronze';
+            error_log("DEBUG: Default unlock for $level: " . ($defaultUnlocked ? '1' : '0'));
+            return $defaultUnlocked;
+            
+        } catch (PDOException $e) {
+            error_log("DEBUG: Error checking level unlock status: " . $e->getMessage());
+            // Default to Bronze unlocked on error
+            return $level === 'Bronze';
+        }
+    }
+}
+
+if (!function_exists('getLevelProgressForUser')) {
+    function getLevelProgressForUser($userId, $level) {
+        try {
+            $conn = getConnection();
+            
+            // Get completed tasks count
+            $stmt = $conn->prepare("
+                SELECT COUNT(*) as completed
+                FROM completed_tasks ct
+                INNER JOIN tasks t ON ct.task_id = t.id
+                WHERE ct.user_id = ? AND t.level = ?
+            ");
+            $stmt->execute([$userId, $level]);
+            $result = $stmt->fetch();
+            $completed = $result['completed'] ?? 0;
+            
+            // Get total tasks for level
+            $stmt = $conn->prepare("
+                SELECT COUNT(*) as total FROM tasks WHERE level = ?
+            ");
+            $stmt->execute([$level]);
+            $result = $stmt->fetch();
+            $total = $result['total'] ?? 40;
+            
+            // Calculate progress
+            $progress = $total > 0 ? ($completed / $total) * 100 : 0;
+            $available = max(0, $total - $completed);
+            
+            return [
+                'completed' => $completed,
+                'total' => $total,
+                'available' => $available,
+                'progress' => $progress,
+                'is_unlocked' => isLevelUnlockedForUser($userId, $level)
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error getting level progress: " . $e->getMessage());
+            return [
+                'completed' => 0,
+                'total' => 40,
+                'available' => 40,
+                'progress' => 0,
+                'is_unlocked' => $level === 'Bronze'
+            ];
+        }
+    }
+}
+
+if (!function_exists('updateUserSessionData')) {
+    function updateUserSessionData($userId) {
+        try {
+            $conn = getConnection();
+            
+            // Get fresh user data
+            $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $userData = $stmt->fetch();
+            
+            if ($userData && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId) {
+                // Update session with fresh data
+                $_SESSION['user_balance'] = $userData['balance'];
+                $_SESSION['user_level'] = $userData['level'];
+                $_SESSION['user_rating'] = $userData['rating'];
+                $_SESSION['user_accuracy'] = $userData['accuracy'];
+                
+                return true;
+            }
+            
+            return false;
+        } catch (PDOException $e) {
+            error_log("Error updating user session data: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+if (!function_exists('refreshUserDashboardCache')) {
+    function refreshUserDashboardCache($userId) {
+        try {
+            // Clear any cached dashboard data for this user
+            if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId) {
+                unset($_SESSION['dashboard_cache']);
+                unset($_SESSION['level_stats_cache']);
+                
+                // Force fresh data on next dashboard load
+                $_SESSION['force_refresh'] = true;
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error refreshing dashboard cache: " . $e->getMessage());
+            return false;
+        }
+    }
+}

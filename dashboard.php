@@ -14,6 +14,8 @@ $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
+// Always read fresh data from database - no session caching
+
 // Get user statistics
 $stats = [];
 try {
@@ -23,30 +25,18 @@ try {
     // Get user's stored level or calculate it
     $current_level = $user['level'] ?? 'Bronze';
     
+    // Calculate stats for each level using new functions
+    $stats['levels'] = [];
     foreach ($levels as $level) {
-        // Total tasks for this level
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM tasks WHERE level = ? AND active = 1");
-        $stmt->execute([$level]);
-        $total_tasks = $stmt->fetch()['count'];
-        
-        // Completed tasks for this level
-        $stmt = $conn->prepare("
-            SELECT COUNT(*) as count FROM completed_tasks ct
-            JOIN tasks t ON ct.task_id = t.id
-            WHERE ct.user_id = ? AND t.level = ?
-        ");
-        $stmt->execute([$_SESSION['user_id'], $level]);
-        $completed_tasks = $stmt->fetch()['count'];
-        
-        $stats['levels'][$level] = [
-            'total' => $total_tasks,
-            'completed' => $completed_tasks,
-            'available' => max(0, $total_tasks - $completed_tasks)
-        ];
-        
-        // Calculate current level if not stored in users table
-        if (empty($user['level'])) {
-            if ($completed_tasks < $total_tasks) {
+        $levelProgress = getLevelProgressForUser($_SESSION['user_id'], $level);
+        $stats['levels'][$level] = $levelProgress;
+    }
+    
+    // Calculate current level if not stored in users table
+    if (empty($user['level'])) {
+        foreach ($levels as $level) {
+            $levelProgress = $stats['levels'][$level];
+            if ($levelProgress['completed'] < $levelProgress['total']) {
                 $current_level = $level;
                 break;
             }
@@ -139,12 +129,17 @@ try {
     $completed_task_ids = [];
 }
 
-// Get available levels
+// Get available levels with unlock status from database
 $levels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
 $unlocked_levels = [];
 foreach ($levels as $level) {
-    $unlocked_levels[$level] = $user[strtolower($level) . '_unlocked'] ?? 0;
+    $unlocked_levels[$level] = isLevelUnlockedForUser($_SESSION['user_id'], $level);
+    error_log("DEBUG: Dashboard - Level $level unlock status: " . ($unlocked_levels[$level] ? 'UNLOCKED' : 'LOCKED'));
 }
+
+// DEBUG: Log user balance from database
+error_log("DEBUG: Dashboard - User balance from database: " . $user['balance']);
+error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? 'null'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -778,7 +773,10 @@ foreach ($levels as $level) {
                     </div>
                     <div class="progress-container">
                         <div class="progress-bar">
-                            <div class="progress-fill" id="currentLevelProgressBar" style="width: <?php echo isset($stats['levels'][$stats['current_level']]) ? min(($stats['levels'][$stats['current_level']]['completed'] / max($stats['levels'][$stats['current_level']]['total'], 1)) * 100, 100) : 0; ?>%"></div>
+                            <div class="progress-fill" id="currentLevelProgressBar" style="width: <?php 
+                                $current_level_data = $stats['levels'][$stats['current_level']] ?? ['completed' => 0, 'total' => 40, 'progress' => 0];
+                                echo min(($current_level_data['completed'] / max($current_level_data['total'], 1)) * 100, 100); 
+                            ?>%"></div>
                         </div>
                         <div style="text-align: right;">
                             <a href="#" class="level-link" onclick="openTaskModal('<?php echo htmlspecialchars($stats['current_level']); ?>')">Start Tasks →</a>
@@ -854,6 +852,7 @@ foreach ($levels as $level) {
                             $is_current = $user['level'] === $level;
                             $is_unlocked = $unlocked_levels[$level] || $is_current;
                             $level_status = $is_current ? 'current' : ($is_unlocked ? 'progress' : 'locked');
+                            $level_data = $stats['levels'][$level] ?? ['completed' => 0, 'total' => 40, 'available' => 40, 'progress' => 0];
                             ?>
                             <div class="level-card <?php echo $is_current ? 'current' : ''; ?>" data-level="<?php echo htmlspecialchars($level); ?>" onclick="handleLevelClick('<?php echo htmlspecialchars($level); ?>', '<?php echo $level_status; ?>')">
                                 <div class="level-card-header">
@@ -865,10 +864,10 @@ foreach ($levels as $level) {
                                 <div class="level-category">Name Items</div>
                                 <div class="level-progress-text">Progress</div>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: <?php echo isset($stats['levels'][$level]) ? min(($stats['levels'][$level]['completed'] / max($stats['levels'][$level]['total'], 1)) * 100, 100) : 0; ?>%"></div>
+                                    <div class="progress-fill" style="width: <?php echo min(($level_data['completed'] / max($level_data['total'], 1)) * 100, 100); ?>%"></div>
                                 </div>
-                                <div class="level-progress-text level-progress"><?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['completed'] : 0; ?>/<?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['total'] : 0; ?> tasks</div>
-                                <div class="available-tasks">Available: <?php echo isset($stats['levels'][$level]) ? $stats['levels'][$level]['available'] : 0; ?></div>
+                                <div class="level-progress-text level-progress"><?php echo $level_data['completed']; ?>/<?php echo $level_data['total']; ?> tasks</div>
+                                <div class="available-tasks">Available: <?php echo $level_data['available']; ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -1050,7 +1049,20 @@ foreach ($levels as $level) {
             if (status === 'locked') {
                 openLockedModal(level);
             } else {
-                openTaskModal(level);
+                // Double-check unlock status in database before opening tasks
+                fetch('check_level_unlock.php?level=' + encodeURIComponent(level))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.unlocked) {
+                            openTaskModal(level);
+                        } else {
+                            openLockedModal(level);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking level unlock status:', error);
+                        openLockedModal(level);
+                    });
             }
         }
         
