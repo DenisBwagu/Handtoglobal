@@ -62,6 +62,20 @@ try {
         exit;
     }
 
+    $taskNumber = $statsBefore['completed'] + 1;
+    $combo = htg_pending_combo_for_task_number($conn, $userId, $level, $taskNumber);
+    if ($combo) {
+        echo json_encode([
+            'success' => true,
+            'combo_required' => true,
+            'combo' => $combo,
+            'next_task' => null,
+            'level_completed' => false,
+            'dashboard_stats' => htg_dashboard_stats($conn, $userId, $level),
+        ]);
+        exit;
+    }
+
     $reward = (float)($task['reward'] ?? 0);
     if ($reward <= 0) {
         $rewardByLevel = [
@@ -74,12 +88,7 @@ try {
         ];
         $reward = $rewardByLevel[$level] ?? 1.80;
     }
-    $statsBefore = htg_level_stats($conn, $userId, $level);
-    $taskNumber = $statsBefore['completed'] + 1;
-    $combo = htg_active_combo_for_task_number($conn, $userId, $level, $taskNumber);
-    $comboMultiplier = $combo ? (float)($combo['multiplier'] ?? 1) : 1;
     $baseReward = $reward;
-    $reward = round($reward * $comboMultiplier, 2);
 
     $conn->beginTransaction();
 
@@ -136,11 +145,11 @@ try {
         'progress' => $statsAfter['progress'],
         'current_level' => $level,
         'combo_required' => false,
-        'combo' => $combo,
-        'combo_applied' => $combo !== null,
+        'combo' => null,
+        'combo_applied' => false,
         'base_reward' => $baseReward,
         'reward' => $reward,
-        'combo_multiplier' => $comboMultiplier,
+        'combo_multiplier' => 1,
         'level_completed' => !$nextTask,
         'next_task' => $nextTask,
         'dashboard_stats' => $dashboardStats,

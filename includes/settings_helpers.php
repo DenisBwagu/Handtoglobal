@@ -112,7 +112,20 @@ if (!function_exists('get_favicon')) {
      * @return string The favicon URL
      */
     function get_favicon() {
-        return get_setting('favicon', 'assets/images/favicon.ico');
+        $favicon = get_setting('site_favicon', get_setting('favicon', 'assets/images/favicon.ico'));
+        if ($favicon === '') {
+            $favicon = 'assets/images/favicon.ico';
+        }
+
+        if (preg_match('/^(https?:)?\/\//i', $favicon)) {
+            return $favicon;
+        }
+
+        $path = strtok($favicon, '?');
+        $absolutePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($path, '/'));
+        $version = is_file($absolutePath) ? filemtime($absolutePath) : time();
+        $separator = strpos($favicon, '?') === false ? '?' : '&';
+        return $favicon . $separator . 'v=' . $version;
     }
 }
 
@@ -148,6 +161,7 @@ if (!function_exists('get_default_settings')) {
             'telegram_link' => 'https://t.me/chica256',
             'site_logo' => 'assets/images/logo.png',
             'favicon' => 'assets/images/favicon.ico',
+            'site_favicon' => 'assets/images/favicon.ico',
             'og_image' => 'assets/images/og-image.jpg',
             'admin_locale' => 'english',
             'user_locale' => 'english',

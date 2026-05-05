@@ -72,4 +72,17 @@ return [
     'error' => 'Помилка',
     'familiar_brand' => 'Ви знайомі з цим брендом?',
     'exploring_visibility_popularity' => 'Ми досліджуємо видимість і популярність продукту.',
+
+    'main' => 'ГОЛОВНЕ',
+    'account' => 'АКАУНТ',
+    'support' => 'Підтримка',
+    'task_history' => 'Історія завдань',
+    'completed_tasks' => 'Виконані завдання',
+    'customer_support' => 'Підтримка клієнтів',
+    'today_progress' => 'Прогрес сьогодні',
+    'all_levels' => 'Усі рівні',
+    'click_level_start_tasks' => 'Натисніть рівень, щоб почати завдання',
+    'performance_score' => 'Оцінка продуктивності',
+    'welcome_back' => 'З поверненням',
+    'name_items' => 'Назвати предмети',
 ];

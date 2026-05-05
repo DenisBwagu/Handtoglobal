@@ -72,4 +72,17 @@ return [
     'error' => 'Fehler',
     'familiar_brand' => 'Sind Sie mit dieser Marke vertraut?',
     'exploring_visibility_popularity' => 'Wir erkunden die Sichtbarkeit und Beliebtheit eines Produkts.',
+
+    'main' => 'HAUPT',
+    'account' => 'KONTO',
+    'support' => 'Support',
+    'task_history' => 'Aufgabenverlauf',
+    'completed_tasks' => 'Abgeschlossene Aufgaben',
+    'customer_support' => 'Kundensupport',
+    'today_progress' => 'Heutiger Fortschritt',
+    'all_levels' => 'Alle Level',
+    'click_level_start_tasks' => 'Klicken Sie auf ein Level, um Aufgaben zu starten',
+    'performance_score' => 'Leistungswert',
+    'welcome_back' => 'Willkommen zurück',
+    'name_items' => 'Artikel benennen',
 ];

@@ -234,41 +234,51 @@ if (!function_exists('getSiteSettings')) {
 // Language System
 if (!function_exists('get_current_language')) {
     function get_current_language() {
-        // Try to get language from settings, fallback to session, then to English
-        $language = getSetting('user_locale', 'english');
-        
-        // Override with session if set
-        if (isset($_SESSION['language'])) {
-            $language = $_SESSION['language'];
+        if (function_exists('current_language')) {
+            return current_language();
         }
-        
-        return $language;
+
+        if (!empty($_SESSION['language'])) {
+            return $_SESSION['language'];
+        }
+
+        if (!empty($_COOKIE['htg_language'])) {
+            return $_COOKIE['htg_language'];
+        }
+
+        $contextKey = !empty($_SESSION['admin_id']) && ($_SESSION['role'] ?? '') === 'admin' ? 'admin_locale' : 'user_locale';
+        return getSetting($contextKey, 'english');
     }
 }
 
 if (!function_exists('set_language')) {
     function set_language($language) {
-        // Save to session
+        if (function_exists('normalize_language_code')) {
+            $language = normalize_language_code($language);
+        }
+
         $_SESSION['language'] = $language;
-        
-        // Also save to database for persistence
-        setSetting('user_locale', $language);
+        setcookie('htg_language', $language, time() + 31536000, '/');
+
+        $contextKey = !empty($_SESSION['admin_id']) && ($_SESSION['role'] ?? '') === 'admin' ? 'admin_locale' : 'user_locale';
+        setSetting($contextKey, $language);
     }
 }
 
 if (!function_exists('get_translation')) {
     function get_translation($key, $fallback = '') {
+        if (function_exists('__t')) {
+            return __t($key, $fallback);
+        }
+
         static $translations = [];
-        
         $language = get_current_language();
-        
-        // Load translations for current language if not already loaded
+
         if (!isset($translations[$language])) {
             $translations[$language] = load_language_translations($language);
         }
-        
-        // Return translation or fallback
-        return $translations[$language][$key] ?? $fallback;
+
+        return $translations[$language][$key] ?? ($fallback !== '' ? $fallback : $key);
     }
 }
 

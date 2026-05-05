@@ -72,4 +72,17 @@ return [
     'error' => '错误',
     'familiar_brand' => '您熟悉这个品牌吗？',
     'exploring_visibility_popularity' => '我们正在探索产品的可见性和受欢迎程度。',
+
+    'main' => '主菜单',
+    'account' => '账户',
+    'support' => '支持',
+    'task_history' => '任务记录',
+    'completed_tasks' => '已完成任务',
+    'customer_support' => '客户支持',
+    'today_progress' => '今日进度',
+    'all_levels' => '全部等级',
+    'click_level_start_tasks' => '点击等级开始任务',
+    'performance_score' => '表现评分',
+    'welcome_back' => '欢迎回来',
+    'name_items' => '命名物品',
 ];

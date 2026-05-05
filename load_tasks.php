@@ -58,10 +58,24 @@ try {
         exit;
     }
 
+    $combo = htg_pending_combo_for_task_number($conn, $userId, $level, (int)$currentTask['task_number']);
+    if ($combo) {
+        echo json_encode([
+            'success' => true,
+            'combo_required' => true,
+            'combo' => $combo,
+            'task' => null,
+            'all_tasks' => htg_all_task_progress($conn, $userId, $level),
+            'progress' => $stats['completed'] . '/' . $stats['total'],
+            'dashboard_stats' => htg_dashboard_stats($conn, $userId, $level),
+        ]);
+        exit;
+    }
+
     echo json_encode([
         'success' => true,
         'task' => $currentTask,
-        'combo' => htg_active_combo_for_task_number($conn, $userId, $level, $currentTask['task_number']),
+        'combo' => null,
         'combo_required' => false,
         'all_tasks' => htg_all_task_progress($conn, $userId, $level),
         'progress' => $stats['completed'] . '/' . $stats['total'],

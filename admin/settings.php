@@ -66,7 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES[$field]['name']) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
 
             $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
-            $allowed = ['jpg','jpeg','png','webp','gif','ico'];
+            $allowed = $field === 'favicon'
+                ? ['ico', 'png', 'jpg', 'jpeg', 'webp']
+                : ['jpg','jpeg','png','webp','gif','ico'];
 
             if (in_array($ext, $allowed)) {
 
@@ -75,6 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
                     update_setting($field, $uploadUrl . $filename);
+                    if ($field === 'favicon') {
+                        update_setting('site_favicon', $uploadUrl . $filename);
+                    }
                 }
             }
         }
@@ -92,7 +97,7 @@ $current_settings = [
     'support_email' => get_setting('support_email', 'support@handtoglobal.com'),
     'telegram_link' => get_setting('telegram_link', 'https://t.me/chica256'),
     'site_logo' => get_setting('site_logo', 'assets/images/logo.png'),
-    'favicon' => get_setting('favicon', 'assets/images/favicon.ico'),
+    'favicon' => get_setting('site_favicon', get_setting('favicon', 'assets/images/favicon.ico')),
     'og_image' => get_setting('og_image', 'assets/images/og-image.jpg'),
     'admin_locale' => get_setting('admin_locale', 'english'),
     'user_locale' => get_setting('user_locale', 'english'),
@@ -619,7 +624,7 @@ $current_settings = [
                                     <img src="../<?php echo htmlspecialchars($current_settings['favicon']); ?>" alt="Current Favicon">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" name="favicon" class="file-input" accept="image/ico,image/png,image/svg">
+                            <input type="file" name="favicon" class="file-input" accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/jpeg,image/webp,.ico,.png,.jpg,.jpeg,.webp">
                         </div>
                         
                         <div class="form-group">

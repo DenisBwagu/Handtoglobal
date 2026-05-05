@@ -963,6 +963,21 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             </div>
         </div>
     </div>
+
+    <div class="modal" id="comboModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><?php echo __t('combo_required', 'Combo Required'); ?></h3>
+                <button class="modal-close" onclick="closeComboModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="comboModalBody"></div>
+            <div class="modal-footer" id="comboModalFooter">
+                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
+            </div>
+        </div>
+    </div>
     
     <!-- Level Completed Modal -->
     <div class="completed-modal-overlay" id="completedModal" style="display: none;">
@@ -1103,6 +1118,21 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         return;
                     }
 
+                    if (data.combo_required && data.combo) {
+                        if (data.dashboard_stats) {
+                            updateDashboardElements(data.dashboard_stats);
+                        }
+                        body.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b;"></i>
+                                <h4 style="margin: 16px 0 8px 0;"><?php echo __t('combo_required', 'Combo Required'); ?></h4>
+                                <p style="color: #6b7280;"><?php echo __t('combo_flow_paused', 'Tasks are paused at this combo point. Please contact support or wait for admin confirmation.'); ?></p>
+                            </div>
+                        `;
+                        showComboModal(data.combo);
+                        return;
+                    }
+                    
                     if (data.completed || !data.task) {
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
@@ -1250,6 +1280,15 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 console.log("next_task:", data.next_task);
                 console.log("combo_required:", data.combo_required);
                 console.log("level_completed:", data.level_completed);
+                
+                if (data.success && data.combo_required && data.combo) {
+                    console.log("COMBO REQUIRED - Showing combo modal");
+                    if (data.dashboard_stats) {
+                        updateDashboardElements(data.dashboard_stats);
+                    }
+                    showComboModal(data.combo);
+                    return;
+                }
                 
                 if (data.success && data.next_task) {
                     console.log("RENDERING NEXT TASK NOW");
@@ -1776,6 +1815,58 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.classList.remove('active');
+            }
+        }
+
+        function showComboModal(combo) {
+            if (!combo) {
+                return;
+            }
+
+            const modal = document.getElementById('comboModal');
+            const body = document.getElementById('comboModalBody');
+            const footer = document.getElementById('comboModalFooter');
+            if (!modal || !body || !footer) {
+                return;
+            }
+
+            body.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
+                    <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block; margin-bottom: 8px;">
+                        <?php echo __t('combo_required', 'Combo Required'); ?>
+                    </div>
+                </div>
+                <div style="background: #f0f4ff; border: 1px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <div style="margin-bottom: 16px;">
+                        <strong><?php echo __t('message', 'Message'); ?>:</strong><br>
+                        ${combo.message || ''}
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <strong><?php echo __t('combo_amount', 'Combo Amount'); ?>:</strong><br>
+                        $${parseFloat(combo.amount || 0).toFixed(2)}
+                    </div>
+                    <div>
+                        <strong><?php echo __t('current_task', 'Current Task'); ?>:</strong><br>
+                        <?php echo __t('task', 'Task'); ?> ${combo.task_number} - ${combo.level}
+                    </div>
+                </div>
+            `;
+
+            footer.innerHTML = `
+                <button class="btn btn-support" onclick="window.open(window.SUPPORT_LINK || '#', '_blank')" style="background: #f59e0b; color: white;">
+                    <?php echo __t('contact_support', 'Contact Support'); ?>
+                </button>
+                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeComboModal() {
+            const modal = document.getElementById('comboModal');
+            if (modal) {
+                modal.classList.remove('active');
             }
         }
             </script>

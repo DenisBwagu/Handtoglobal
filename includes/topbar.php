@@ -72,6 +72,10 @@ if ($isAdminArea && isAdminLoggedIn()) {
 
 $siteName = get_setting('site_name', 'HandToGlobal');
 $siteLogo = get_setting('site_logo', '');
+$faviconUrl = function_exists('get_favicon') ? get_favicon() : 'assets/images/favicon.ico';
+if ($faviconUrl !== '' && !preg_match('/^(https?:)?\/\//i', $faviconUrl) && $faviconUrl[0] !== '/') {
+    $faviconUrl = $baseUrl . ltrim($faviconUrl, '/');
+}
 $siteLogoUrl = $siteLogo;
 if ($siteLogoUrl !== '' && !preg_match('/^(https?:)?\/\//i', $siteLogoUrl) && $siteLogoUrl[0] !== '/') {
     $siteLogoUrl = $baseUrl . ltrim($siteLogoUrl, '/');
@@ -83,6 +87,7 @@ $languages = available_languages();
 ?>
 
 <link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/global-theme.css">
+<link rel="icon" href="<?php echo htmlspecialchars($faviconUrl); ?>" type="image/x-icon">
 <script src="<?php echo $assetPrefix; ?>assets/js/theme.js" defer></script>
 
 <div class="topbar htg-topbar" id="topbar" data-support-link="<?php echo htmlspecialchars($supportTelegram); ?>">
