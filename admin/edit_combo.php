@@ -1,26 +1,17 @@
 <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
- require_once __DIR__ . '/../config.php'; ?>
-<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
-
 /**
  * Edit Combo Page
  * This page allows admins to edit existing combos
  */
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/settings_helpers.php';
 
+// Check if admin is logged in
+if (!isAdminLoggedIn()) {
+    header('Location: ../login.php');
+    exit;
+}
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
     header('Location: ../login.php');
