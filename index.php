@@ -672,18 +672,18 @@ $support_link = get_telegram_link();
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Transform Your Time into Income</h1>
-            <p>Join thousands of earners worldwide completing simple tasks and getting paid daily. No experience needed - start earning today!</p>
+            <h1><?php echo __t('Transform Your Time into Income'); ?></h1>
+            <p><?php echo __t('Join thousands of earners worldwide completing simple tasks and getting paid daily. No experience needed - start earning today!'); ?></p>
             <div class="hero-buttons">
                 <?php if (!$is_logged_in): ?>
                     <a href="register.php" class="btn btn-success">
                         <i class="fas fa-rocket"></i>
-                        Start Earning Now
+                        <?php echo __t('Start Earning Now'); ?>
                     </a>
                 <?php endif; ?>
                 <a href="<?php echo $support_link; ?>" target="_blank" class="btn btn-secondary">
                     <i class="fas fa-headset"></i>
-                    Get Support
+                    <?php echo __t('Get Support'); ?>
                 </a>
             </div>
         </div>
