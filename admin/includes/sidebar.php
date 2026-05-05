@@ -4,6 +4,8 @@
  * Shared sidebar for all admin pages
  */
 
+require_once '../includes/settings_helpers.php';
+
 // Get current page for active state
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
@@ -13,8 +15,8 @@ function isMenuActive($page, $currentPage) {
 }
 
 // Get site logo and name
-$siteLogo = get_setting('site_logo');
-$siteName = get_setting('site_name', 'HandToGlobal');
+$siteLogo = get_site_logo();
+$siteName = get_site_name();
 ?>
 
 <!-- Admin Sidebar -->

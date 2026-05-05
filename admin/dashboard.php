@@ -1,6 +1,6 @@
 <?php
 require_once '../config.php';
-require_once '../get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -88,7 +88,14 @@ $topPerformersToday = $conn->query("
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - HandToGlobal Admin</title>
+    <title><?php echo htmlspecialchars(get_meta_title()); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars(get_meta_keywords()); ?>">
+    <meta name="robots" content="<?php echo htmlspecialchars(get_meta_robots()); ?>">
+    <meta property="og:title" content="<?php echo htmlspecialchars(get_meta_title()); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
+    <link rel="icon" href="<?php echo htmlspecialchars(get_favicon()); ?>" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="includes/admin_styles.css">
 </head>

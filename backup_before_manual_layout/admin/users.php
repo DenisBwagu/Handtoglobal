@@ -2,7 +2,7 @@
 require_once '../config.php';
 $conn = getConnection();
 $pdo = $conn;
-require_once '../get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {

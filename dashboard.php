@@ -1,9 +1,9 @@
 <?php
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once 'includes/settings_helpers.php';
 
 // Get Telegram link from settings
-$supportLink = getSupportLink();
+$supportLink = get_telegram_link();
 require_once 'get_translation.php';
 
 requireLogin();
@@ -158,7 +158,14 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - <?php echo get_setting('site_name', 'HandToGlobal'); ?></title>
+    <title><?php echo htmlspecialchars(get_meta_title()); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars(get_meta_keywords()); ?>">
+    <meta name="robots" content="<?php echo htmlspecialchars(get_meta_robots()); ?>">
+    <meta property="og:title" content="<?php echo htmlspecialchars(get_meta_title()); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
+    <link rel="icon" href="<?php echo htmlspecialchars(get_favicon()); ?>" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/global-theme.css">
     <script src="assets/js/theme.js" defer></script>

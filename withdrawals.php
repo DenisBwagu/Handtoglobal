@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once 'includes/settings_helpers.php';
 require_once 'get_translation.php';
 
 requireLogin();
@@ -39,8 +39,8 @@ $stmt = $conn->prepare("
 $stmt->execute([$userId]);
 $withdrawals = $stmt->fetchAll();
 
-$supportLink = getSupportLink();
-$siteName = get_setting('site_name', 'HandToGlobal');
+$supportLink = get_telegram_link();
+$siteName = get_site_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">

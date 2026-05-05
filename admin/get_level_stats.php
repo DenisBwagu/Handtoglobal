@@ -7,7 +7,7 @@
 header('Content-Type: application/json');
 
 require_once '../config.php';
-require_once '../get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {

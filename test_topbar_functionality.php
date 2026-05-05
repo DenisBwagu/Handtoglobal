@@ -5,7 +5,7 @@
  */
 
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 echo "<h2>Topbar Functionality Test</h2>";
 

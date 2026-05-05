@@ -1,6 +1,6 @@
 <?php
 require_once '../config.php';
-require_once '../get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -8,124 +8,105 @@ if (!isAdminLoggedIn()) {
 }
 
 // Get database connection
-$conn = getConnection();
 
-$msg = "";
-$error = "";
-if (isset($_GET['saved'])) {
-    $msg = "Settings updated successfully!";
+// Initialize variables
+$msg = '';
+$error = '';
+
+// Handle success message from redirect
+if (isset($_GET['saved']) && $_GET['saved'] === '1') {
+    $msg = 'Settings updated successfully!';
 }
 
 // Handle settings update
-if (isset($_POST['update_settings'])) {
-    try {
-        // Handle file uploads
-        $upload_dir = '../uploads/settings/';
-        
-        // Create upload directory if it doesn't exist
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        // Site Logo Upload
-        if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
-            $allowed_types = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
-            $file_info = pathinfo($_FILES['site_logo']['name']);
-            $extension = strtolower($file_info['extension']);
-            
-            if (in_array($extension, $allowed_types)) {
-                $filename = 'logo_' . time() . '.' . $extension;
-                $upload_path = $upload_dir . $filename;
-                
-                if (move_uploaded_file($_FILES['site_logo']['tmp_name'], $upload_path)) {
-                    $_POST['site_logo'] = 'uploads/settings/' . $filename;
-                } else {
-                    $error = "Failed to upload site logo";
-                }
-            } else {
-                $error = "Invalid file type for site logo";
-            }
-        }
-        
-        // OG Image Upload
-        if (isset($_FILES['og_image']) && $_FILES['og_image']['error'] === UPLOAD_ERR_OK) {
-            $allowed_types = ['jpg', 'jpeg', 'png', 'webp'];
-            $file_info = pathinfo($_FILES['og_image']['name']);
-            $extension = strtolower($file_info['extension']);
-            
-            if (in_array($extension, $allowed_types)) {
-                $filename = 'og_' . time() . '.' . $extension;
-                $upload_path = $upload_dir . $filename;
-                
-                if (move_uploaded_file($_FILES['og_image']['tmp_name'], $upload_path)) {
-                    $_POST['og_image'] = 'uploads/settings/' . $filename;
-                } else {
-                    $error = "Failed to upload OG image";
-                }
-            } else {
-                $error = "Invalid file type for OG image";
-            }
-        }
-        
-        // Favicon Upload
-        if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === UPLOAD_ERR_OK) {
-            $allowed_types = ['ico', 'png', 'svg'];
-            $file_info = pathinfo($_FILES['favicon']['name']);
-            $extension = strtolower($file_info['extension']);
-            
-            if (in_array($extension, $allowed_types)) {
-                $filename = 'favicon_' . time() . '.' . $extension;
-                $upload_path = $upload_dir . $filename;
-                
-                if (move_uploaded_file($_FILES['favicon']['tmp_name'], $upload_path)) {
-                    $_POST['favicon'] = 'uploads/settings/' . $filename;
-                } else {
-                    $error = "Failed to upload favicon";
-                }
-            } else {
-                $error = "Invalid file type for favicon";
-            }
-        }
-        
-        if (empty($error)) {
-            // Update all settings
-            $settings_to_update = [
-                'site_name' => $_POST['site_name'] ?? '',
-                'support_email' => $_POST['support_email'] ?? '',
-                'telegram_link' => $_POST['telegram_link'] ?? '',
-                'site_logo' => $_POST['site_logo'] ?? get_setting('site_logo'),
-                'admin_locale' => $_POST['admin_locale'] ?? 'english',
-                'user_locale' => $_POST['user_locale'] ?? 'english',
-                'min_withdrawal_amount' => $_POST['min_withdrawal_amount'] ?? '10',
-                'min_withdrawal_level' => $_POST['min_withdrawal_level'] ?? '1',
-                'max_levels_per_day' => $_POST['max_levels_per_day'] ?? '3',
-                'testimonials_display' => $_POST['testimonials_display'] ?? 'both',
-                'meta_title' => $_POST['meta_title'] ?? '',
-                'meta_description' => $_POST['meta_description'] ?? '',
-                'meta_keywords' => $_POST['meta_keywords'] ?? '',
-                'og_image' => $_POST['og_image'] ?? get_setting('og_image'),
-                'favicon' => $_POST['favicon'] ?? get_setting('favicon'),
-                'meta_robots' => $_POST['meta_robots'] ?? 'index, follow'
-            ];
-            
-            foreach ($settings_to_update as $key => $value) {
-                update_setting($key, $value);
-            }
-            
-            // Set language in session for immediate effect
-            $_SESSION['admin_language'] = $_POST['admin_locale'] ?? 'english';
-            $_SESSION['user_language'] = $_POST['user_locale'] ?? 'english';
-            
-            redirect('settings.php?saved=1');
-        }
-        
-    } catch(PDOException $e) {
-        $error = "Failed to update settings: " . $e->getMessage();
-    }
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-// Get current settings
-$current_settings = get_all_settings();
+    // TEXT SETTINGS
+    $fields = [
+        'site_name',
+        'support_email',
+        'telegram_link',
+        'admin_locale',
+        'user_locale',
+        'min_withdrawal_amount',
+        'min_withdrawal_level',
+        'max_levels_per_day',
+        'testimonials_display',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
+        'meta_robots'
+    ];
+
+    foreach ($fields as $field) {
+        update_setting($field, $_POST[$field] ?? '');
+    }
+
+    // IMAGE UPLOADS
+    $uploadDir = __DIR__ . '/../uploads/settings/';
+    $uploadUrl = 'uploads/settings/';
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $imageFields = [
+        'site_logo',
+        'favicon',
+        'og_image',
+        'homepage_hero_image',
+        'homepage_about_image',
+        'homepage_banner_image'
+    ];
+
+    foreach ($imageFields as $field) {
+
+        if (!empty($_FILES[$field]['name']) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+
+            $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg','jpeg','png','webp','gif','ico'];
+
+            if (in_array($ext, $allowed)) {
+
+                $filename = $field . '_' . time() . '.' . $ext;
+                $target = $uploadDir . $filename;
+
+                if (move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
+                    update_setting($field, $uploadUrl . $filename);
+                }
+            }
+        }
+    }
+
+    header("Location: settings.php?saved=1");
+    exit;
+}
+        
+          
+
+// Get current settings using new helper functions
+$current_settings = [
+    'site_name' => get_setting('site_name', 'HandToGlobal'),
+    'support_email' => get_setting('support_email', 'support@handtoglobal.com'),
+    'telegram_link' => get_setting('telegram_link', 'https://t.me/chica256'),
+    'site_logo' => get_setting('site_logo', 'assets/images/logo.png'),
+    'favicon' => get_setting('favicon', 'assets/images/favicon.ico'),
+    'og_image' => get_setting('og_image', 'assets/images/og-image.jpg'),
+    'admin_locale' => get_setting('admin_locale', 'english'),
+    'user_locale' => get_setting('user_locale', 'english'),
+    'min_withdrawal_amount' => get_setting('min_withdrawal_amount', '10.00'),
+    'min_withdrawal_level' => get_setting('min_withdrawal_level', '2'),
+    'max_levels_per_day' => get_setting('max_levels_per_day', '40'),
+    'testimonials_display' => get_setting('testimonials_display', 'both'),
+    'meta_title' => get_setting('meta_title', 'HandToGlobal - Earn Money Online'),
+    'meta_description' => get_setting('meta_description', 'Join HandToGlobal and earn money by completing simple tasks.'),
+    'meta_keywords' => get_setting('meta_keywords', 'earn money online, tasks, get paid'),
+    'meta_robots' => get_setting('meta_robots', 'index, follow'),
+    'homepage_hero_image' => get_setting('homepage_hero_image', 'assets/images/hero-bg.jpg'),
+    'homepage_about_image' => get_setting('homepage_about_image', 'assets/images/about-image.jpg'),
+    'homepage_banner_image' => get_setting('homepage_banner_image', 'assets/images/banner.jpg'),
+    'homepage_logo_strip' => get_setting('homepage_logo_strip', '')
+];
 ?>
 
 <!DOCTYPE html>
@@ -519,13 +500,13 @@ $current_settings = get_all_settings();
         
         <!-- Main Content -->
         <div class="main-content">
-            <?php if ($msg): ?>
+            <?php if (!empty($msg)): ?>
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
                 </div>
             <?php endif; ?>
             
-            <?php if ($error): ?>
+            <?php if (!empty($error)): ?>
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
                 </div>
@@ -672,11 +653,53 @@ $current_settings = get_all_settings();
                         </div>
                     </div>
                     
+                    <!-- HOMEPAGE IMAGES Section -->
+                    <div class="settings-section">
+                        <div class="section-title">HOMEPAGE IMAGES</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">HomepageHeroImage</label>
+                            <?php if (!empty($current_settings['homepage_hero_image'])): ?>
+                                <div class="file-preview">
+                                    <img src="../<?php echo htmlspecialchars($current_settings['homepage_hero_image']); ?>" alt="Current Homepage Hero Image">
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" name="homepage_hero_image" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp,image/gif">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">HomepageAboutImage</label>
+                            <?php if (!empty($current_settings['homepage_about_image'])): ?>
+                                <div class="file-preview">
+                                    <img src="../<?php echo htmlspecialchars($current_settings['homepage_about_image']); ?>" alt="Current Homepage About Image">
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" name="homepage_about_image" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp,image/gif">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">HomepageBannerImage</label>
+                            <?php if (!empty($current_settings['homepage_banner_image'])): ?>
+                                <div class="file-preview">
+                                    <img src="../<?php echo htmlspecialchars($current_settings['homepage_banner_image']); ?>" alt="Current Homepage Banner Image">
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" name="homepage_banner_image" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp,image/gif">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">HomepageLogoStripImages</label>
+                            <textarea name="homepage_logo_strip" class="form-control-textarea" placeholder="Enter logo strip URLs or descriptions, one per line"><?php echo htmlspecialchars($current_settings['homepage_logo_strip'] ?? ''); ?></textarea>
+                        </div>
+                    </div>
+                    
                     <!-- Save Button -->
                     <div class="form-group">
                         <button type="submit" name="update_settings" class="btn btn-primary">Save</button>
                     </div>
                 </form>
+                
+                                
             </div>
         </div>
     </div>

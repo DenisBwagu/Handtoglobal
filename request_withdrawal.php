@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once 'includes/settings_helpers.php';
 require_once 'get_translation.php';
 
 requireLogin();
@@ -24,6 +24,7 @@ if (!$user) {
 
 // Get settings
 $minWithdrawal = (float)get_setting('min_withdrawal_amount', '10.00');
+$minWithdrawalLevel = (int)get_setting('min_withdrawal_level', '2');
 $availableBalance = (float)$user['balance'];
 
 // Handle form submission
@@ -40,12 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Amount is required and must be greater than 0.';
     } elseif ($amount > $availableBalance) {
         $error = 'Amount cannot exceed your available balance.';
+    } elseif ($amount < $minWithdrawal) {
+        $error = 'Minimum withdrawal amount is $' . number_format($minWithdrawal, 2) . '. Please enter a higher amount.';
     } elseif ($walletAddress === '') {
         $error = 'Wallet address is required.';
     } elseif ($coinAsset === '') {
         $error = 'Coin asset is required.';
     } elseif ($network === '') {
         $error = 'Network is required.';
+    } elseif ($user['level'] < $minWithdrawalLevel) {
+        $error = 'You must reach at least level ' . $minWithdrawalLevel . ' to request withdrawals.';
     } else {
         // Insert into withdrawals table
         $stmt = $conn->prepare("
@@ -63,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$supportLink = getSupportLink();
-$siteName = get_setting('site_name', 'HandToGlobal');
+$supportLink = get_telegram_link();
+$siteName = get_site_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">

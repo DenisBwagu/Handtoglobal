@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once '../includes/settings_helpers.php';
 
 // Test language system
 echo "<h2>Language System Test</h2>";

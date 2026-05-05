@@ -5,7 +5,7 @@ if (function_exists('get_all_settings')) {
 }
 
 require_once 'config.php';
-require_once 'get_setting.php';
+require_once 'includes/settings_helpers.php';
 require_once 'get_translation.php';
 
 // Get testimonials from database (force refresh for instant updates)
@@ -48,15 +48,21 @@ $is_logged_in = function_exists('isLoggedIn') && isLoggedIn();
 $is_admin = function_exists('isAdminLoggedIn') && isAdminLoggedIn();
 
 // Get support link from settings (force refresh for instant updates)
-$support_link = get_setting('telegram_link', 'https://t.me/chica256', true);
+$support_link = get_telegram_link();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo get_setting('site_name', 'HandToGlobal', true); ?> - Earn Money Online</title>
-    <meta name="description" content="Join HandToGlobal and start earning money online with simple tasks. Flexible work, reliable payments, global opportunities.">
+    <title><?php echo htmlspecialchars(get_meta_title()); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars(get_meta_keywords()); ?>">
+    <meta name="robots" content="<?php echo htmlspecialchars(get_meta_robots()); ?>">
+    <meta property="og:title" content="<?php echo htmlspecialchars(get_meta_title()); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
+    <link rel="icon" href="<?php echo htmlspecialchars(get_favicon()); ?>" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -216,6 +222,13 @@ $support_link = get_setting('telegram_link', 'https://t.me/chica256', true);
             position: relative;
             overflow: hidden;
         }
+        
+        .hero {
+            <?php $hero_image = get_setting('homepage_hero_image', '', true); ?>
+            <?php if ($hero_image): ?>
+                background: url('<?php echo $hero_image; ?>') center/cover no-repeat;
+            <?php endif; ?>
+        }
 
         .hero::before {
             content: '';
@@ -265,10 +278,13 @@ $support_link = get_setting('telegram_link', 'https://t.me/chica256', true);
 
         /* Animated Logo Strip */
         .logo-strip {
-            background: var(--white);
-            padding: 40px 0;
-            overflow: hidden;
-            border-bottom: 1px solid var(--border);
+            <?php $logo_strip = get_setting('homepage_logo_strip', '', true); ?>
+            <?php if ($logo_strip): ?>
+                background: var(--white);
+                padding: 40px 0;
+                overflow: hidden;
+                border-bottom: 1px solid var(--border);
+            <?php endif; ?>
         }
 
         .logo-track {
@@ -676,31 +692,15 @@ $support_link = get_setting('telegram_link', 'https://t.me/chica256', true);
     <!-- Animated Logo Strip -->
     <section class="logo-strip">
         <div class="logo-track">
-            <div class="logo-item">
-                <i class="fas fa-globe"></i>
-                Global Opportunities
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-dollar-sign"></i>
-                Daily Earnings
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-clock"></i>
-                Flexible Hours
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-shield-alt"></i>
-                Secure Payments
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-users"></i>
-                Growing Community
-            </div>
-            <!-- Duplicate for seamless loop -->
-            <div class="logo-item">
-                <i class="fas fa-globe"></i>
-                Global Opportunities
-            </div>
+            <?php 
+            $logo_strip = get_setting('homepage_logo_strip', '', true);
+            $logo_items = $logo_strip ? explode("\n", $logo_strip) : [];
+            foreach ($logo_items as $item): ?>
+                <div class="logo-item">
+                    <?php echo htmlspecialchars(trim($item)); ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
             <div class="logo-item">
                 <i class="fas fa-dollar-sign"></i>
                 Daily Earnings
@@ -750,6 +750,10 @@ $support_link = get_setting('telegram_link', 'https://t.me/chica256', true);
         </div>
     </section>
 
+    <?php 
+    $testimonials_display = get_setting('testimonials_display', 'both');
+    if ($testimonials_display !== 'none'): 
+?>
     <!-- Testimonials Section -->
     <section class="testimonials">
         <h2>What Our Community Says</h2>

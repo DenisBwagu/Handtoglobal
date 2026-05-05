@@ -4,6 +4,8 @@
  * Shared topbar for all admin pages - matches combos.php exactly
  */
 
+require_once '../includes/settings_helpers.php';
+
 // Get current page for title
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
