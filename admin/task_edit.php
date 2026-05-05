@@ -41,6 +41,7 @@ if (isset($_POST['update_task'])) {
     $description = trim($_POST['description']);
     $instructions = trim($_POST['instructions']);
     $external_link = trim($_POST['external_link']);
+    $reward = floatval($_POST['reward'] ?? 1.80);
     $active = isset($_POST['active']) ? 1 : 0;
     
     if (empty($title) || empty($level)) {
@@ -85,10 +86,11 @@ if (isset($_POST['update_task'])) {
                 external_link = ?, 
                 active = ?,
                 image = ?,
+                reward = ?,
                 updated_at = NOW()
                 WHERE id = ?
             ");
-            $stmt->execute([$level, $title, $description, $instructions, $external_link, $active, $image_filename, $task_id]);
+            $stmt->execute([$level, $title, $description, $instructions, $external_link, $active, $image_filename, $reward, $task_id]);
             
             $msg = "Task updated successfully!";
             
@@ -642,6 +644,12 @@ if (isset($_POST['update_task'])) {
                     <div class="form-group">
                         <label class="form-label">Title</label>
                         <input type="text" name="title" class="form-control" value="<?php echo htmlspecialchars($task['title']); ?>" required>
+                    </div>
+                    
+                    <!-- Reward -->
+                    <div class="form-group">
+                        <label class="form-label">Reward Amount ($)</label>
+                        <input type="number" name="reward" class="form-control" value="<?php echo htmlspecialchars($task['reward'] ?? '1.80'); ?>" step="0.01" min="0" required>
                     </div>
                     
                     <!-- Description -->

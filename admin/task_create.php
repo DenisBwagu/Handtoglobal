@@ -21,6 +21,7 @@ if (isset($_POST['create_task'])) {
     $description = trim($_POST['description']);
     $instructions = trim($_POST['instructions']);
     $external_link = trim($_POST['external_link']);
+    $reward = floatval($_POST['reward'] ?? 1.80);
     
     if (empty($title) || empty($level) || empty($type)) {
         $error = "Please fill all required fields";
@@ -56,10 +57,10 @@ if (isset($_POST['create_task'])) {
             
             // Insert new task into database
             $stmt = $conn->prepare("
-                INSERT INTO tasks (level, title, type, description, instructions, external_link, image, active, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW())
+                INSERT INTO tasks (level, title, type, description, instructions, external_link, image, reward, active, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())
             ");
-            $stmt->execute([$level, $title, $type, $description, $instructions, $external_link, $image_filename]);
+            $stmt->execute([$level, $title, $type, $description, $instructions, $external_link, $image_filename, $reward]);
             
             $msg = "Task created successfully!";
             
@@ -602,6 +603,12 @@ if (isset($_POST['create_task'])) {
                     <div class="form-group">
                         <label class="form-label">Type</label>
                         <input type="text" name="type" class="form-control" value="<?php echo htmlspecialchars($_POST['type'] ?? 'Name_items'); ?>" required>
+                    </div>
+                    
+                    <!-- Reward -->
+                    <div class="form-group">
+                        <label class="form-label">Reward Amount ($)</label>
+                        <input type="number" name="reward" class="form-control" value="<?php echo htmlspecialchars($_POST['reward'] ?? '1.80'); ?>" step="0.01" min="0" required>
                     </div>
                     
                     <!-- Description -->

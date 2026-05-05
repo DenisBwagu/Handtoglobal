@@ -319,15 +319,10 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
             'id' => (int)$next_task['id'],
             'title' => $next_task['title'] ?? 'Task Title',
             'description' => $next_task['description'] ?? 'Task description',
-            'instructions' => $next_task['instructions'] ?? 'YES or NO',
             'image' => $next_task['image'] ? 'uploads/tasks/' . $next_task['image'] : '',
+            'instructions' => $next_task['instructions'] ?? 'YES or NO',
             'level' => $next_task['level'] ?? 'Bronze',
-            'reward' => (float)($next_task['reward'] ?? 1.80),
-            'task_number' => $next_task['task_number'] ?? 1,
-            'completed_count' => $stats[$current_level]['completed'],
-            'total_tasks' => 40,
-            'available_count' => $stats[$current_level]['available'],
-            'progress_text' => $stats[$current_level]['completed'] . '/40'
+            'task_number' => $next_task['task_number'] ?? 1
         ];
     }
     

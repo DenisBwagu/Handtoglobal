@@ -141,8 +141,10 @@ if ($total_tasks == 0) {
                         <thead>
                             <tr>
                                 <th>TITLE</th>
-                                <th>TYPE</th>
+                                <th>DESCRIPTION</th>
                                 <th>LEVEL</th>
+                                <th>REWARD</th>
+                                <th>IMAGE</th>
                                 <th>ACTIVE</th>
                                 <th>ACTIONS</th>
                             </tr>
@@ -152,9 +154,26 @@ if ($total_tasks == 0) {
                                 <tr>
                                     <td><?php echo htmlspecialchars($task['title']); ?></td>
                                     <td>
-                                        <span class="badge"><?php echo htmlspecialchars($task['type']); ?></span>
+                                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+                                             title="<?php echo htmlspecialchars($task['description'] ?? ''); ?>">
+                                            <?php echo htmlspecialchars(substr($task['description'] ?? '', 0, 50)) . (strlen($task['description'] ?? '') > 50 ? '...' : ''); ?>
+                                        </div>
                                     </td>
-                                    <td><?php echo htmlspecialchars($task['level']); ?></td>
+                                    <td>
+                                        <span class="badge badge-<?php echo strtolower($task['level']); ?>">
+                                            <?php echo htmlspecialchars($task['level']); ?>
+                                        </span>
+                                    </td>
+                                    <td>$<?php echo number_format($task['reward'] ?? 1.80, 2); ?></td>
+                                    <td>
+                                        <?php if ($task['image']): ?>
+                                            <img src="../uploads/tasks/<?php echo htmlspecialchars($task['image']); ?>" 
+                                                 alt="Task Image" 
+                                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #dee2e6;">
+                                        <?php else: ?>
+                                            <span style="color: #6c757d; font-size: 12px;">No image</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if ($task['active']): ?>
                                             <span class="badge badge-active">Active</span>
@@ -164,10 +183,12 @@ if ($total_tasks == 0) {
                                     </td>
                                     <td>
                                         <div class="actions">
-                                            <a href="task_edit.php?id=<?= $task['id'] ?>" class="action-link">Edit</a>
+                                            <a href="task_edit.php?id=<?= $task['id'] ?>" class="action-link">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
                                             <a href="?delete=<?php echo $task['id']; ?>" class="action-link delete" 
                                                onclick="return confirm('Are you sure you want to delete this task?')">
-                                                Delete
+                                                <i class="fas fa-trash"></i> Delete
                                             </a>
                                         </div>
                                     </td>

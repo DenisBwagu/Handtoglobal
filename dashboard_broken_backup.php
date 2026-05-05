@@ -1033,8 +1033,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         }
         
         function openTaskModal(level) {
-            console.log("ACTIVE OPEN TASK MODAL FUNCTION CALLED WITH LEVEL:", level);
-            
             const modal = document.getElementById('taskModal');
             const title = document.getElementById('taskModalTitle');
             const body = document.getElementById('taskModalBody');
@@ -1187,10 +1185,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         return;
                     }
                     
-                    // Store all_tasks data for progress calculation
-                    window.currentAllTasks = data.all_tasks || [];
-                    console.log("STORED ALL_TASKS:", window.currentAllTasks);
-                    
                     // Display current task using renderTask for consistency
                     renderTask(data.task);
                     
@@ -1265,8 +1259,8 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         }
         
         function completeTask(taskId, response, level) {
-            console.log("ACTIVE COMPLETE TASK FUNCTION RUNNING");
-            console.log("SUBMIT RESPONSE", {taskId, response, level});
+            console.log("ACTIVE TASK SUBMIT FUNCTION RUNNING");
+            console.log("TASK ID:", taskId, "RESPONSE:", response, "LEVEL:", level);
             
             // Disable buttons to prevent double clicking
             disableTaskButtons();
@@ -1284,8 +1278,10 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             })
             .then(response => response.json())
             .then(data => {
-                console.log("SUBMIT RESPONSE", data);
-                console.log("NEXT TASK", data.next_task);
+                console.log("TASK RESPONSE:", data);
+                console.log("NEXT_TASK EXISTS:", data.next_task);
+                console.log("LEVEL_COMPLETED:", data.level_completed);
+                console.log("COMBO_REQUIRED:", data.combo_required);
                 
                 if (data.error) {
                     console.error('Task error:', data.error);
@@ -1301,32 +1297,12 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     updateDashboardStats(data);
                 }
                 
-                // Update live dashboard activity
-                updateLiveActivity(data);
-                
-                // AUTO NEXT CHECK
-                console.log("AUTO NEXT CHECK:");
-                console.log("success:", data.success);
-                console.log("next_task:", data.next_task);
-                console.log("level_completed:", data.level_completed);
-                
-                if (data.success && data.next_task) {
-                    console.log("RENDERING NEXT TASK NOW");
-                    // Update the all_tasks data for the new task
-                    if (window.currentAllTasks) {
-                        const taskIndex = window.currentAllTasks.findIndex(t => t.id === data.next_task.id);
-                        if (taskIndex !== -1) {
-                            window.currentAllTasks[taskIndex].completed = true;
-                        }
-                    }
+                // Load next task in same modal (continuous flow)
+                if (data.next_task) {
                     renderTask(data.next_task);
-                    return;
-                }
-                
-                if (data.success && data.level_completed) {
-                    console.log("LEVEL COMPLETE");
+                } else {
+                    // No next task available - show level completion in modal
                     showLevelCompletionInModal();
-                    return;
                 }
                 
             })
@@ -1480,93 +1456,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             `;
         }
         
-        function updateLiveActivity(data) {
-            console.log("UPDATING LIVE ACTIVITY:", data);
-            
-            // Update current level if provided
-            if (data.current_level) {
-                const currentLevelElements = document.querySelectorAll('.current-level, #currentLevelName, #welcomeLevelText');
-                currentLevelElements.forEach(el => {
-                    if (el.id === 'welcomeLevelText') {
-                        el.textContent = `${data.current_level} - ${data.completed_tasks || 0} tasks completed`;
-                    } else if (el.id === 'currentLevelName') {
-                        el.textContent = data.current_level;
-                    }
-                });
-            }
-            
-            // Update completed tasks count
-            if (data.completed_tasks !== undefined) {
-                const completedElements = document.querySelectorAll('.completed-count, #completedTasksCount');
-                completedElements.forEach(el => {
-                    el.textContent = data.completed_tasks;
-                });
-                
-                // Update progress text
-                const progressElements = document.querySelectorAll('.level-progress, .progress-text');
-                progressElements.forEach(el => {
-                    el.textContent = `${data.completed_tasks}/40`;
-                });
-            }
-            
-            // Update available tasks
-            if (data.available_tasks !== undefined) {
-                const availableElements = document.querySelectorAll('.available-tasks');
-                availableElements.forEach(el => {
-                    el.textContent = 'Available: ' + data.available_tasks;
-                });
-            }
-            
-            // Update balance
-            if (data.balance !== undefined) {
-                const balanceElements = document.querySelectorAll('#balanceText, .balance');
-                balanceElements.forEach(el => {
-                    el.textContent = '$' + parseFloat(data.balance).toFixed(2);
-                });
-            }
-            
-            // Update performance score
-            if (data.performance_score !== undefined) {
-                const scoreElements = document.querySelectorAll('.performance-score');
-                scoreElements.forEach(el => {
-                    el.textContent = parseFloat(data.performance_score).toFixed(2);
-                });
-            }
-            
-            // Update today's progress
-            if (data.today_completed !== undefined) {
-                const todayElements = document.querySelectorAll('#todayProgressText');
-                todayElements.forEach(el => {
-                    el.textContent = `${data.today_completed}/${data.daily_limit || 40} tasks`;
-                });
-            }
-            
-            // Update level cards progress bars
-            if (data.current_level && data.completed_tasks !== undefined) {
-                const levelCard = document.querySelector(`[data-level="${data.current_level}"]`);
-                if (levelCard) {
-                    const progressFill = levelCard.querySelector('.progress-fill');
-                    const progressText = levelCard.querySelector('.level-progress');
-                    const availableTasks = levelCard.querySelector('.available-tasks');
-                    
-                    if (progressFill) {
-                        const percentage = (data.completed_tasks / 40) * 100;
-                        progressFill.style.width = Math.min(percentage, 100) + '%';
-                    }
-                    
-                    if (progressText) {
-                        progressText.textContent = `${data.completed_tasks}/40`;
-                    }
-                    
-                    if (availableTasks) {
-                        availableTasks.textContent = 'Available: ' + (40 - data.completed_tasks);
-                    }
-                }
-            }
-            
-            console.log("LIVE ACTIVITY UPDATED");
-        }
-        
         function showLevelCompletion(data) {
             const modal = document.getElementById('taskModal');
             const modalBody = document.getElementById('taskModalBody');
@@ -1694,14 +1583,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         }
         
         function renderTask(task) {
-            console.log("ACTIVE RENDER TASK FUNCTION CALLED WITH:", task);
-            console.log("TASK RECEIVED", task);
-            
-            // Check if task data is valid
-            if (!task || !task.id) {
-                console.error("INVALID TASK DATA:", task);
-                return;
-            }
+            console.log("RENDER TASK FUNCTION CALLED WITH:", task);
+            console.log("TASK FIELDS CHECK:");
+            console.log("  - ID:", task.id);
+            console.log("  - TITLE:", task.title);
+            console.log("  - DESCRIPTION:", task.description);
+            console.log("  - IMAGE:", task.image);
+            console.log("  - INSTRUCTIONS:", task.instructions);
+            console.log("  - LEVEL:", task.level);
+            console.log("  - TASK_NUMBER:", task.task_number);
+            console.log("MODAL BODY ELEMENT:", document.getElementById('taskModalBody'));
             
             // Update the modal content with the new task
             const modalBody = document.getElementById('taskModalBody');
@@ -1711,54 +1602,24 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 return;
             }
             
-            // Calculate task number and progress from all_tasks data
-            const allTasks = window.currentAllTasks || [];
-            const completedTasks = allTasks.filter(t => t.completed).length;
-            const totalTasks = allTasks.length;
-            const currentTaskNumber = allTasks.findIndex(t => t.id === task.id) + 1;
-            
-            console.log("CALCULATED VALUES:", {
-                currentTaskNumber,
-                completedTasks,
-                totalTasks,
-                allTasksLength: allTasks.length
-            });
-            
             modalBody.innerHTML = `
-                <!-- Header with level and progress -->
                 <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <div>
-                            <h4 style="margin: 0; color: #333;">${task.level || 'Bronze'}</h4>
+                            <h4 style="margin: 0; color: #333;">${task.level}</h4>
                             <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Name Items</p>
                         </div>
                         <div style="text-align: right;">
                             <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                ${completedTasks}/${totalTasks} done
+                                ${task.task_number}/40 done
                             </span>
                         </div>
                     </div>
-                    
-                    <!-- Progress stepper -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        ${Array.from({length: Math.min(5, totalTasks)}, (_, i) => `
-                            <div style="display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; 
-                                    ${i < completedTasks ? 'background: #10b981; color: white;' : 
-                                      i === currentTaskNumber - 1 ? 'background: #667eea; color: white;' : 
-                                      'background: #e5e7eb; color: #6b7280;'}">
-                                    ${i < completedTasks ? '✓' : i + 1}
-                                </div>
-                                ${i === 0 || i === Math.min(5, totalTasks) - 1 ? `<span style="font-size: 10px; color: #6b7280; margin-top: 2px;">${i === 0 ? '1' : totalTasks}</span>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
                 </div>
                 
-                <!-- Task info -->
                 <div style="margin-bottom: 20px;">
                     <div style="background: #f0f4ff; color: #667eea; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; margin-bottom: 12px;">
-                        TASK ${currentTaskNumber} OF ${totalTasks}
+                        TASK ${task.task_number} OF 40
                     </div>
                     <div style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; margin-left: 8px;">
                         Name Items
@@ -1766,28 +1627,21 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                    <h5 style="margin: 0 0 8px 0; color: #333;">${currentTaskNumber}. ${task.title || 'Task Title'}</h5>
-                    <p style="margin: 0; color: #6b7280; font-size: 14px;">${task.description || 'Task description'}</p>
+                    <h5 style="margin: 0 0 8px 0; color: #333;">${task.task_number}. ${task.title}</h5>
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;">${task.description}</p>
                 </div>
                 
-                <!-- Task image with grey side panels -->
                 ${task.image ? `
-                    <div style="margin-bottom: 20px; display: flex; justify-content: center; align-items: stretch;">
-                        <div style="background: #f3f4f6; width: 20%; border-radius: 8px 0 0 8px;"></div>
-                        <div style="flex: 1; text-align: center;">
-                            <img src="uploads/tasks/${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 0; border: 1px solid #e5e7eb;">
-                        </div>
-                        <div style="background: #f3f4f6; width: 20%; border-radius: 0 8px 8px 0;"></div>
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <img src="${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
                     </div>
                 ` : ''}
                 
-                <!-- Instructions box -->
                 <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
                     <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">INSTRUCTIONS</div>
-                    <div style="color: #92400e; font-size: 14px;">${task.instructions || 'YES or NO'}</div>
+                    <div style="color: #92400e; font-size: 14px;">${task.instructions}</div>
                 </div>
                 
-                <!-- Fixed buttons at bottom -->
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${task.level}')" style="flex: 1;">
                         <i class="fas fa-check"></i> I Know This Item
