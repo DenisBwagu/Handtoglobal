@@ -22,7 +22,10 @@ if (isset($_GET['action'])) {
         try {
             switch ($action) {
                 case 'activate':
-                    // Resolve all pending user combos for this combo
+                    // Set combo to active and resolve all pending user combos for this combo
+                    $stmt = $conn->prepare("UPDATE combos SET status = 'active', is_active = 1, updated_at = NOW() WHERE id = ?");
+                    $stmt->execute([$combo_id]);
+                    
                     $stmt = $conn->prepare("
                         UPDATE user_combo_status 
                         SET status = 'activated', updated_at = NOW() 
@@ -33,7 +36,7 @@ if (isset($_GET['action'])) {
                     break;
                     
                 case 'deactivate':
-                    $stmt = $conn->prepare("UPDATE combos SET status = 'inactive', updated_at = NOW() WHERE id = ?");
+                    $stmt = $conn->prepare("UPDATE combos SET status = 'inactive', is_active = 0, updated_at = NOW() WHERE id = ?");
                     $stmt->execute([$combo_id]);
                     $msg = "Combo deactivated successfully!";
                     break;
@@ -168,6 +171,16 @@ $siteName = get_setting('site_name', 'HandToGlobal');
             font-size: 12px;
             margin-top: 2px;
         }
+        
+        .action-link.warning {
+            color: #f59e0b !important;
+            border-color: #f59e0b !important;
+            background: rgba(245, 158, 11, 0.1) !important;
+        }
+        
+        .action-link.warning:hover {
+            background: rgba(245, 158, 11, 0.2) !important;
+        }
     </style>
 </head>
 <body>
@@ -274,7 +287,10 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                                         </td>
                                         <td>
                                             <div class="actions">
-                                                <?php if ($combo['status'] === 'active' && $combo['pending_users'] > 0): ?>
+                                                <a href="edit_combo.php?id=<?php echo $combo['id']; ?>" class="action-link">Edit</a>
+                                                <?php if ($combo['status'] === 'active' && $combo['is_active'] == 1): ?>
+                                                    <a href="?action=deactivate&id=<?php echo $combo['id']; ?>" class="action-link warning">Deactivate</a>
+                                                <?php else: ?>
                                                     <a href="?action=activate&id=<?php echo $combo['id']; ?>" class="action-link">Activate</a>
                                                 <?php endif; ?>
                                                 <a href="?action=delete&id=<?php echo $combo['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this combo?')">Delete</a>

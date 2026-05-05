@@ -995,11 +995,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 </button>
             </div>
             <div class="modal-body" id="comboModalBody">
-                <div style="text-align: center; padding: 40px;">
-                    <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
-                    <h4 style="margin: 0 0 8px 0;">Loading Combo...</h4>
-                    <p style="color: #6b7280;">Please wait while we load your combo details.</p>
-                </div>
+                <!-- Combo content will be populated dynamically -->
             </div>
             <div class="modal-footer" id="comboModalFooter">
                 <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>
@@ -1071,10 +1067,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             document.getElementById('lockedModal').classList.remove('active');
         }
         
-        function openComboModal() {
-            document.getElementById('comboModal').classList.add('active');
-        }
-        
+                
         function closeComboModal() {
             document.getElementById('comboModal').classList.remove('active');
         }
@@ -1276,37 +1269,40 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    alert(data.error);
+                    console.error('Task error:', data.error);
                     return;
                 }
                 
+                // Update dashboard stats immediately
+                updateDashboardStats(data);
+                
                 // Check if combo is required
                 if (data.combo_required) {
-                    // Update UI first
-                    updateDashboardStats(data);
                     // Close task modal and show combo modal
                     closeTaskModal();
                     showComboModal(data.combo);
                     return;
                 }
                 
-                // Update UI immediately
-                updateDashboardStats(data);
-                
                 // Check if level is completed
-                if (data.available_tasks === 0) {
-                    // Close task modal and show completion modal
-                    closeTaskModal();
-                    openCompletedModal(data.current_level);
+                if (data.level_completed) {
+                    // Show level completion in modal
+                    showLevelCompletion(data);
+                    return;
+                }
+                
+                // Load next task in same modal (continuous flow)
+                if (data.next_task) {
+                    showTaskInModal(data.next_task);
                 } else {
-                    // Load next task automatically
-                    loadTasks(data.current_level);
+                    // No next task available, close modal
+                    closeTaskModal();
                 }
                 
             })
             .catch(error => {
                 console.error('Error completing task:', error);
-                alert('Failed to complete task. Please try again.');
+                console.error('Response:', error.response);
             });
         }
         
@@ -1379,6 +1375,85 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             }
         }
         
+        function showTaskInModal(task) {
+            const modal = document.getElementById('taskModal');
+            const modalBody = document.getElementById('taskModalBody');
+            
+            if (!modal || !modalBody) {
+                console.error('Task modal not found');
+                return;
+            }
+            
+            // Update modal content with new task
+            modalBody.innerHTML = `
+                <div class="task-header">
+                    <h3>Task ${task.task_number} - ${task.title}</h3>
+                    <span class="task-badge">${task.level}</span>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-image">
+                        <img src="${task.image || 'https://via.placeholder.com/300x200'}" alt="${task.title}">
+                    </div>
+                    
+                    <div class="task-description">
+                        <p>${task.description}</p>
+                    </div>
+                </div>
+                
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">INSTRUCTIONS</div>
+                    <div style="color: #92400e; font-size: 14px;">YES or NO</div>
+                </div>
+                
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${task.level}')" style="flex: 1;">
+                        <i class="fas fa-check"></i> I Know This Item
+                    </button>
+                    <button class="btn" onclick="completeTask(${task.id}, 'no', '${task.level}')" style="flex: 1; background: #ef4444; color: white;">
+                        <i class="fas fa-times"></i> I Don't Know
+                    </button>
+                </div>
+            `;
+            
+            // Ensure modal is open
+            modal.classList.add('active');
+        }
+        
+        function showLevelCompletion(data) {
+            const modal = document.getElementById('taskModal');
+            const modalBody = document.getElementById('taskModalBody');
+            
+            if (!modal || !modalBody) {
+                console.error('Task modal not found');
+                return;
+            }
+            
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-trophy" style="font-size: 64px; color: #f59e0b; margin-bottom: 20px;"></i>
+                    <h3 style="color: #1f2937; margin-bottom: 16px;">Level Completed!</h3>
+                    <p style="color: #6b7280; margin-bottom: 24px;">
+                        Congratulations! You've completed all ${data.current_level} tasks.
+                    </p>
+                    <div style="background: #f0f4ff; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                        <div style="font-size: 24px; font-weight: 600; color: #1f2937; margin-bottom: 8px;">
+                            ${data.current_level_completed}/${data.current_level_total}
+                        </div>
+                        <div style="color: #6b7280;">
+                            Tasks Completed
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="closeTaskModal()">
+                        <i class="fas fa-check"></i> Continue
+                    </button>
+                </div>
+            `;
+            
+            // Ensure modal is open
+            modal.classList.add('active');
+        }
+        
         // Handle support button click
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'completedSupportBtn') {
@@ -1409,6 +1484,12 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         }
         
         function showComboModal(combo) {
+            // Validate combo data before showing popup
+            if (!combo || !combo.amount || !combo.message || !combo.multiplier) {
+                console.log('Invalid combo data - not showing popup');
+                return;
+            }
+            
             const modal = document.getElementById('comboModal');
             const body = document.getElementById('comboModalBody');
             const footer = document.getElementById('comboModalFooter');
@@ -1466,12 +1547,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             // The combo check will show the modal if needed
         };
         
-        // Show combo modal if user has active combo
-        <?php if ($active_combo): ?>
-            setTimeout(() => {
-                openComboModal();
-            }, 2000);
-        <?php endif; ?>
-    </script>
+            </script>
 </body>
 </html>

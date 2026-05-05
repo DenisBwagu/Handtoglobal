@@ -47,6 +47,7 @@ try {
             AND ucs.user_id = ?
         WHERE c.level = ?
             AND c.status = 'active'
+            AND c.is_active = 1
             AND c.start_task <= ?
             AND c.end_task >= ?
             AND (c.user_id = ? OR c.user_id IS NULL)

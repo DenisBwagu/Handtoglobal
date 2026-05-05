@@ -1,12 +1,11 @@
 <?php
+header('Content-Type: application/json');
+
 require_once 'config.php';
 require_once 'get_setting.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
-    echo json_encode(['error' => 'Please login to complete tasks']);
-    exit;
-}
+// Wrap entire logic in try/catch to catch any PHP/SQL errors
+try {
 
 // Get POST data
 $task_id = $_POST['task_id'] ?? '';
@@ -23,11 +22,10 @@ $level = normalizeLevelName($level);
 $conn = getConnection();
 $user_id = $_SESSION['user_id'];
 
-try {
-    if (!isLevelUnlockedForUser($user_id, $level)) {
-        echo json_encode(['error' => 'This level is locked. Please contact support to unlock it.']);
-        exit;
-    }
+if (!isLevelUnlockedForUser($user_id, $level)) {
+    echo json_encode(['error' => 'This level is locked. Please contact support to unlock it.']);
+    exit;
+}
 
     // Check if task was already completed by this user
     $stmt = $conn->prepare("SELECT id FROM completed_tasks WHERE user_id = ? AND task_id = ?");
@@ -131,6 +129,7 @@ try {
             AND ucs.user_id = ?
         WHERE c.level = ?
             AND c.status = 'active'
+            AND c.is_active = 1
             AND c.start_task <= ?
             AND c.end_task >= ?
             AND (c.user_id = ? OR c.user_id IS NULL)
@@ -243,26 +242,77 @@ try {
     // Get daily task limit
     $daily_limit = (int)get_setting('daily_task_limit', '40');
     
-    echo json_encode([
-        'success' => true,
-        'message' => 'Task completed successfully!',
-        'task_title' => $task_title,
-        'reward' => number_format($reward, 2),
-        'balance' => number_format($new_balance, 2),
-        'current_level' => $current_level,
-        'current_level_completed' => $stats[$current_level]['completed'],
-        'current_level_total' => $stats[$current_level]['total'],
-        'available_tasks' => $stats[$current_level]['available'],
-        'completed_tasks' => $stats[$current_level]['completed'],
-        'today_completed' => $today_completed,
-        'daily_limit' => $daily_limit,
-        'progress_percent' => round($stats[$current_level]['progress'], 1),
-        'all_levels' => $stats,
-        'live_activity_message' => "You submitted {$task_title}. Reward added: \${reward}. Current level progress: {$stats[$current_level]['completed']}/{$stats[$current_level]['total']}"
-    ]);
+    // Get next task for continuous flow
+    $next_task = null;
+    $level_completed = false;
     
-} catch(PDOException $e) {
+    if ($stats[$current_level]['available'] > 0) {
+        // Get next available task
+        $stmt = $conn->prepare("
+            SELECT t.id, t.title, t.description, t.image, t.level, 
+                   ROW_NUMBER() OVER (ORDER BY t.id) as task_number
+            FROM tasks t
+            WHERE t.level = ? AND t.active = 1
+            AND t.id NOT IN (
+                SELECT ct.task_id 
+                FROM completed_tasks ct 
+                WHERE ct.user_id = ?
+            )
+            ORDER BY t.id
+            LIMIT 1
+        ");
+        $stmt->execute([$current_level, $user_id]);
+        $next_task = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($next_task) {
+            // Calculate task number based on completed tasks
+            $task_number = $stats[$current_level]['completed'] + 1;
+            $next_task['task_number'] = $task_number;
+        }
+    } else {
+        $level_completed = true;
+    }
+
+    $response = [
+        'success' => true,
+        'balance' => (float)$new_balance,
+        'completed_tasks' => $stats[$current_level]['completed'],
+        'progress' => round($stats[$current_level]['progress'], 1),
+        'current_level' => $current_level,
+        'level_completed' => $level_completed
+    ];
+    
+    if ($level_completed) {
+        $response['message'] = 'Level completed!';
+        $response['current_level_completed'] = $stats[$current_level]['completed'];
+        $response['current_level_total'] = $stats[$current_level]['total'];
+    } else if ($next_task) {
+        $response['next_task'] = [
+            'id' => $next_task['id'],
+            'title' => $next_task['title'],
+            'description' => $next_task['description'],
+            'image' => $next_task['image'],
+            'level' => $next_task['level'],
+            'task_number' => $next_task['task_number']
+        ];
+    }
+    
+    echo json_encode($response);
+    
+} // Close main try block
+catch(PDOException $e) {
     $conn->rollBack();
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+} catch(Throwable $e) {
+    // Catch any other PHP/SQL errors
+    if (isset($conn) && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
+    echo json_encode([
+        'error' => 'System error: ' . $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ]);
 }
 ?>
