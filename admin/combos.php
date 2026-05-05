@@ -56,8 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_combo'])) {
     $start_task = (int)($_POST['start_task'] ?? 0);
     $end_task = (int)($_POST['end_task'] ?? 0);
     $amount = (float)($_POST['amount'] ?? 0);
+    $multiplier = (float)($_POST['multiplier'] ?? 1);
     $message = trim($_POST['message'] ?? '');
     $status = $_POST['status'] ?? 'active';
+    $user_id = !empty($_POST['user_id']) ? (int)$_POST['user_id'] : null;
     
     if (empty($level) || $start_task <= 0 || $end_task <= 0 || empty($message)) {
         $error = "Please fill all required fields.";
@@ -77,10 +79,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_combo'])) {
                 $error = "A combo with the same level and task range already exists.";
             } else {
                 $stmt = $conn->prepare("
-                    INSERT INTO combos (level, start_task, end_task, amount, message, status, is_active, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+                    INSERT INTO combos (level, start_task, end_task, amount, multiplier, user_id, message, status, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
                 ");
-                $stmt->execute([$level, $start_task, $end_task, $amount, $message, $status]);
+                $stmt->execute([$level, $start_task, $end_task, $amount, $multiplier, $user_id, $message, $status]);
                 $msg = "Combo created successfully!";
                 
                 // Redirect to prevent form resubmission
@@ -122,6 +124,51 @@ $siteName = get_setting('site_name', 'HandToGlobal');
     <title>Combos - HandToGlobal Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="includes/admin_styles.css">
+    <style>
+        .user-select-container {
+            position: relative;
+        }
+        
+        .user-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .user-search-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        .user-search-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .user-search-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: #212529;
+            font-size: 14px;
+        }
+        
+        .user-email {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+    </style>
 </head>
 <body>
     <?php require_once __DIR__ . '/includes/topbar.php'; ?>
@@ -174,6 +221,8 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                                 <th>END TASK</th>
                                 <th>AMOUNT</th>
                                 <th>MESSAGE</th>
+                                <th>MULTIPLIER</th>
+                                <th>USER</th>
                                 <th>STATUS</th>
                                 <th>ACTIONS</th>
                             </tr>
@@ -181,7 +230,7 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                         <tbody>
                             <?php if (empty($combos)): ?>
                                 <tr>
-                                    <td colspan="7" style="text-align: center; padding: 40px; color: #6c757d;">
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: #6c757d;">
                                         <i class="fas fa-link" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
                                         No combos found. Create your first combo to get started.
                                     </td>
@@ -197,6 +246,26 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                                             <span style="max-width: 200px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($combo['message']); ?>">
                                                 <?php echo htmlspecialchars(substr($combo['message'], 0, 50)) . (strlen($combo['message']) > 50 ? '...' : ''); ?>
                                             </span>
+                                        </td>
+                                        <td>
+                                            <?php echo number_format($combo['multiplier'], 1); ?>x
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            if ($combo['user_id']) {
+                                                // Get user info for display
+                                                $stmt = $conn->prepare("SELECT fullname, email FROM users WHERE id = ?");
+                                                $stmt->execute([$combo['user_id']]);
+                                                $user = $stmt->fetch();
+                                                if ($user) {
+                                                    echo htmlspecialchars($user['fullname'] . ' - ' . $user['email']);
+                                                } else {
+                                                    echo 'User ID: ' . $combo['user_id'];
+                                                }
+                                            } else {
+                                                echo 'All Users';
+                                            }
+                                            ?>
                                         </td>
                                         <td>
                                             <span class="badge badge-<?php echo $combo['status']; ?>">
@@ -242,6 +311,14 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="user_select">Select User</label>
+                        <div class="user-select-container">
+                            <input type="text" id="user_select" name="user_select" placeholder="Search user by name or email..." autocomplete="off">
+                            <input type="hidden" id="user_id" name="user_id" value="">
+                            <div id="user_search_results" class="user-search-results" style="display: none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="start_task">Start Task</label>
                         <select id="start_task" name="start_task" required>
                             <option value="">Select Level First</option>
@@ -270,6 +347,10 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 <div class="form-group">
                     <label for="message">Message</label>
                     <textarea id="message" name="message" required placeholder="Enter combo message for users" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="multiplier">Multiplier</label>
+                    <input type="number" id="multiplier" name="multiplier" step="0.1" min="1" value="1" required>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">Cancel</button>
@@ -315,10 +396,10 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                         return;
                     }
                     
-                    // Populate both dropdowns
+                    // Populate both dropdowns with task numbering
                     let options = '<option value="">Select Task</option>';
                     data.forEach(task => {
-                        options += `<option value="${task.id}">${task.title}</option>`;
+                        options += `<option value="${task.task_number}">Task ${task.task_number} - ${task.title}</option>`;
                     });
                     
                     startSelect.innerHTML = options;
@@ -331,11 +412,82 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 });
         }
         
+        // User search functionality
+        let userSearchTimeout;
+        const userSelectInput = document.getElementById('user_select');
+        const userIdInput = document.getElementById('user_id');
+        const userSearchResults = document.getElementById('user_search_results');
+        
+        userSelectInput.addEventListener('input', function() {
+            clearTimeout(userSearchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                userSearchResults.style.display = 'none';
+                return;
+            }
+            
+            userSearchTimeout = setTimeout(() => {
+                fetch('search_users.php?query=' + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                            userSearchResults.style.display = 'none';
+                            return;
+                        }
+                        
+                        displayUserSearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        userSearchResults.style.display = 'none';
+                    });
+            }, 300);
+        });
+        
+        function displayUserSearchResults(users) {
+            if (users.length === 0) {
+                userSearchResults.innerHTML = '<div class="user-search-item">No users found</div>';
+            } else {
+                let html = '';
+                users.forEach(user => {
+                    html += `
+                        <div class="user-search-item" onclick="selectUser(${user.id}, '${user.fullname}', '${user.email}')">
+                            <div class="user-name">${user.fullname}</div>
+                            <div class="user-email">${user.email}</div>
+                        </div>
+                    `;
+                });
+                userSearchResults.innerHTML = html;
+            }
+            userSearchResults.style.display = 'block';
+        }
+        
+        function selectUser(userId, fullName, email) {
+            userIdInput.value = userId;
+            userSelectInput.value = `${fullName} - ${email}`;
+            userSearchResults.style.display = 'none';
+        }
+        
+        // Clear user selection when input is cleared
+        userSelectInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (this.value.trim() === '') {
+                    userIdInput.value = '';
+                }
+            }, 200);
+        });
+        
         // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('createModal');
             if (event.target === modal) {
                 hideCreateModal();
+            }
+            // Close user search results when clicking outside
+            if (!event.target.closest('.user-select-container')) {
+                userSearchResults.style.display = 'none';
             }
         }
     </script>

@@ -24,7 +24,7 @@ if (!$level) {
 try {
     $conn = getConnection();
     
-    // Get tasks for the specified level
+    // Get tasks for the specified level with task numbering
     $stmt = $conn->prepare("
         SELECT id, title, level
         FROM tasks
@@ -34,14 +34,22 @@ try {
     $stmt->execute([$level]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Format tasks as requested
+    // Format tasks with task numbering (1-40 for each level)
     $formattedTasks = [];
+    $taskNumber = 1;
     foreach ($tasks as $task) {
         $formattedTasks[] = [
             'id' => $task['id'],
+            'task_number' => $taskNumber,
             'title' => $task['title'],
             'level' => $task['level']
         ];
+        $taskNumber++;
+        
+        // Limit to 40 tasks per level
+        if ($taskNumber > 40) {
+            break;
+        }
     }
     
     echo json_encode($formattedTasks);

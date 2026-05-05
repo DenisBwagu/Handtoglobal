@@ -1416,29 +1416,28 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             body.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
                     <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
-                    <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
-                        $${parseFloat(combo.amount).toFixed(2)}
+                    <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block; margin-bottom: 8px;">
+                        ${combo.multiplier ? combo.multiplier + 'x Multiplier' : '1x Multiplier'}
                     </div>
                 </div>
                 
                 <div style="background: #f0f4ff; border: 1px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 12px 0; color: #333;">COMBO DETAILS</h4>
                     <div style="margin-bottom: 16px;">
-                        <strong>Task range:</strong><br>
-                        Tasks: ${combo.start_task} → ${combo.end_task} (${combo.end_task - combo.start_task + 1} tasks)
+                        <strong>Message:</strong><br>
+                        ${combo.message || 'Special combo offer available!'}
                     </div>
                     <div style="margin-bottom: 16px;">
-                        <strong>Deposit Amount:</strong><br>
+                        <strong>Tasks:</strong><br>
+                        ${combo.start_task_title ? combo.start_task_title + ' → ' + (combo.end_task_title || combo.start_task_title) : 'Task ' + combo.start_task + ' → Task ' + combo.end_task} (${combo.task_count || (combo.end_task - combo.start_task + 1)} tasks)
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <strong>Deposit Required:</strong><br>
                         $${parseFloat(combo.amount).toFixed(2)}
                     </div>
                     <div>
-                        <strong>Message:</strong><br>
-                        ${combo.message}
+                        <strong>Earnings Multiplier:</strong><br>
+                        ${combo.multiplier ? combo.multiplier + 'x' : '1x'}
                     </div>
-                </div>
-                
-                <div style="text-align: center; margin-bottom: 16px;">
-                    <p style="color: #6b7280; font-weight: 600;">${combo.message}</p>
                 </div>
             `;
             

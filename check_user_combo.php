@@ -49,10 +49,11 @@ try {
             AND c.status = 'active'
             AND c.start_task <= ?
             AND c.end_task >= ?
+            AND (c.user_id = ? OR c.user_id IS NULL)
             AND (ucs.status IS NULL OR ucs.status = 'pending')
         LIMIT 1
     ");
-    $stmt->execute([$userId, $userLevel, $taskId, $taskId]);
+    $stmt->execute([$userId, $userLevel, $taskId, $taskId, $userId]);
     $combo = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($combo) {

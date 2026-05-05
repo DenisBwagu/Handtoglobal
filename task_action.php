@@ -65,6 +65,35 @@ try {
         $reward = $level_rewards[$level] ?? 0.10;
     }
     
+    // Check if user has an active combo for this task and apply multiplier
+    // Calculate current task number for this level
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as completed_count 
+        FROM completed_tasks ct
+        JOIN tasks t ON ct.task_id = t.id
+        WHERE ct.user_id = ? AND t.level = ?
+    ");
+    $stmt->execute([$user_id, $level]);
+    $completed_count = $stmt->fetch()['completed_count'];
+    $current_task_number = $completed_count + 1; // Current task being completed
+    
+    $stmt = $conn->prepare("
+        SELECT multiplier 
+        FROM combos 
+        WHERE level = ? 
+            AND status = 'active' 
+            AND start_task <= ? 
+            AND end_task >= ?
+        LIMIT 1
+    ");
+    $stmt->execute([$level, $current_task_number, $current_task_number]);
+    $combo = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($combo && $combo['multiplier'] > 1) {
+        $original_reward = $reward;
+        $reward = $reward * $combo['multiplier'];
+    }
+    
     // Start transaction
     $conn->beginTransaction();
     
@@ -104,10 +133,11 @@ try {
             AND c.status = 'active'
             AND c.start_task <= ?
             AND c.end_task >= ?
+            AND (c.user_id = ? OR c.user_id IS NULL)
             AND (ucs.status IS NULL OR ucs.status = 'pending')
         LIMIT 1
     ");
-    $stmt->execute([$user_id, $current_level, $current_task_number, $current_task_number]);
+    $stmt->execute([$user_id, $current_level, $current_task_number, $current_task_number, $user_id]);
     $combo = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($combo) {
@@ -118,6 +148,20 @@ try {
         ");
         $stmt->execute([$user_id, $combo['id']]);
         
+        // Get task titles for the combo range
+        $stmt = $conn->prepare("
+            SELECT title FROM tasks 
+            WHERE level = ? AND (
+                (id = (SELECT id FROM tasks WHERE level = ? ORDER BY id LIMIT 1 OFFSET ? - 1) AND ? = 1) OR
+                (id = (SELECT id FROM tasks WHERE level = ? ORDER BY id LIMIT 1 OFFSET ? - 1) AND ? = ?)
+            )
+        ");
+        $stmt->execute([$current_level, $current_level, $combo['start_task'], $combo['start_task'], $current_level, $combo['end_task'], $combo['start_task'], $combo['end_task']]);
+        $taskTitles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $startTaskTitle = $taskTitles[0] ?? 'Task ' . $combo['start_task'];
+        $endTaskTitle = $taskTitles[1] ?? ($combo['start_task'] == $combo['end_task'] ? $startTaskTitle : 'Task ' . $combo['end_task']);
+        
         // Return combo_required response
         echo json_encode([
             'combo_required' => true,
@@ -126,8 +170,12 @@ try {
                 'level' => $combo['level'],
                 'start_task' => $combo['start_task'],
                 'end_task' => $combo['end_task'],
+                'amount' => $combo['amount'],
                 'message' => $combo['message'],
-                'amount' => $combo['amount']
+                'multiplier' => $combo['multiplier'] ?? 1,
+                'start_task_title' => $combo['start_task'] . '. ' . $startTaskTitle,
+                'end_task_title' => $combo['end_task'] . '. ' . $endTaskTitle,
+                'task_count' => $combo['end_task'] - $combo['start_task'] + 1
             ],
             'success' => true,
             'message' => 'Task completed but combo required!',
