@@ -149,11 +149,7 @@ foreach ($all_translation_keys as $key => $used) {
     echo "<span class='key'>$key</span> ";
 }
 echo "</div>";
-        
-        <div class='section'>
-            <h2>Missing Keys by Language</h2>";
-            
-<?php
+echo "<div class='section'><h2>Missing Keys by Language</h2>";
 foreach ($language_files as $lang_file) {
     if (file_exists($lang_file)) {
         $translations = include $lang_file;
@@ -172,13 +168,11 @@ foreach ($language_files as $lang_file) {
         echo "<br><br>";
     }
 }
-?>
-        
+echo "</div>
         <div class='section'>
             <h2>Actions</h2>
             <a href='?repair=1' class='back-link'>Repair Missing Translation Keys</a>
         </div>
     </div>
 </body>
-</html>
-?>
+</html>";

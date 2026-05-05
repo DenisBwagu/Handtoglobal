@@ -53,31 +53,31 @@ try {
         echo "   ❌ Modal content replacement not found\n";
     }
     
-    if (strpos($dashboardContent, 'TASK ${task.task_number} OF 40') !== false) {
+    if (strpos($dashboardContent, 'TASK \${task.task_number} OF 40') !== false) {
         echo "   ✅ Task number badge updated\n";
     } else {
         echo "   ❌ Task number badge not updated\n";
     }
     
-    if (strpos($dashboardContent, '${task.task_number}. ${task.title}') !== false) {
+    if (strpos($dashboardContent, '\${task.task_number}. \${task.title}') !== false) {
         echo "   ✅ Task title with number\n";
     } else {
         echo "   ❌ Task title format incorrect\n";
     }
     
-    if (strpos($dashboardContent, '${task.description}') !== false) {
+    if (strpos($dashboardContent, '\${task.description}') !== false) {
         echo "   ✅ Task description updated\n";
     } else {
         echo "   ❌ Task description not updated\n";
     }
     
-    if (strpos($dashboardContent, 'src="${task.image}"') !== false) {
+    if (strpos($dashboardContent, 'src="\${task.image}"') !== false) {
         echo "   ✅ Task image updated\n";
     } else {
         echo "   ❌ Task image not updated\n";
     }
     
-    if (strpos($dashboardContent, '${task.instructions}') !== false) {
+    if (strpos($dashboardContent, '\${task.instructions}') !== false) {
         echo "   ✅ Instructions updated\n";
     } else {
         echo "   ❌ Instructions not updated\n";

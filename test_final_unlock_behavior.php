@@ -43,7 +43,7 @@ try {
     
     foreach ($levels as $level) {
         $isUnlocked = isLevelUnlockedForUser($testUserId, $level);
-        echo "   $level: " . ($isUnlocked ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
+        echo "   {$level}: " . ($isUnlocked ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
     }
     
     // Test 3: Simulate dashboard data-unlocked attributes

@@ -40,7 +40,7 @@ try {
         echo "   - Level: {$sampleCombo['level']}\n";
         echo "   - Tasks: {$sampleCombo['start_task_id']}-{$sampleCombo['end_task_id']}\n";
         echo "   - Message: " . substr($sampleCombo['message'], 0, 50) . "...\n";
-        echo "   - Deposit: \${$sampleCombo['deposit_required']}\n";
+        echo "   - Deposit: \\${$sampleCombo['deposit_required']}\n";
         echo "   - Multiplier: {$sampleCombo['multiplier']}x\n";
         echo "   - Status: {$sampleCombo['status']}\n";
     } else {
@@ -120,7 +120,7 @@ try {
                 echo "   - Combo ID: {$combo['id']}\n";
                 echo "   - Level: {$combo['level']}\n";
                 echo "   - Task Range: {$combo['start_task_id']}-{$combo['end_task_id']}\n";
-                echo "   - Deposit: \${$combo['deposit_required']}\n";
+                echo "   - Deposit: \\${$combo['deposit_required']}\n";
                 echo "   - Multiplier: {$combo['multiplier']}x\n";
                 echo "   - Message: " . substr($combo['message'], 0, 50) . "...\n";
                 

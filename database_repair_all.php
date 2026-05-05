@@ -451,4 +451,7 @@ try {
     }
     
     echo "\n=== REPAIR COMPLETE ===\n";
+} catch (PDOException $e) {
+    echo "Database repair verification failed: " . $e->getMessage() . "\n";
+}
 ?>

@@ -13,8 +13,8 @@ try {
     $dashboardContent = file_get_contents('dashboard.php');
     
     $buttonHandlers = [
-        'I Know This Item button calls completeTask' => strpos($dashboardContent, 'onclick="completeTask(${task.id}, \'yes\', \'${task.level}\')"') !== false,
-        'I Don\'t Know button calls completeTask' => strpos($dashboardContent, 'onclick="completeTask(${task.id}, \'no\', \'${task.level}\')"') !== false,
+        'I Know This Item button calls completeTask' => strpos($dashboardContent, 'onclick="completeTask(\${task.id}, \'yes\', \'\${task.level}\')"') !== false,
+        'I Don\'t Know button calls completeTask' => strpos($dashboardContent, 'onclick="completeTask(\${task.id}, \'no\', \'\${task.level}\')"') !== false,
         'completeTask function exists' => strpos($dashboardContent, 'function completeTask(taskId, response, level)') !== false,
         'completeTask uses task_action.php' => strpos($dashboardContent, "fetch('task_action.php'") !== false,
         'completeTask sends correct parameters' => strpos($dashboardContent, 'task_id: taskId') !== false && 
@@ -22,8 +22,8 @@ try {
                                                    strpos($dashboardContent, 'level: level') !== false
     ];
     
-    foreach ($buttonHandlers as $handler => present) {
-        echo "   ✅ $handler: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($buttonHandlers as $handler => $present) {
+        echo "   ✅ {$handler}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 2: Auto Next Debugging
@@ -40,8 +40,8 @@ try {
         'showLevelCompletionInModal called' => strpos($dashboardContent, 'showLevelCompletionInModal()') !== false
     ];
     
-    foreach ($debuggingCode as $debug => present) {
-        echo "   ✅ $debug: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($debuggingCode as $debug => $present) {
+        echo "   ✅ {$debug}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 3: Backend Query Logic
@@ -65,8 +65,8 @@ try {
         'Sets level_completed flag' => strpos($taskActionContent, "'level_completed' => \$level_completed") !== false
     ];
     
-    foreach ($queryLogic as $logic => present) {
-        echo "   ✅ $logic: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($queryLogic as $logic => $present) {
+        echo "   ✅ {$logic}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 4: Response Flow Logic
@@ -84,8 +84,8 @@ try {
         'No alert in auto-next flow' => strpos($dashboardContent, 'alert(') === false
     ];
     
-    foreach ($flowLogic as $logic => present) {
-        echo "   ✅ $logic: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($flowLogic as $logic => $present) {
+        echo "   ✅ {$logic}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 5: Task Progress Update
@@ -99,8 +99,8 @@ try {
         'Live activity updated' => strpos($dashboardContent, 'updateLiveActivity(data)') !== false
     ];
     
-    foreach ($progressUpdate as $update => present) {
-        echo "   ✅ $update: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($progressUpdate as $update => $present) {
+        echo "   ✅ {$update}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     echo "\n=== AUTO NEXT FLOW TEST SUMMARY ===\n";

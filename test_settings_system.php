@@ -26,7 +26,7 @@ $helper_tests = [
 ];
 
 foreach ($helper_tests as $function => $exists) {
-    echo "   ✅ $function: " . ($exists ? "EXISTS" : "MISSING") . "\n";
+    echo "   ✅ {$function}: " . ($exists ? "EXISTS" : "MISSING") . "\n";
 }
 
 // Test 2: Settings Values
@@ -53,7 +53,7 @@ $settings_tests = [
 
 foreach ($settings_tests as $key => $value) {
     $status = !empty($value) ? "✅ SET" : "⚠️  EMPTY";
-    echo "   $key: $status - '$value'\n";
+    echo "   {$key}: $status - '$value'\n";
 }
 
 // Test 3: File Integration Tests
@@ -88,7 +88,7 @@ foreach ($files_to_test as $file => $description) {
         if (!$all_good) {
             foreach ($checks as $check => $result) {
                 if (!$result) {
-                    echo "     ⚠️  $check: FAILED\n";
+                    echo "     ⚠️  {$check}: FAILED\n";
                 }
             }
         }
@@ -146,7 +146,7 @@ $language_settings = [
 ];
 
 foreach ($language_settings as $key => $value) {
-    echo "   ✅ $key: '$value'\n";
+    echo "   ✅ {$key}: '$value'\n";
 }
 
 // Test 7: Withdrawal Settings
@@ -158,7 +158,7 @@ $withdrawal_tests = [
 ];
 
 foreach ($withdrawal_tests as $key => $value) {
-    echo "   ✅ $key: '$value'\n";
+    echo "   ✅ {$key}: '$value'\n";
 }
 
 // Test 8: SEO Settings
@@ -173,7 +173,7 @@ $seo_tests = [
 
 foreach ($seo_tests as $key => $value) {
     $status = !empty($value) ? "✅ SET" : "⚠️  EMPTY";
-    echo "   ✅ $key: $status - '$value'\n";
+    echo "   ✅ {$key}: $status - '$value'\n";
 }
 
 // Test 9: Homepage Image Settings
@@ -187,7 +187,7 @@ $image_tests = [
 
 foreach ($image_tests as $key => $value) {
     $status = !empty($value) ? "✅ SET" : "⚠️  EMPTY";
-    echo "   ✅ $key: $status - '$value'\n";
+    echo "   ✅ {$key}: $status - '$value'\n";
 }
 
 echo "\n=== SETTINGS SYSTEM TEST SUMMARY ===\n";

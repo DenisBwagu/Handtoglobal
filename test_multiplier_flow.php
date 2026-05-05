@@ -65,7 +65,7 @@ try {
         echo "   - Level: {$combo['level']}\n";
         echo "   - Start Task: {$combo['start_task']}\n";
         echo "   - End Task: {$combo['end_task']}\n";
-        echo "   - Amount: \${$combo['amount']}\n";
+        echo "   - Amount: \\${$combo['amount']}\n";
         echo "   - Multiplier: {$combo['multiplier']}x\n";
         echo "   - Message: {$combo['message']}\n";
         echo "   - Status: {$combo['status']}\n";
@@ -126,8 +126,8 @@ try {
         $normalReward = 0.10; // Bronze level reward
         $expectedMultiplierReward = $normalReward * 6; // 6x multiplier
         
-        echo "   - Normal reward: \${$normalReward}\n";
-        echo "   - Expected multiplier reward: \${$expectedMultiplierReward}\n";
+        echo "   - Normal reward: \\${$normalReward}\n";
+        echo "   - Expected multiplier reward: \\${$expectedMultiplierReward}\n";
         
         // Test the combo detection logic
         $stmt = $conn->prepare("
@@ -195,7 +195,7 @@ try {
     echo "   - combo.level: {$testComboData['combo']['level']}\n";
     echo "   - combo.start_task: {$testComboData['combo']['start_task']}\n";
     echo "   - combo.end_task: {$testComboData['combo']['end_task']}\n";
-    echo "   - combo.amount: \${$testComboData['combo']['amount']}\n";
+    echo "   - combo.amount: \\${$testComboData['combo']['amount']}\n";
     echo "   - combo.message: {$testComboData['combo']['message']}\n";
     echo "   - combo.multiplier: {$testComboData['combo']['multiplier']}x\n";
     echo "   - combo.start_task_title: {$testComboData['combo']['start_task_title']}\n";

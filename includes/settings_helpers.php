@@ -36,15 +36,35 @@ if (!function_exists('update_setting')) {
             $pdo = getConnection();
         }
 
-        $sql = "INSERT INTO settings (setting_key, setting_value, setting_type)
-                VALUES (:setting_key, :setting_value, :setting_type)
-                ON DUPLICATE KEY UPDATE
-                    setting_value = VALUES(setting_value),
-                    setting_type = VALUES(setting_type),
-                    updated_at = CURRENT_TIMESTAMP";
+        $stmt = $pdo->prepare("
+            UPDATE settings
+            SET setting_value = :setting_value,
+                setting_type = :setting_type,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE setting_key = :setting_key
+            LIMIT 1
+        ");
+        $stmt->execute([
+            ':setting_key' => $key,
+            ':setting_value' => $value,
+            ':setting_type' => $type
+        ]);
 
-        $stmt = $pdo->prepare($sql);
-        return $stmt->execute([
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        $check = $pdo->prepare("SELECT setting_key FROM settings WHERE setting_key = ? LIMIT 1");
+        $check->execute([$key]);
+        if ($check->fetchColumn()) {
+            return true;
+        }
+
+        $insert = $pdo->prepare("
+            INSERT INTO settings (setting_key, setting_value, setting_type, created_at, updated_at)
+            VALUES (:setting_key, :setting_value, :setting_type, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ");
+        return $insert->execute([
             ':setting_key' => $key,
             ':setting_value' => $value,
             ':setting_type' => $type

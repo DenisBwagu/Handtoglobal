@@ -3,6 +3,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/settings_helpers.php';
+require_once __DIR__ . '/includes/language_helpers.php';
 require_once __DIR__ . '/includes/task_flow_helpers.php';
 
 if (!isLoggedIn()) {

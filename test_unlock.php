@@ -45,7 +45,7 @@ $userResult = $stmt->fetch();
 if ($userResult) {
     echo "   Found user record:\n";
     echo "   - id: " . $userResult['id'] . "\n";
-    echo "   - $levelField: " . ($userResult['unlocked'] ?? 'NULL') . "\n";
+    echo "   - {$levelField}: " . ($userResult['unlocked'] ?? 'NULL') . "\n";
 } else {
     echo "   No user record found\n";
 }

@@ -128,13 +128,6 @@ $languages = available_languages();
     </div>
 </div>
 
-<?php if (!empty($_SESSION['is_impersonating'])): ?>
-    <div class="htg-impersonation-bar">
-        <?php echo __t('viewing_as_user', 'Viewing as user'); ?>
-        <a href="<?php echo $baseUrl; ?>admin/return_to_admin.php"><?php echo __t('return_to_admin', 'Return to Admin'); ?></a>
-    </div>
-<?php endif; ?>
-
 <style>
 .htg-topbar {
     position: fixed;

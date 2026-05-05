@@ -6,7 +6,7 @@ try {
     $dashboardContent = file_get_contents('dashboard.php');
     
     echo "1. Backend field fixes:\n";
-    echo "   ✅ ID cast to integer: " . (strpos($taskActionContent, "(int)$next_task['id']") !== false ? "YES" : "NO") . "\n";
+    echo "   ✅ ID cast to integer: " . (strpos($taskActionContent, "(int)\$next_task['id']") !== false ? "YES" : "NO") . "\n";
     echo "   ✅ Title with fallback: " . (strpos($taskActionContent, "?? 'Task Title'") !== false ? "YES" : "NO") . "\n";
     echo "   ✅ Description with fallback: " . (strpos($taskActionContent, "?? 'Task description'") !== false ? "YES" : "NO") . "\n";
     echo "   ✅ Image path formatting: " . (strpos($taskActionContent, "uploads/tasks/") !== false ? "YES" : "NO") . "\n";

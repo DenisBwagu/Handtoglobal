@@ -133,7 +133,7 @@ try {
     echo "   ✅ Available combos for task 5:\n";
     foreach ($availableCombos as $combo) {
         $userDisplay = $combo['user_id'] ? "{$combo['fullname']} ({$combo['email']})" : "All Users";
-        echo "   - Combo ID: {$combo['id']}, User: $userDisplay, Amount: \${combo['amount']}, Multiplier: {$combo['multiplier']}x\n";
+        echo "   - Combo ID: {$combo['id']}, User: $userDisplay, Amount: \\${combo['amount']}, Multiplier: {$combo['multiplier']}x\n";
     }
     
     // Test 6: Test combo detection for different user
@@ -167,7 +167,7 @@ try {
         echo "   ✅ Available combos for different user at task 5:\n";
         foreach ($differentUserCombos as $combo) {
             $userDisplay = $combo['user_id'] ? "{$combo['fullname']} ({$combo['email']})" : "All Users";
-            echo "   - Combo ID: {$combo['id']}, User: $userDisplay, Amount: \${combo['amount']}, Multiplier: {$combo['multiplier']}x\n";
+            echo "   - Combo ID: {$combo['id']}, User: $userDisplay, Amount: \\${combo['amount']}, Multiplier: {$combo['multiplier']}x\n";
         }
         
         // Verify that user-specific combo is NOT available for different user

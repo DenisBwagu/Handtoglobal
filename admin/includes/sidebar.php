@@ -75,7 +75,6 @@ $siteName = get_site_name();
         <div class="sidebar-section-title"><?php echo __t('system', 'SYSTEM'); ?></div>
         <ul class="sidebar-menu">
             <li><a href="settings.php" class="<?php echo isMenuActive('settings', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-cog"></i> <?php echo __t('settings', 'Settings'); ?></a></li>
-            <li><a href="languages.php" class="<?php echo isMenuActive('languages', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-language"></i> <?php echo __t('languages', 'Languages'); ?></a></li>
             <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?></a></li>
         </ul>
     </div>

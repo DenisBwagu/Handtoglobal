@@ -51,7 +51,7 @@ try {
     
     foreach ($levels as $level) {
         $isUnlocked = isLevelUnlockedForUser($testUserId, $level);
-        echo "   $level: " . ($isUnlocked ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
+        echo "   {$level}: " . ($isUnlocked ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
     }
     
     // Test 4: Simulate admin unlock Silver
@@ -103,7 +103,7 @@ try {
             echo "   Dashboard - Bronze: ✅ ALWAYS UNLOCKED\n";
         } else {
             $dashboardUnlocked[$level] = isLevelUnlockedForUser($testUserId, $level);
-            echo "   Dashboard - $level: " . ($dashboardUnlocked[$level] ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
+            echo "   Dashboard - {$level}: " . ($dashboardUnlocked[$level] ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
         }
     }
     
@@ -114,11 +114,11 @@ try {
         $status = $dashboardUnlocked[$level] ? 'unlocked' : 'locked';
         
         if ($level === 'Bronze') {
-            echo "   $level: ✅ Would open task modal (Bronze always unlocked)\n";
+            echo "   {$level}: ✅ Would open task modal (Bronze always unlocked)\n";
         } elseif ($status === 'unlocked') {
-            echo "   $level: ✅ Would open task modal (Admin unlocked)\n";
+            echo "   {$level}: ✅ Would open task modal (Admin unlocked)\n";
         } else {
-            echo "   $level: ❌ Would show unlock popup (Locked)\n";
+            echo "   {$level}: ❌ Would show unlock popup (Locked)\n";
         }
     }
     

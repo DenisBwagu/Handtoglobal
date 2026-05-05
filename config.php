@@ -201,11 +201,19 @@ if (!function_exists('setSetting')) {
     function setSetting($key, $value) {
         try {
             $conn = getConnection();
-            $stmt = $conn->prepare("
-                INSERT INTO settings (setting_key, setting_value)
-                VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
-            ");
+            $stmt = $conn->prepare("UPDATE settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ? LIMIT 1");
+            $stmt->execute([$value, $key]);
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
+
+            $check = $conn->prepare("SELECT setting_key FROM settings WHERE setting_key = ? LIMIT 1");
+            $check->execute([$key]);
+            if ($check->fetchColumn()) {
+                return true;
+            }
+
+            $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
             return $stmt->execute([$key, $value]);
         } catch (Throwable $e) {
             return false;
@@ -1220,6 +1228,7 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         ensureColumnExists($conn, 'admins', 'email', 'VARCHAR(150) NOT NULL UNIQUE');
         ensureColumnExists($conn, 'admins', 'password', 'VARCHAR(255) NOT NULL');
         ensureColumnExists($conn, 'admins', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        $conn->exec("ALTER TABLE admins MODIFY COLUMN password VARCHAR(255) NOT NULL");
 
         $stmt = $conn->prepare("SELECT id, password FROM admins WHERE email = ? LIMIT 1");
         $stmt->execute(['admin@handtoglobal.com']);
@@ -1227,9 +1236,9 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         if (!$admin) {
             $stmt = $conn->prepare("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)");
             $stmt->execute(['Admin', 'admin@handtoglobal.com', password_hash('admin123', PASSWORD_DEFAULT)]);
-        } elseif (!password_verify('admin123', $admin['password'])) {
-            $stmt = $conn->prepare("UPDATE admins SET name = COALESCE(NULLIF(name, ''), 'Admin'), password = ? WHERE email = ?");
-            $stmt->execute([password_hash('admin123', PASSWORD_DEFAULT), 'admin@handtoglobal.com']);
+        } else {
+            $stmt = $conn->prepare("UPDATE admins SET name = COALESCE(NULLIF(name, ''), 'Admin') WHERE email = ?");
+            $stmt->execute(['admin@handtoglobal.com']);
         }
 
         $createUsersSql = "
@@ -1267,6 +1276,7 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         ensureColumnExists($conn, 'users', 'fullname', 'VARCHAR(255) NOT NULL');
         ensureColumnExists($conn, 'users', 'email', 'VARCHAR(150) NOT NULL UNIQUE');
         ensureColumnExists($conn, 'users', 'password', 'VARCHAR(255) NOT NULL');
+        $conn->exec("ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NOT NULL");
         ensureColumnExists($conn, 'users', 'balance', 'DECIMAL(10,2) DEFAULT 0.00');
         ensureColumnExists($conn, 'users', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
         ensureColumnExists($conn, 'users', 'rating', 'DECIMAL(5,2) DEFAULT 0.00');

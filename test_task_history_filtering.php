@@ -72,7 +72,7 @@ try {
     
     echo "   Tasks by level:\n";
     foreach ($tasksByLevel as $level => $tasks) {
-        echo "   - $level: " . count($tasks) . " tasks\n";
+        echo "   - {$level}: " . count($tasks) . " tasks\n";
     }
     
     // Test 2: Test filtering logic
@@ -99,7 +99,7 @@ try {
         if (!empty($filteredTasks)) {
             $sample = array_slice($filteredTasks, 0, 2);
             foreach ($sample as $task) {
-                echo "     * {$task['title']} ({$task['level']}) - \${$task['reward']}\n";
+                echo "     * {$task['title']} ({$task['level']}) - \\${$task['reward']}\n";
             }
         }
         echo "\n";
@@ -109,7 +109,7 @@ try {
     echo "3. Testing URL generation...\n";
     foreach ($levels as $level) {
         $url = "task_history.php?level=" . urlencode($level);
-        echo "   $level: $url\n";
+        echo "   {$level}: $url\n";
     }
     
     // Test 4: Test active highlighting logic
@@ -119,7 +119,7 @@ try {
     
     foreach ($levels as $level) {
         $active = $level === $testSelected ? 'active' : '';
-        echo "   $level: class='filter-btn $active'\n";
+        echo "   {$level}: class='filter-btn $active'\n";
     }
     
     // Test 5: Verify table structure
@@ -129,7 +129,7 @@ try {
         echo "   Sample task data:\n";
         echo "   - Task: {$sampleTask['title']}\n";
         echo "   - Level: " . normalizeLevelName($sampleTask['level']) . "\n";
-        echo "   - Reward: \${$sampleTask['reward']}\n";
+        echo "   - Reward: \\${$sampleTask['reward']}\n";
         echo "   - Status: Completed\n";
         echo "   - Date: {$sampleTask['completed_at']}\n";
         echo "   ✓ Table columns: Task | Level | Reward | Status | Date\n";

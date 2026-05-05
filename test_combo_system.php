@@ -53,7 +53,7 @@ try {
     foreach ($combos as $combo) {
         echo "   - ID: {$combo['id']}, Level: {$combo['level']}, Tasks: {$combo['start_task']}-{$combo['end_task']}, Status: {$combo['status']}\n";
         echo "     Message: " . substr($combo['message'], 0, 50) . "...\n";
-        echo "     Amount: \${$combo['amount']}\n";
+        echo "     Amount: \\${$combo['amount']}\n";
     }
     
     // Test 3: Test admin get_tasks_by_level API
@@ -108,7 +108,7 @@ try {
             echo "   - Combo ID: {$comboData['combo']['id']}\n";
             echo "   - Level: {$comboData['combo']['level']}\n";
             echo "   - Task Range: {$comboData['combo']['start_task']}-{$comboData['combo']['end_task']}\n";
-            echo "   - Amount: \${$comboData['combo']['amount']}\n";
+            echo "   - Amount: \\${$comboData['combo']['amount']}\n";
             echo "   - Message: " . substr($comboData['combo']['message'], 0, 50) . "...\n";
         } else {
             echo "   ℹ️  No combo found for task $taskId (this is normal if no combo exists for this task)\n";
@@ -124,7 +124,7 @@ try {
     $stmt->execute([$testUserId]);
     $userComboStatuses = $stmt->fetchAll();
     
-    echo "   Found " . count($userComboStatuses) . " combo statuses for user $testUserId:\n";
+    echo "   Found " . count($userComboStatuses) . " combo statuses for user {$testUserId}:\n";
     foreach ($userComboStatuses as $status) {
         echo "   - Combo ID: {$status['combo_id']}, Status: {$status['status']}, Created: {$status['created_at']}\n";
     }

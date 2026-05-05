@@ -1,10 +1,10 @@
 <?php
 require_once 'config.php';
 require_once 'includes/settings_helpers.php';
+require_once 'includes/language_helpers.php';
 
 // Get Telegram link from settings
 $supportLink = get_telegram_link();
-require_once 'get_translation.php';
 
 requireLogin();
 
@@ -858,13 +858,13 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')"
+                    <button class="btn btn-primary" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')">
                         <i class="fas fa-play"></i> <?php echo __t('start_tasks', 'Start Tasks'); ?>
                     </button>
                     <a href="withdrawals.php" class="btn btn-secondary">
                         <i class="fas fa-money-bill-wave"></i> <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?>
                     </a>
-                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')"
+                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
                         <i class="fas fa-headset"></i> <?php echo __t('customer_support', 'Customer Support'); ?>
                     </button>
                 </div>
@@ -1002,7 +1002,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             const title = document.getElementById('taskModalTitle');
             const body = document.getElementById('taskModalBody');
             
-            title.textContent = level + ' ' + __t('tasks', 'Tasks') + '';
+            title.textContent = level + ' <?php echo addslashes(__t('tasks', 'Tasks')); ?>';
             
             // Load tasks via AJAX or show task content
             body.innerHTML = `

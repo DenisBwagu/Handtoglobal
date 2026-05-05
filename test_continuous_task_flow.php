@@ -68,7 +68,7 @@ try {
         echo "   ❌ Modal content replacement not found\n";
     }
     
-    if (strpos($dashboardContent, 'Task ${task.task_number}') !== false) {
+    if (strpos($dashboardContent, 'Task \${task.task_number}') !== false) {
         echo "   ✅ Task numbering in modal content\n";
     } else {
         echo "   ❌ Task numbering not found in modal\n";

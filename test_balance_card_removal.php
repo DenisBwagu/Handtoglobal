@@ -85,18 +85,18 @@ foreach ($otherPages as $page) {
         $pageContent = file_get_contents($pageFile);
         
         if (strpos($pageContent, '$hideBalanceCard = true;') !== false) {
-            echo "   ⚠️  $page: Has hide balance card variable (unexpected)\n";
+            echo "   ⚠️  {$page}: Has hide balance card variable (unexpected)\n";
         } else {
-            echo "   ✅ $page: No hide balance card variable (expected)\n";
+            echo "   ✅ {$page}: No hide balance card variable (expected)\n";
         }
         
         if (strpos($pageContent, 'require_once \'includes/sidebar.php\';') !== false) {
-            echo "   ✅ $page: Includes sidebar.php\n";
+            echo "   ✅ {$page}: Includes sidebar.php\n";
         } else {
-            echo "   ❌ $page: Does not include sidebar.php\n";
+            echo "   ❌ {$page}: Does not include sidebar.php\n";
         }
     } else {
-        echo "   ⚠️  $page: File not found\n";
+        echo "   ⚠️  {$page}: File not found\n";
     }
 }
 

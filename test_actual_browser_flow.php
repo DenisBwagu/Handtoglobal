@@ -24,14 +24,14 @@ try {
         'completeTask has console.log ACTIVE' => strpos($dashboardContent, 'console.log("ACTIVE COMPLETE TASK FUNCTION RUNNING")') !== false,
         'completeTask uses task_action.php' => strpos($dashboardContent, "fetch('task_action.php'") !== false,
         'completeTask calls renderTask for next_task' => strpos($dashboardContent, 'renderTask(data.next_task)') !== false,
-        'Modal design matches screenshot' => strpos($dashboardContent, 'TASK ${currentTaskNumber} OF ${totalTasks}') !== false,
+        'Modal design matches screenshot' => strpos($dashboardContent, 'TASK \${currentTaskNumber} OF \${totalTasks}') !== false,
         'Progress stepper implemented' => strpos($dashboardContent, 'background: #10b981; color: white;') !== false,
         'Grey side panels for image' => strpos($dashboardContent, 'background: #f3f4f6; width: 20%;') !== false,
         'Fixed buttons at bottom' => strpos($dashboardContent, 'flex: 1; background: #ef4444; color: white;') !== false
     ];
     
     foreach ($activeFunctions as $function => $present) {
-        echo "   ✅ $function: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$function}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 2: Check load_tasks.php Response Format
@@ -50,7 +50,7 @@ try {
     ];
     
     foreach ($loadTasksFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 3: Check task_action.php Response Format
@@ -75,20 +75,20 @@ try {
     ];
     
     foreach ($taskActionFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 4: Check Modal Design Elements
     echo "\n4. MODAL DESIGN ELEMENTS:\n";
     
     $modalDesignFeatures = [
-        'Header with level and progress' => strpos($dashboardContent, '${task.level || \'Bronze\'}') !== false,
+        'Header with level and progress' => strpos($dashboardContent, '\${task.level || \'Bronze\'}') !== false,
         'Progress stepper with circles' => strpos($dashboardContent, 'width: 24px; height: 24px; border-radius: 50%;') !== false,
         'Green checked circles' => strpos($dashboardContent, 'background: #10b981; color: white;') !== false,
         'Current task blue circle' => strpos($dashboardContent, 'background: #667eea; color: white;') !== false,
-        'TASK X OF Y badge' => strpos($dashboardContent, 'TASK ${currentTaskNumber} OF ${totalTasks}') !== false,
+        'TASK X OF Y badge' => strpos($dashboardContent, 'TASK \${currentTaskNumber} OF \${totalTasks}') !== false,
         'Name Items category badge' => strpos($dashboardContent, 'Name Items') !== false,
-        'Task number with title' => strpos($dashboardContent, '${currentTaskNumber}. ${task.title') !== false,
+        'Task number with title' => strpos($dashboardContent, '\${currentTaskNumber}. \${task.title') !== false,
         'Grey side panels for image' => strpos($dashboardContent, 'background: #f3f4f6; width: 20%;') !== false,
         'Instructions box' => strpos($dashboardContent, 'background: #fef3c7; border: 1px solid #f59e0b;') !== false,
         'Green I Know This Item button' => strpos($dashboardContent, 'class="btn btn-primary"') !== false,
@@ -96,7 +96,7 @@ try {
     ];
     
     foreach ($modalDesignFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 5: Check Console Debugging
@@ -114,7 +114,7 @@ try {
     ];
     
     foreach ($debuggingFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 6: Check Auto-Next Flow
@@ -134,7 +134,7 @@ try {
     ];
     
     foreach ($autoNextFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     echo "\n=== BROWSER FLOW TEST SUMMARY ===\n";

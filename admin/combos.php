@@ -38,15 +38,25 @@ if (isset($_GET['action'])) {
                 case 'deactivate':
                     $stmt = $conn->prepare("UPDATE combos SET status = 'inactive', is_active = 0, updated_at = NOW() WHERE id = ?");
                     $stmt->execute([$combo_id]);
+                    $stmt = $conn->prepare("
+                        UPDATE user_combo_status
+                        SET status = 'cleared', updated_at = NOW()
+                        WHERE combo_id = ? AND status = 'pending'
+                    ");
+                    $stmt->execute([$combo_id]);
                     $msg = "Combo deactivated successfully!";
                     break;
                     
                 case 'delete':
+                    $stmt = $conn->prepare("DELETE FROM user_combo_status WHERE combo_id = ?");
+                    $stmt->execute([$combo_id]);
                     $stmt = $conn->prepare("DELETE FROM combos WHERE id = ?");
                     $stmt->execute([$combo_id]);
                     $msg = "Combo deleted successfully!";
                     break;
             }
+            header("Location: combos.php?msg=" . urlencode($msg));
+            exit;
         } catch(PDOException $e) {
             $error = "Failed to update combo: " . $e->getMessage();
         }
@@ -81,11 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_combo'])) {
             if ($stmt->fetch()) {
                 $error = "A combo with the same level and task range already exists.";
             } else {
+                $is_active = strtolower($status) === 'active' ? 1 : 0;
                 $stmt = $conn->prepare("
                     INSERT INTO combos (level, start_task, end_task, amount, multiplier, user_id, message, status, is_active, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                 ");
-                $stmt->execute([$level, $start_task, $end_task, $amount, $multiplier, $user_id, $message, $status]);
+                $stmt->execute([$level, $start_task, $end_task, $amount, $multiplier, $user_id, $message, $status, $is_active]);
                 $msg = "Combo created successfully!";
                 
                 // Redirect to prevent form resubmission

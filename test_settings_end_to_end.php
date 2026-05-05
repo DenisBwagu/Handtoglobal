@@ -80,7 +80,7 @@ $helper_tests = [
 foreach ($helper_tests as $function => $value) {
     $status = !empty($value) ? 'PASS' : 'FAIL';
     $class = $status === 'PASS' ? 'success' : 'warning';
-    echo "<div class='$class'>✅ $function: '$value'</div>";
+    echo "<div class='$class'>✅ {$function}: '$value'</div>";
 }
 
 // Test 3: Settings Update Test
@@ -142,7 +142,7 @@ foreach ($files_to_test as $file => $description) {
         if (!$all_good) {
             foreach ($checks as $check => $result) {
                 if (!$result) {
-                    echo "<div class='warning'>⚠️ $check: FAILED</div>";
+                    echo "<div class='warning'>⚠️ {$check}: FAILED</div>";
                 }
             }
         }

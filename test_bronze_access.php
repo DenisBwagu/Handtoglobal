@@ -46,10 +46,10 @@ try {
         // Bronze is always unlocked, check others normally
         if ($level === 'Bronze') {
             $unlocked_levels[$level] = true;
-            echo "   $level: ✅ ALWAYS UNLOCKED\n";
+            echo "   {$level}: ✅ ALWAYS UNLOCKED\n";
         } else {
             $unlocked_levels[$level] = isLevelUnlockedForUser($userId, $level);
-            echo "   $level: " . ($unlocked_levels[$level] ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
+            echo "   {$level}: " . ($unlocked_levels[$level] ? '✅ UNLOCKED' : '❌ LOCKED') . "\n";
         }
     }
     

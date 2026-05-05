@@ -64,7 +64,7 @@ try {
         echo "   Sample task:\n";
         echo "   - Task: {$sample['title']}\n";
         echo "   - Level: {$sample['level']}\n";
-        echo "   - Reward: \${$sample['reward']}\n";
+        echo "   - Reward: \\${$sample['reward']}\n";
         echo "   - Status: {$sample['status']}\n";
         echo "   - Date: {$sample['completed_at']}\n";
         echo "   ✅ Status field shows 'Completed'\n";
@@ -108,9 +108,9 @@ try {
         
         foreach ($requiredFields as $field) {
             if (isset($task[$field])) {
-                echo "   ✅ $field: " . (is_string($task[$field]) ? substr($task[$field], 0, 20) : $task[$field]) . "\n";
+                echo "   ✅ {$field}: " . (is_string($task[$field]) ? substr($task[$field], 0, 20) : $task[$field]) . "\n";
             } else {
-                echo "   ❌ $field: NOT FOUND\n";
+                echo "   ❌ {$field}: NOT FOUND\n";
             }
         }
     }

@@ -141,7 +141,7 @@ if (!function_exists(\'get_current_language\')) {
 ?>';
 
 // Write improved language helpers
-if (file_put_contents(__DIR__ . \'/includes/language_helpers.php\', $language_helpers_content)) {
+if (file_put_contents(__DIR__ . '/includes/language_helpers.php', $language_helpers_content)) {
     echo "✅ Updated language_helpers.php - Now independent of settings\n";
 } else {
     echo "❌ Failed to update language_helpers.php\n";
@@ -159,9 +159,4 @@ echo "2. Verify settings control language globally\n";
 echo "3. Check that translations apply correctly\n";
 echo "4. Test admin language settings\n";
 echo "5. Verify user language settings\n";
-?>';
-
-// Execute the fix
-eval($language_helpers_content);
-
 ?>

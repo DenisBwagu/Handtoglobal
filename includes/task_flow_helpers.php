@@ -107,7 +107,7 @@ if (!function_exists('htg_pending_combo_for_task_number')) {
     function htg_pending_combo_for_task_number(PDO $conn, $userId, $level, $taskNumber) {
         $aliases = htg_level_aliases($level);
         $placeholders = htg_in_clause($aliases);
-        $params = array_merge($aliases, [$taskNumber, $taskNumber, $userId]);
+        $params = array_merge($aliases, [$taskNumber, $userId]);
 
         $stmt = $conn->prepare("
             SELECT c.*, ucs.status AS user_combo_status
@@ -116,8 +116,7 @@ if (!function_exists('htg_pending_combo_for_task_number')) {
             WHERE c.level IN ($placeholders)
               AND c.is_active = 1
               AND LOWER(c.status) = 'active'
-              AND c.start_task <= ?
-              AND c.end_task >= ?
+              AND c.start_task = ?
               AND (c.user_id IS NULL OR c.user_id = ?)
             ORDER BY c.id ASC
             LIMIT 1

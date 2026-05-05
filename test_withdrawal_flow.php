@@ -101,7 +101,7 @@ try {
         $latest = $withdrawals[0];
         echo "   Latest withdrawal:\n";
         echo "     ID: {$latest['id']}\n";
-        echo "     Amount: \${$latest['amount']}\n";
+        echo "     Amount: \\${$latest['amount']}\n";
         echo "     Asset: {$latest['coin_asset']}\n";
         echo "     Network: {$latest['network']}\n";
         echo "     Status: {$latest['status']}\n";
@@ -184,7 +184,7 @@ try {
     
     echo "   User withdrawal history:\n";
     foreach ($updatedWithdrawals as $withdrawal) {
-        echo "     ID {$withdrawal['id']}: {$withdrawal['status']} - \${$withdrawal['amount']}\n";
+        echo "     ID {$withdrawal['id']}: {$withdrawal['status']} - \\${$withdrawal['amount']}\n";
         if ($withdrawal['note']) {
             echo "       Note: {$withdrawal['note']}\n";
         }
@@ -200,7 +200,7 @@ try {
     ];
     
     foreach ($statusColors as $status => $color) {
-        echo "   $status: $color badge\n";
+        echo "   {$status}: $color badge\n";
     }
     
     echo "\n=== WITHDRAWAL FLOW TEST RESULTS ===\n";

@@ -24,8 +24,8 @@ try {
         'Normal task response includes combo fields' => strpos($taskActionContent, "'combo' => null") !== false
     ];
     
-    foreach ($backendComboFeatures as $feature => present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($backendComboFeatures as $feature => $present) {
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 2: Frontend Combo Logic
@@ -38,14 +38,14 @@ try {
         'Shows combo modal when required' => strpos($dashboardContent, 'if (data.success && data.combo_required && data.combo)') !== false,
         'Renders next task when no combo' => strpos($dashboardContent, 'if (data.success && data.next_task)') !== false,
         'Shows level completion when done' => strpos($dashboardContent, 'if (data.success && data.level_completed)') !== false,
-        'showComboModal uses new format' => strpos($dashboardContent, 'Task ${combo.task_number} in ${combo.level}') !== false,
+        'showComboModal uses new format' => strpos($dashboardContent, 'Task \${combo.task_number} in \${combo.level}') !== false,
         'Combo modal validation updated' => strpos($dashboardContent, 'if (!combo || !combo.amount || !combo.message)') !== false,
         'Combo modal shows correct fields' => strpos($dashboardContent, 'Combo Amount:') !== false &&
                                            strpos($dashboardContent, 'Combo Range:') !== false
     ];
     
-    foreach ($frontendComboFeatures as $feature => present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($frontendComboFeatures as $feature => $present) {
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 3: Combo Query Logic
@@ -62,8 +62,8 @@ try {
         'Checks user combo status' => strpos($taskActionContent, '(ucs.status IS NULL OR ucs.status = \'pending\')') !== false
     ];
     
-    foreach ($comboQueryFeatures as $feature => present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($comboQueryFeatures as $feature => $present) {
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 4: Expected Response Formats
@@ -112,8 +112,8 @@ try {
         'Level completion shows in modal' => strpos($dashboardContent, 'showLevelCompletionInModal()') !== false
     ];
     
-    foreach ($flowLogic as $logic => present) {
-        echo "   ✅ $logic: " . ($present ? "YES" : "NO") . "\n";
+    foreach ($flowLogic as $logic => $present) {
+        echo "   ✅ {$logic}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     echo "\n=== COMBO SYSTEM FIX SUMMARY ===\n";

@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/language_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {

@@ -44,7 +44,7 @@ try {
         } else {
             $isUnlocked = isLevelUnlockedForUser($testUserId, $level);
             $unlocked_levels[$level] = $isUnlocked;
-            echo "   $level: " . ($isUnlocked ? 'UNLOCKED' : 'LOCKED') . "\n";
+            echo "   {$level}: " . ($isUnlocked ? 'UNLOCKED' : 'LOCKED') . "\n";
         }
     }
     
@@ -62,7 +62,7 @@ try {
         // New logic: current only if current AND unlocked
         $level_status = $is_current && $is_unlocked ? 'current' : ($is_unlocked ? 'progress' : 'locked');
         
-        echo "   $level: $level_status";
+        echo "   {$level}: $level_status";
         if ($is_current) echo " (current)";
         echo "\n";
     }
@@ -98,7 +98,7 @@ try {
         
         $level_status = $is_current && $is_unlocked ? 'current' : ($is_unlocked ? 'progress' : 'locked');
         
-        echo "   $level: $level_status";
+        echo "   {$level}: $level_status";
         if ($is_current) echo " (current)";
         echo "\n";
     }

@@ -89,7 +89,7 @@ try {
             echo "   - Combo ID: {$comboData['combo']['id']}\n";
             echo "   - Level: {$comboData['combo']['level']}\n";
             echo "   - Task Range: {$comboData['combo']['start_task']}-{$comboData['combo']['end_task']}\n";
-            echo "   - Amount: \${$comboData['combo']['amount']}\n";
+            echo "   - Amount: \\${$comboData['combo']['amount']}\n";
             echo "   - Message: {$comboData['combo']['message']}\n";
             
             // Check if user_combo_status was created
@@ -249,7 +249,7 @@ try {
         ]);
         
         if ($result) {
-            echo "   ✅ Bronze combo created at task {$comboData['start_task']}, Amount \${$comboData['amount']}\n";
+            echo "   ✅ Bronze combo created at task {$comboData['start_task']}, Amount \\${$comboData['amount']}\n";
         }
     }
     

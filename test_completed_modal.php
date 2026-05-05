@@ -95,7 +95,7 @@ try {
     
     // Test 6: Check for dynamic level name
     echo "\n6. Verifying dynamic level name support...\n";
-    if (strpos($dashboard_content, 'All tasks completed in ${levelName} level!') !== false) {
+    if (strpos($dashboard_content, 'All tasks completed in \${levelName} level!') !== false) {
         echo "   ✅ Dynamic level name template found\n";
     } else {
         echo "   ❌ Dynamic level name template NOT found\n";

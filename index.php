@@ -6,7 +6,7 @@ if (function_exists('get_all_settings')) {
 
 require_once 'config.php';
 require_once 'includes/settings_helpers.php';
-require_once 'get_translation.php';
+require_once 'includes/language_helpers.php';
 
 // Get testimonials from database (force refresh for instant updates)
 $testimonials = [];

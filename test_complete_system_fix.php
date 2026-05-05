@@ -53,7 +53,7 @@ try {
     ];
     
     foreach ($adminTasksFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 3: Task Create/Edit Forms
@@ -72,7 +72,7 @@ try {
     ];
     
     foreach ($formFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 4: Frontend Task Modal
@@ -92,7 +92,7 @@ try {
     ];
     
     foreach ($modalFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 5: Backend Response Format
@@ -115,7 +115,7 @@ try {
     ];
     
     foreach ($backendFeatures as $feature => $present) {
-        echo "   ✅ $feature: " . ($present ? "YES" : "NO") . "\n";
+        echo "   ✅ {$feature}: " . ($present ? "YES" : "NO") . "\n";
     }
     
     // Test 6: Sample Data Verification

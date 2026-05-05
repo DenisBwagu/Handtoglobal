@@ -20,7 +20,7 @@ try {
     if ($testUser) {
         echo "✅ Found test user: {$testUser['fullname']} (ID: {$testUser['id']})\n";
         echo "   Email: {$testUser['email']}\n";
-        echo "   Balance: \${$testUser['balance']}\n";
+        echo "   Balance: \\${$testUser['balance']}\n";
         
         // Simulate the login_as_user.php process
         echo "\n=== SIMULATING LOGIN AS USER ===\n";

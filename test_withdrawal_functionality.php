@@ -19,7 +19,7 @@ try {
     $withdrawals = $stmt->fetchAll();
     
     foreach ($withdrawals as $withdrawal) {
-        echo "ID: {$withdrawal['id']} | {$withdrawal['fullname']} | \${$withdrawal['amount']} | {$withdrawal['status']} | Balance: \${$withdrawal['balance']}\n";
+        echo "ID: {$withdrawal['id']} | {$withdrawal['fullname']} | \\${$withdrawal['amount']} | {$withdrawal['status']} | Balance: \\${$withdrawal['balance']}\n";
         echo "  Wallet: {$withdrawal['wallet_address']}\n";
         echo "  Asset: {$withdrawal['asset']} / {$withdrawal['network']}\n";
         echo "  Memo: " . ($withdrawal['memo_tag'] ?: 'None') . "\n\n";
@@ -62,7 +62,7 @@ try {
     
     if ($pending) {
         echo "  Found pending withdrawal ID: {$pending['id']}\n";
-        echo "  Amount: \${$pending['amount']}\n";
+        echo "  Amount: \\${$pending['amount']}\n";
         echo "  User ID: {$pending['user_id']}\n";
         
         // Check user balance
@@ -70,7 +70,7 @@ try {
         $stmt->execute([$pending['user_id']]);
         $user = $stmt->fetch();
         
-        echo "  Current user balance: \${$user['balance']}\n";
+        echo "  Current user balance: \\${$user['balance']}\n";
         echo "  Can approve: " . ($user['balance'] >= $pending['amount'] ? 'YES' : 'NO') . "\n";
         
         if ($user['balance'] >= $pending['amount']) {
@@ -155,7 +155,7 @@ try {
         
         echo "  Recent withdrawal activities:\n";
         foreach ($activities as $activity) {
-            echo "    - {$activity['fullname']}: \${$activity['amount']} ({$activity['reason']})\n";
+            echo "    - {$activity['fullname']}: \\${$activity['amount']} ({$activity['reason']})\n";
         }
     }
 } catch(PDOException $e) {

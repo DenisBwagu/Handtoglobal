@@ -49,7 +49,7 @@ try {
                                        strpos($dashboardContent, '// Load next task in same modal (continuous flow)') !== false
     ];
     
-    foreach ($flowConsistency as $consistency => present) {
+    foreach ($flowConsistency as $consistency => $present) {
         echo $present ? "   ✅ $consistency\n" : "   ❌ $consistency not found\n";
     }
     
@@ -66,7 +66,7 @@ try {
         'Dashboard stats included' => strpos($taskActionContent, 'dashboard_stats') !== false
     ];
     
-    foreach ($backendResponse as $response => present) {
+    foreach ($backendResponse as $response => $present) {
         echo $present ? "   ✅ $response\n" : "   ❌ $response not found\n";
     }
     
@@ -82,7 +82,7 @@ try {
         'Modal body element logged' => strpos($dashboardContent, 'console.log("MODAL BODY ELEMENT:", document.getElementById(\'taskModalBody\'))') !== false
     ];
     
-    foreach ($debugLogs as $log => present) {
+    foreach ($debugLogs as $log => $present) {
         echo $present ? "   ✅ $log\n" : "   ❌ $log not found\n";
     }
     

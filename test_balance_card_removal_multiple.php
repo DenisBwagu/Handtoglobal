@@ -20,12 +20,12 @@ foreach ($pages as $file => $name) {
         $content = file_get_contents($filePath);
         
         if (strpos($content, '$hideBalanceCard = true;') !== false) {
-            echo "   ✅ $name: Hide variable found\n";
+            echo "   ✅ {$name}: Hide variable found\n";
         } else {
-            echo "   ❌ $name: Hide variable NOT found\n";
+            echo "   ❌ {$name}: Hide variable NOT found\n";
         }
     } else {
-        echo "   ❌ $name: File not found\n";
+        echo "   ❌ {$name}: File not found\n";
     }
 }
 
@@ -93,7 +93,7 @@ foreach ($testPages as $file => $name) {
     
     $showBalanceCard = !isset($hideBalanceCard);
     
-    echo "   $name:\n";
+    echo "   {$name}:\n";
     echo "     - hideBalanceCard set: " . (isset($hideBalanceCard) ? 'true' : 'false') . "\n";
     echo "     - Balance card shown: " . ($showBalanceCard ? '✅ YES' : '❌ NO') . "\n";
 }
@@ -108,12 +108,12 @@ foreach ($allPages as $file => $name) {
         $content = file_get_contents($filePath);
         
         if (strpos($content, 'require_once \'includes/sidebar.php\';') !== false) {
-            echo "   ✅ $name: Includes sidebar.php\n";
+            echo "   ✅ {$name}: Includes sidebar.php\n";
         } else {
-            echo "   ❌ $name: Does not include sidebar.php\n";
+            echo "   ❌ {$name}: Does not include sidebar.php\n";
         }
     } else {
-        echo "   ❌ $name: File not found\n";
+        echo "   ❌ {$name}: File not found\n";
     }
 }
 

@@ -1,57 +1,57 @@
 <?php
-session_start();
-require 'config.php';
-require 'get_setting.php';
+require_once 'config.php';
+require_once 'includes/settings_helpers.php';
+require_once 'includes/language_helpers.php';
 
 // Get Telegram link from settings
-$supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
+$supportLink = get_telegram_link();
 
-if (!isset($_SESSION['user'])) { header("Location: login.php"); exit(); }
+requireLogin();
 
-$user_id = (int)$_SESSION['user'];
+$user_id = (int)$_SESSION['user_id'];
 
-$stmt = $conn->prepare("SELECT id, fullname, email, balance, level FROM users WHERE id=? LIMIT 1");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
-if (!$user) { session_destroy(); header("Location: login.php"); exit(); }
+$conn = getConnection();
+$stmt = $conn->prepare("SELECT id, fullname, email, balance, level FROM users WHERE id = ? LIMIT 1");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$user) {
+    session_destroy();
+    redirect("login.php");
+}
 
 /* Earnings */
 $stmt = $conn->prepare("
   SELECT t.title, t.level, t.reward, ct.completed_at
   FROM completed_tasks ct
   JOIN tasks t ON t.id = ct.task_id
-  WHERE ct.user_id=?
+  WHERE ct.user_id = ?
   ORDER BY ct.completed_at DESC
   LIMIT 300
 ");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$earnings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->execute([$user_id]);
+$earnings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* Deposits */
 $stmt = $conn->prepare("
   SELECT amount, status, created_at
   FROM deposits
-  WHERE user_id=?
+  WHERE user_id = ?
   ORDER BY created_at DESC
   LIMIT 300
 ");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$deposits = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->execute([$user_id]);
+$deposits = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* Withdrawals */
 $stmt = $conn->prepare("
   SELECT amount, wallet_address, status, created_at
   FROM withdrawals
-  WHERE user_id=?
+  WHERE user_id = ?
   ORDER BY created_at DESC
   LIMIT 300
 ");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$withdrawals = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->execute([$user_id]);
+$withdrawals = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function badge($txt){
   return '<span style="display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;font-weight:900;font-size:12px">'.$txt.'</span>';
@@ -151,7 +151,7 @@ function badge($txt){
       <a href="dashboard.php"><?php echo __t('dashboard', 'Dashboard'); ?></a>
       <a class="active" href="transactions.php"><?php echo __t('transactions', 'Transactions'); ?></a>
       <a href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank"><?php echo __t('customer_service', 'Customer Service'); ?></a>
-      <a href="withdraw.php"><?php echo __t('withdraw', 'Withdraw'); ?></a>
+      <a href="withdrawals.php"><?php echo __t('withdraw', 'Withdraw'); ?></a>
       <a href="logout.php"><?php echo __t('logout', 'Logout'); ?></a>
     </div>
   </aside>
@@ -167,7 +167,7 @@ function badge($txt){
             <?php echo __t('level', 'Level'); ?>: <strong><?php echo htmlspecialchars($user['level']); ?></strong>
           </div>
           <div class="muted" style="margin-top:10px">
-            <?php echo __t('referral_link', 'Referral link'); ?>: <code><?php echo "http://localhost/globalhand/register.php?ref=".$user['id']; ?></code>
+            <?php echo __t('referral_link', 'Referral link'); ?>: <code><?php echo "http://localhost/handtoglobal/register.php?ref=".$user['id']; ?></code>
           </div>
         </div>
         <a class="btn" href="dashboard.php"><?php echo __t('back_to_dashboard', 'Back to Dashboard'); ?></a>
