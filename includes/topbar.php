@@ -12,7 +12,8 @@ if ($isAdmin) {
     $userName = $_SESSION['admin_name'] ?? 'Admin';
     $userEmail = $_SESSION['admin_email'] ?? 'admin@handtoglobal.com';
     $userBadge = 'ADMIN';
-    $logoutUrl = 'admin_login.php';
+    $logoutUrl = '/handtoglobal/admin/logout.php';
+    $profileUrl = 'settings.php';
 } else {
     // User side - get from session or database
     $userId = $_SESSION['user_id'] ?? null;
@@ -34,6 +35,7 @@ if ($isAdmin) {
     }
     $userBadge = '';
     $logoutUrl = 'logout.php';
+    $profileUrl = 'profile.php';
 }
 
 // Get first letter for avatar
@@ -123,7 +125,7 @@ $languageOptions = $isAdmin
                     </div>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a href="profile.php" class="dropdown-item">
+                <a href="<?php echo $profileUrl; ?>" class="dropdown-item">
                     <i class="fas fa-user"></i>
                     <?php echo get_translation('profile', 'Profile'); ?>
                 </a>

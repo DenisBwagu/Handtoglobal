@@ -3,7 +3,7 @@ require_once '../config.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('admin_login.php');
+    redirect('login.php');
 }
 
 // Get database connection

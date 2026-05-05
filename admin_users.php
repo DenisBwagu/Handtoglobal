@@ -1,7 +1,7 @@
 <?php
 session_start();
 require 'config.php';
-if (empty($_SESSION['admin'])) { header("Location: admin_login.php"); exit(); }
+if (empty($_SESSION['admin'])) { header("Location: login.php"); exit(); }
 
 $users = $conn->query("SELECT * FROM users ORDER BY id DESC");
 ?>

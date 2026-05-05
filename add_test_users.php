@@ -72,7 +72,7 @@ echo "==================\n";
 echo "Admin:\n";
 echo "  Email: admin@handtoglobal.com\n";
 echo "  Password: password\n";
-echo "  URL: http://localhost/globalhand/admin_login.php\n\n";
+echo "  URL: http://localhost/globalhand/login.php\n\n";
 echo "Test Users:\n";
 echo "  Email: test@handtoglobal.com\n";
 echo "  Password: password123\n";

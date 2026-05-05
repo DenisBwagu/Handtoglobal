@@ -4,7 +4,7 @@ require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('../login.php');
 }
 
 // Get employee ID from URL

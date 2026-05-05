@@ -1376,6 +1376,66 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             $addColumn('recipient_name', 'VARCHAR(255) NULL');
             $addColumn('processed_at', 'DATETIME NULL');
             $addColumn('processed_by', 'INT NULL');
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS languages (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    code VARCHAR(10) NOT NULL UNIQUE,
+                    name VARCHAR(100) NOT NULL,
+                    native_name VARCHAR(100) NOT NULL,
+                    is_active TINYINT(1) DEFAULT 1,
+                    is_default TINYINT(1) DEFAULT 0,
+                    flag_icon VARCHAR(255) NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $defaultLanguages = [
+                ['english', 'English', 'English', 1],
+                ['greek', 'Greek', 'Ελληνικά', 0],
+                ['german', 'German', 'Deutsch', 0],
+                ['ukrainian', 'Ukrainian', 'Українська', 0],
+                ['chinese', 'Chinese', '中文', 0],
+            ];
+            $stmt = $conn->prepare("
+                INSERT INTO languages (code, name, native_name, is_default, is_active)
+                VALUES (?, ?, ?, ?, 1)
+                ON DUPLICATE KEY UPDATE name = VALUES(name), native_name = VALUES(native_name)
+            ");
+            foreach ($defaultLanguages as $language) {
+                $stmt->execute($language);
+            }
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS translations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    language_code VARCHAR(10) NOT NULL,
+                    translation_key VARCHAR(255) NOT NULL,
+                    translation_value TEXT NOT NULL,
+                    module VARCHAR(50) DEFAULT 'general',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_translation (language_code, translation_key)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS employees (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(100) NULL,
+                    fullname VARCHAR(100) NULL,
+                    email VARCHAR(150) NULL UNIQUE,
+                    phone VARCHAR(20) NULL,
+                    role VARCHAR(50) DEFAULT 'Employee',
+                    status ENUM('Active','Inactive') DEFAULT 'Active',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+            ensureColumnExists($conn, 'employees', 'fullname', 'VARCHAR(100) NULL');
+            ensureColumnExists($conn, 'employees', 'phone', 'VARCHAR(20) NULL');
+            ensureColumnExists($conn, 'employees', 'role', "VARCHAR(50) DEFAULT 'Employee'");
+            ensureColumnExists($conn, 'employees', 'status', "ENUM('Active','Inactive') DEFAULT 'Active'");
         } catch (Throwable $e) {
             error_log('Runtime schema check failed: ' . $e->getMessage());
         }

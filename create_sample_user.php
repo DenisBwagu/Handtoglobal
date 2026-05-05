@@ -74,7 +74,7 @@ try {
         echo "\n=== LOGIN URL ===\n";
         echo "🌐 http://localhost/handtoglobal/login.php\n";
         echo "\n=== ADMIN LOGIN URL ===\n";
-        echo "🌐 http://localhost/handtoglobal/admin_login.php\n";
+        echo "🌐 http://localhost/handtoglobal/login.php\n";
         echo "\n✅ Sample user account is ready for testing!\n";
     } else {
         echo "❌ Failed to retrieve user details\n";

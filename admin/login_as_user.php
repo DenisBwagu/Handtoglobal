@@ -1,12 +1,14 @@
 <?php
-// Start session and get config
-session_start();
 require_once '../config.php';
 
 $userId = $_GET['user_id'] ?? null;
 
-if (!$userId) {
-    die('Invalid user');
+if (!isAdminLoggedIn()) {
+    redirect('../login.php');
+}
+
+if (!$userId || !is_numeric($userId)) {
+    redirect('users.php');
 }
 
 // Get database connection
@@ -21,32 +23,27 @@ if (!$user) {
     die('User not found');
 }
 
-// Save admin session for later restore (if exists)
-$originalAdminId = $_SESSION['admin_id'] ?? null;
+// Save admin session for later restore.
+$originalAdmin = [
+    'id' => $_SESSION['admin_id'] ?? null,
+    'name' => $_SESSION['admin_name'] ?? 'Admin',
+    'email' => $_SESSION['admin_email'] ?? '',
+];
 
-// Completely destroy and restart session
-session_destroy();
-session_start();
 session_regenerate_id(true);
 
-// Set fresh user session - NO admin data
+$_SESSION['admin_temp_id'] = $originalAdmin['id'];
+$_SESSION['admin_temp_name'] = $originalAdmin['name'];
+$_SESSION['admin_temp_email'] = $originalAdmin['email'];
+$_SESSION['original_admin_id'] = $originalAdmin['id'];
+
 $_SESSION['user_id'] = $user['id'];
-$_SESSION['user'] = $user;
+$_SESSION['user_name'] = $user['fullname'] ?? $user['name'] ?? 'User';
+$_SESSION['user_email'] = $user['email'];
+$_SESSION['user_fullname'] = $user['fullname'] ?? $user['name'] ?? 'User';
 $_SESSION['role'] = 'user';
 $_SESSION['is_impersonating'] = true;
-
-// Save original admin ID if it existed
-if ($originalAdminId) {
-    $_SESSION['original_admin_id'] = $originalAdminId;
-}
-
-// Debug: Let's see what we're setting
-error_log("DEBUG: Login As User - Setting session for user_id: " . $user['id'] . ", role: user, impersonating: true");
-
-// Set a flag to bypass login check
-$_SESSION['bypass_login'] = true;
 
 // Redirect to user dashboard
 header("Location: ../dashboard.php");
 exit;
-?>

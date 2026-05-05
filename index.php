@@ -794,6 +794,7 @@ $support_link = get_telegram_link();
             <?php endforeach; ?>
         </div>
     </section>
+    <?php endif; ?>
 
     <!-- CTA Section -->
     <section class="cta">
@@ -819,7 +820,7 @@ $support_link = get_telegram_link();
                 <a href="#" onclick="window.open('privacy.php', '_blank')">Privacy Policy</a>
                 <a href="#" onclick="window.open('terms.php', '_blank')">Terms of Service</a>
             </div>
-            <p>&copy; <?php echo date('Y'); ?> <?php echo get_setting('site_name', 'HandToGlobal', true); ?>. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> <?php echo get_setting('site_name', 'HandToGlobal'); ?>. All rights reserved.</p>
         </div>
     </footer>
 

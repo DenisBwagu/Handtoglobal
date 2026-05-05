@@ -9,7 +9,7 @@ require_once __DIR__ . '/../config.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    header('Location: login.php');
+    header('Location: ../login.php');
     exit;
 }
 

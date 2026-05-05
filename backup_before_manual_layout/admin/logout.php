@@ -11,5 +11,5 @@ session_destroy();
 
 setcookie(session_name(), '', time() - 3600, '/');
 
-header("Location: /handtoglobal/admin_login.php");
+header("Location: /handtoglobal/login.php");
 exit;

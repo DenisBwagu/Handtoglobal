@@ -1169,6 +1169,21 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         `;
                         return;
                     }
+
+                    if (data.combo_required && data.combo) {
+                        if (data.dashboard_stats) {
+                            updateDashboardElements(data.dashboard_stats);
+                        }
+                        body.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b;"></i>
+                                <h4 style="margin: 16px 0 8px 0;">Combo Required</h4>
+                                <p style="color: #6b7280;">Tasks are paused for this level until admin activates the combo.</p>
+                            </div>
+                        `;
+                        showComboModal(data.combo);
+                        return;
+                    }
                     
                     if (data.completed || !data.task) {
                         body.innerHTML = `
@@ -1326,11 +1341,12 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 if (data.success && data.next_task) {
                     console.log("RENDERING NEXT TASK NOW");
-                    // Update the all_tasks data for the new task
-                    if (window.currentAllTasks) {
-                        const taskIndex = window.currentAllTasks.findIndex(t => t.id === data.next_task.id);
-                        if (taskIndex !== -1) {
-                            window.currentAllTasks[taskIndex].completed = true;
+                    if (data.all_tasks) {
+                        window.currentAllTasks = data.all_tasks;
+                    } else if (window.currentAllTasks) {
+                        const completedIndex = window.currentAllTasks.findIndex(t => parseInt(t.id, 10) === parseInt(taskId, 10));
+                        if (completedIndex !== -1) {
+                            window.currentAllTasks[completedIndex].completed = true;
                         }
                     }
                     renderTask(data.next_task);
@@ -1727,9 +1743,10 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             
             // Calculate task number and progress from all_tasks data
             const allTasks = window.currentAllTasks || [];
-            const completedTasks = allTasks.filter(t => t.completed).length;
-            const totalTasks = allTasks.length;
-            const currentTaskNumber = allTasks.findIndex(t => t.id === task.id) + 1;
+            const completedTasks = allTasks.length ? allTasks.filter(t => parseInt(t.completed, 10) === 1 || t.completed === true).length : (parseInt(task.completed_count, 10) || 0);
+            const totalTasks = allTasks.length || parseInt(task.total_tasks, 10) || 40;
+            const foundTaskIndex = allTasks.findIndex(t => parseInt(t.id, 10) === parseInt(task.id, 10));
+            const currentTaskNumber = foundTaskIndex >= 0 ? foundTaskIndex + 1 : (parseInt(task.task_number, 10) || completedTasks + 1);
             
             console.log("CALCULATED VALUES:", {
                 currentTaskNumber,
@@ -1904,7 +1921,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             `;
             
             footer.innerHTML = `
-                <button class="btn btn-support" onclick="window.open('${getSupportLink()}', '_blank')" style="background: #f59e0b; color: white;">
+                <button class="btn btn-support" onclick="window.open(window.SUPPORT_LINK || '#', '_blank')" style="background: #f59e0b; color: white;">
                     Deposit via Telegram
                 </button>
                 <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>

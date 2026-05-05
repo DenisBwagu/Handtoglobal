@@ -25,7 +25,18 @@ if (!$user) {
 // Get settings
 $minWithdrawal = (float)get_setting('min_withdrawal_amount', '10.00');
 $minWithdrawalLevel = (int)get_setting('min_withdrawal_level', '2');
+$effectiveMinWithdrawalLevel = ($minWithdrawalLevel >= 1 && $minWithdrawalLevel <= 4) ? $minWithdrawalLevel : 1;
 $availableBalance = (float)$user['balance'];
+$levelRanks = [
+    'Bronze' => 1,
+    'Sliver' => 2,
+    'Silver' => 2,
+    'Gold' => 3,
+    'VIP 1' => 4,
+    'VIP' => 4,
+    'Platinum' => 4,
+];
+$userLevelRank = $levelRanks[normalizeLevelName($user['level'] ?? 'Bronze')] ?? 1;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -49,8 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Coin asset is required.';
     } elseif ($network === '') {
         $error = 'Network is required.';
-    } elseif ($user['level'] < $minWithdrawalLevel) {
-        $error = 'You must reach at least level ' . $minWithdrawalLevel . ' to request withdrawals.';
+    } elseif ($userLevelRank < $effectiveMinWithdrawalLevel) {
+        $error = 'You must reach at least level ' . $effectiveMinWithdrawalLevel . ' to request withdrawals.';
     } else {
         // Insert into withdrawals table
         $stmt = $conn->prepare("

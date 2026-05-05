@@ -4,7 +4,7 @@ require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('../login.php');
 }
 
 // Get user ID from URL
@@ -105,8 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
     
     switch ($action) {
         case 'login_as':
-            // Redirect to the direct user dashboard handler
-            redirect('direct_user_dashboard.php?user_id=' . $user['id']);
+            redirect('login_as_user.php?user_id=' . $user['id']);
             exit;
             
         case 'reset_password':

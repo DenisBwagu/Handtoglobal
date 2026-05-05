@@ -1,7 +1,7 @@
 <?php
 session_start();
 require 'config.php';
-if (empty($_SESSION['admin'])) { header("Location: admin_login.php"); exit(); }
+if (empty($_SESSION['admin'])) { header("Location: login.php"); exit(); }
 
 if (isset($_GET['approve'])) {
     $dep_id = (int)$_GET['approve'];

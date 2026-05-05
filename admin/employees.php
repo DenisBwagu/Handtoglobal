@@ -4,7 +4,7 @@ require_once '../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
-    redirect('../admin_login.php');
+    redirect('../login.php');
 }
 
 // Get database connection
@@ -15,6 +15,22 @@ $conn = getConnection();
 $msg = '';
 $employees = [];
 $totalEmployees = 0;
+$search = trim($_GET['search'] ?? '');
+
+if (isset($_GET['deleted'])) {
+    $msg = 'Employee deleted successfully.';
+}
+
+if (isset($_GET['delete'])) {
+    $employeeId = (int)$_GET['delete'];
+    try {
+        $stmt = $conn->prepare("DELETE FROM employees WHERE id = ?");
+        $stmt->execute([$employeeId]);
+        redirect('employees.php?deleted=1');
+    } catch (Exception $e) {
+        $msg = "Error deleting employee: " . $e->getMessage();
+    }
+}
 
 // Handle pagination
 $page = max(1, (int)($_GET['page'] ?? 1));
@@ -24,10 +40,21 @@ $totalPages = ceil($totalEmployees / $limit);
 
 // Fetch employees data
 try {
-    $stmt = $conn->query("SELECT id, name, email, role, status, created_at FROM employees ORDER BY created_at DESC");
-    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $totalEmployees = count($employees);
+    $where = '';
+    $params = [];
+    if ($search !== '') {
+        $where = "WHERE name LIKE ? OR fullname LIKE ? OR email LIKE ? OR role LIKE ?";
+        $params = ["%$search%", "%$search%", "%$search%", "%$search%"];
+    }
+
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM employees $where");
+    $stmt->execute($params);
+    $totalEmployees = (int)$stmt->fetchColumn();
     $totalPages = ceil($totalEmployees / $limit);
+
+    $stmt = $conn->prepare("SELECT id, COALESCE(NULLIF(name, ''), fullname) AS name, email, role, status, created_at FROM employees $where ORDER BY created_at DESC LIMIT $limit OFFSET $offset");
+    $stmt->execute($params);
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $msg = "Error loading employees: " . $e->getMessage();
     $employees = [];
@@ -74,7 +101,7 @@ try {
                         <form method="GET" style="display: flex; gap: 8px;">
                             <div class="search-container">
                                 <i class="fas fa-search search-icon"></i>
-                                <input type="text" name="search" placeholder="<?php echo get_translation('search', 'Search'); ?>..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                                <input type="text" name="search" placeholder="<?php echo get_translation('search', 'Search'); ?>..." value="<?php echo htmlspecialchars($search); ?>">
                             </div>
                         </form>
                         <a href="employee_create.php" class="btn btn-success"><?php echo get_translation('add', 'Add'); ?></a>

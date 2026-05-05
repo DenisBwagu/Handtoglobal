@@ -194,7 +194,7 @@ try {
     echo "🔐 ADMIN LOGIN:\n";
     echo "   Email: admin@handtoglobal.com\n";
     echo "   Password: password\n";
-    echo "   URL: http://localhost/globalhand/admin_login.php\n\n";
+    echo "   URL: http://localhost/globalhand/login.php\n\n";
     
     echo "👤 USER LOGINS:\n";
     echo "   Email: test@handtoglobal.com\n";
