@@ -103,16 +103,15 @@ if (!function_exists('htg_next_task')) {
     }
 }
 
-if (!function_exists('htg_pending_combo_for_task_number')) {
-    function htg_pending_combo_for_task_number(PDO $conn, $userId, $level, $taskNumber) {
+if (!function_exists('htg_active_combo_for_task_number')) {
+    function htg_active_combo_for_task_number(PDO $conn, $userId, $level, $taskNumber) {
         $aliases = htg_level_aliases($level);
         $placeholders = htg_in_clause($aliases);
         $params = array_merge($aliases, [$taskNumber, $userId]);
 
         $stmt = $conn->prepare("
-            SELECT c.*, ucs.status AS user_combo_status
+            SELECT c.*
             FROM combos c
-            LEFT JOIN user_combo_status ucs ON ucs.combo_id = c.id AND ucs.user_id = ?
             WHERE c.level IN ($placeholders)
               AND c.is_active = 1
               AND LOWER(c.status) = 'active'
@@ -121,36 +120,33 @@ if (!function_exists('htg_pending_combo_for_task_number')) {
             ORDER BY c.id ASC
             LIMIT 1
         ");
-        $stmt->execute(array_merge([$userId], $params));
+        $stmt->execute($params);
         $combo = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$combo) {
             return null;
         }
 
-        $status = strtolower((string)($combo['user_combo_status'] ?? ''));
-        if ($status === 'activated' || $status === 'cleared') {
-            return null;
-        }
-
-        if ($status !== 'pending') {
-            $stmt = $conn->prepare("
-                INSERT INTO user_combo_status (user_id, combo_id, status, created_at, updated_at)
-                VALUES (?, ?, 'pending', NOW(), NOW())
-                ON DUPLICATE KEY UPDATE status = 'pending', updated_at = NOW()
-            ");
-            $stmt->execute([$userId, $combo['id']]);
-        }
+        $rawMultiplier = (float)($combo['multiplier'] ?? 1);
+        $rawAmount = (float)($combo['amount'] ?? 0);
+        $effectiveMultiplier = $rawMultiplier > 1 ? $rawMultiplier : ($rawAmount > 1 ? $rawAmount : 1);
 
         return [
             'id' => (int)$combo['id'],
             'amount' => (float)$combo['amount'],
+            'multiplier' => $effectiveMultiplier,
             'message' => $combo['message'],
             'level' => normalizeLevelName($combo['level']),
             'task_number' => (int)$taskNumber,
             'start_task' => (int)$combo['start_task'],
             'end_task' => (int)$combo['end_task'],
         ];
+    }
+}
+
+if (!function_exists('htg_pending_combo_for_task_number')) {
+    function htg_pending_combo_for_task_number(PDO $conn, $userId, $level, $taskNumber) {
+        return htg_active_combo_for_task_number($conn, $userId, $level, $taskNumber);
     }
 }
 

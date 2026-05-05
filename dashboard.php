@@ -964,24 +964,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         </div>
     </div>
     
-    <!-- Combo Modal -->
-    <div class="modal" id="comboModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"><?php echo __t('combo_available', 'Combo Available!'); ?></h3>
-                <button class="modal-close" onclick="closeComboModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="comboModalBody">
-                <!-- Combo content will be populated dynamically -->
-            </div>
-            <div class="modal-footer" id="comboModalFooter">
-                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Level Completed Modal -->
     <div class="completed-modal-overlay" id="completedModal" style="display: none;">
         <div class="completed-modal">
@@ -1034,11 +1016,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         
         function closeLockedModal() {
             document.getElementById('lockedModal').classList.remove('active');
-        }
-        
-                
-        function closeComboModal() {
-            document.getElementById('comboModal').classList.remove('active');
         }
         
         function openCompletedModal(levelName) {
@@ -1126,21 +1103,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         return;
                     }
 
-                    if (data.combo_required && data.combo) {
-                        if (data.dashboard_stats) {
-                            updateDashboardElements(data.dashboard_stats);
-                        }
-                        body.innerHTML = `
-                            <div style="text-align: center; padding: 40px;">
-                                <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b;"></i>
-                                <h4 style="margin: 16px 0 8px 0;"><?php echo __t('combo_required', 'Combo Required'); ?></h4>
-                                <p style="color: #6b7280;">Tasks are paused for this level until admin activates the combo.</p>
-                            </div>
-                        `;
-                        showComboModal(data.combo);
-                        return;
-                    }
-                    
                     if (data.completed || !data.task) {
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
@@ -1288,12 +1250,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 console.log("next_task:", data.next_task);
                 console.log("combo_required:", data.combo_required);
                 console.log("level_completed:", data.level_completed);
-                
-                if (data.success && data.combo_required && data.combo) {
-                    console.log("COMBO REQUIRED - Showing combo modal");
-                    showComboModal(data.combo);
-                    return;
-                }
                 
                 if (data.success && data.next_task) {
                     console.log("RENDERING NEXT TASK NOW");
@@ -1822,85 +1778,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 event.target.classList.remove('active');
             }
         }
-        
-        // Combo functions
-        function checkForCombo(taskId) {
-            fetch('check_user_combo.php?task_id=' + taskId)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.combo_found && data.combo) {
-                        showComboModal(data.combo);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking combo:', error);
-                });
-        }
-        
-        function showComboModal(combo) {
-            // Validate combo data before showing popup
-            if (!combo || !combo.amount || !combo.message) {
-                console.log('Invalid combo data - not showing popup');
-                return;
-            }
-            
-            const modal = document.getElementById('comboModal');
-            const body = document.getElementById('comboModalBody');
-            const footer = document.getElementById('comboModalFooter');
-            
-            body.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
-                    <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block; margin-bottom: 8px;">
-                        Special Combo Offer
-                    </div>
-                </div>
-                
-                <div style="background: #f0f4ff; border: 1px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                    <div style="margin-bottom: 16px;">
-                        <strong>Message:</strong><br>
-                        ${combo.message || 'Special combo offer available!'}
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <strong>Current Task:</strong><br>
-                        Task ${combo.task_number} in ${combo.level}
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <strong>Combo Amount:</strong><br>
-                        $${parseFloat(combo.amount).toFixed(2)}
-                    </div>
-                    <div>
-                        <strong>Combo Range:</strong><br>
-                        Tasks ${combo.start_task} to ${combo.end_task}
-                    </div>
-                </div>
-            `;
-            
-            footer.innerHTML = `
-                <button class="btn btn-support" onclick="window.open(window.SUPPORT_LINK || '#', '_blank')" style="background: #f59e0b; color: white;">
-                    <?php echo __t('deposit_via_telegram', 'Deposit via Telegram'); ?>
-                </button>
-                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
-            `;
-            
-            modal.classList.add('active');
-        }
-        
-        function closeComboModal() {
-            const modal = document.getElementById('comboModal');
-            modal.classList.remove('active');
-        }
-        
-        // Override submitTask function to check for combos
-        const originalSubmitTask = window.submitTask;
-        window.submitTask = function(taskId, level) {
-            // Check for combo before submitting task
-            checkForCombo(taskId);
-            
-            // Don't proceed with task submission if combo is active
-            // The combo check will show the modal if needed
-        };
-        
             </script>
 </body>
 </html>

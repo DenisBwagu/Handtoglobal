@@ -25,6 +25,10 @@ if (!function_exists('current_language')) {
             return normalize_language_code($_SESSION['language']);
         }
 
+        if (!empty($_COOKIE['htg_language'])) {
+            return normalize_language_code($_COOKIE['htg_language']);
+        }
+
         $contextKey = !empty($_SESSION['admin_id']) && ($_SESSION['role'] ?? '') === 'admin'
             ? 'admin_locale'
             : 'user_locale';
@@ -90,6 +94,7 @@ if (!function_exists('set_user_language')) {
     function set_user_language($language) {
         $language = normalize_language_code($language);
         $_SESSION['language'] = $language;
+        setcookie('htg_language', $language, time() + 31536000, '/');
 
         try {
             if (!empty($_SESSION['user_id'])) {

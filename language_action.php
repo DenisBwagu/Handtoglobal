@@ -8,6 +8,7 @@ $context = ($_POST['context'] ?? 'user') === 'admin' ? 'admin' : 'user';
 $redirectTo = $_POST['redirect'] ?? ($context === 'admin' ? '/handtoglobal/admin/dashboard.php' : '/handtoglobal/dashboard.php');
 
 $_SESSION['language'] = $language;
+setcookie('htg_language', $language, time() + 31536000, '/');
 
 try {
     if ($context === 'admin') {

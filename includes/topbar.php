@@ -72,6 +72,10 @@ if ($isAdminArea && isAdminLoggedIn()) {
 
 $siteName = get_setting('site_name', 'HandToGlobal');
 $siteLogo = get_setting('site_logo', '');
+$siteLogoUrl = $siteLogo;
+if ($siteLogoUrl !== '' && !preg_match('/^(https?:)?\/\//i', $siteLogoUrl) && $siteLogoUrl[0] !== '/') {
+    $siteLogoUrl = $baseUrl . ltrim($siteLogoUrl, '/');
+}
 $supportTelegram = get_setting('support_telegram', get_setting('telegram_link', ''));
 $avatarLetter = strtoupper(substr(trim($displayName) !== '' ? trim($displayName) : 'U', 0, 1));
 $currentLanguage = current_language();
@@ -86,13 +90,13 @@ $languages = available_languages();
         <button type="button" class="menu-icon htg-menu-btn" id="menuToggle" aria-label="Toggle sidebar">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="topbar-title htg-page-title"><?php echo htmlspecialchars($pageTitle); ?></div>
         <div class="htg-brand">
-            <?php if ($siteLogo !== ''): ?>
-                <img src="<?php echo htmlspecialchars($siteLogo); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
+            <?php if ($siteLogoUrl !== ''): ?>
+                <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
             <?php endif; ?>
             <span><?php echo htmlspecialchars($siteName); ?></span>
         </div>
+        <div class="topbar-title htg-page-title"><?php echo htmlspecialchars($pageTitle); ?></div>
     </div>
 
     <div class="topbar-right htg-topbar-right">

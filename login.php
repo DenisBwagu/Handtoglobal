@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'includes/settings_helpers.php';
+require_once 'includes/language_helpers.php';
 
 // Get Telegram link from settings
 $supportLink = get_telegram_link();
@@ -14,6 +15,8 @@ if (isAdminLoggedIn()) {
 }
 
 $error = '';
+$siteName = get_site_name();
+$siteLogo = get_site_logo();
 
 // Handle POST request (form submission) ONLY
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -208,15 +211,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="login-container">
-        <h1 class="login-title">Welcome to <?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
+        <h1 class="login-title"><?php echo __t('welcome_to', 'Welcome to'); ?> <?php echo htmlspecialchars($siteName); ?></h1>
         <div class="logo">
-            <?php $site_logo = get_setting('site_logo'); ?>
-            <?php if ($site_logo): ?>
-                <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 48px; margin-bottom: 10px;">
+            <?php if ($siteLogo): ?>
+                <img src="<?php echo htmlspecialchars($siteLogo); ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="height: 48px; margin-bottom: 10px;">
             <?php else: ?>
-                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo strtoupper(substr(get_setting('site_name', 'HandToGlobal'), 0, 1)); ?></i>
+                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo htmlspecialchars(strtoupper(substr($siteName, 0, 1))); ?></i>
             <?php endif; ?>
-            <h1><?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
+            <h1><?php echo htmlspecialchars($siteName); ?></h1>
         </div>
         
         <?php if ($error): ?>
@@ -227,20 +229,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <form method="POST">
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <label for="email"><?php echo __t('email_address', 'Email Address'); ?></label>
+                <input type="email" id="email" name="email" placeholder="<?php echo htmlspecialchars(__t('enter_your_email', 'Enter your email')); ?>" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <label for="password"><?php echo __t('password', 'Password'); ?></label>
+                <input type="password" id="password" name="password" placeholder="<?php echo htmlspecialchars(__t('enter_your_password', 'Enter your password')); ?>" required>
             </div>
             
-            <button type="submit" class="btn">Login</button>
+            <button type="submit" class="btn"><?php echo __t('login', 'Login'); ?></button>
         </form>
         
         <div class="register-link">
-            Don't have an account? <a href="register.php">Create account</a>
+            <?php echo __t('dont_have_account', "Don't have an account?"); ?> <a href="register.php"><?php echo __t('create_account', 'Create account'); ?></a>
         </div>
     </div>
 </body>

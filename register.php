@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'includes/settings_helpers.php';
+require_once 'includes/language_helpers.php';
 
 // Get Telegram link from settings
 $supportLink = get_telegram_link();
@@ -12,6 +13,8 @@ if (isLoggedIn()) {
 
 $error = '';
 $success = '';
+$siteName = get_site_name();
+$siteLogo = get_site_logo();
 
 // Handle POST request (form submission) ONLY
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -259,10 +262,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="register-container">
-        <h1 class="login-title">Create Account</h1>
+        <h1 class="login-title"><?php echo __t('create_account', 'Create Account'); ?></h1>
         <div class="logo">
-            <i style="display: inline-block; font-size: 48px; color: #667eea;">H</i>
-            <h1><?php echo get_setting('site_name', 'HandToGlobal'); ?></h1>
+            <?php if ($siteLogo): ?>
+                <img src="<?php echo htmlspecialchars($siteLogo); ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="height: 48px; margin-bottom: 10px;">
+            <?php else: ?>
+                <i style="display: inline-block; font-size: 48px; color: #667eea;"><?php echo htmlspecialchars(strtoupper(substr($siteName, 0, 1))); ?></i>
+            <?php endif; ?>
+            <h1><?php echo htmlspecialchars($siteName); ?></h1>
         </div>
         
         <?php if ($error): ?>
@@ -279,35 +286,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <form method="POST">
             <div class="form-group">
-                <label for="fullname">Full Name</label>
-                <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+                <label for="fullname"><?php echo __t('full_name', 'Full Name'); ?></label>
+                <input type="text" id="fullname" name="fullname" placeholder="<?php echo htmlspecialchars(__t('enter_full_name', 'Enter your full name')); ?>" required>
             </div>
             
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <label for="email"><?php echo __t('email_address', 'Email Address'); ?></label>
+                <input type="email" id="email" name="email" placeholder="<?php echo htmlspecialchars(__t('enter_your_email', 'Enter your email')); ?>" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a password" required>
+                <label for="password"><?php echo __t('password', 'Password'); ?></label>
+                <input type="password" id="password" name="password" placeholder="<?php echo htmlspecialchars(__t('create_password', 'Create a password')); ?>" required>
             </div>
             
             <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                <label for="confirm_password"><?php echo __t('confirm_password', 'Confirm Password'); ?></label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="<?php echo htmlspecialchars(__t('confirm_your_password', 'Confirm your password')); ?>" required>
             </div>
             
             <div class="form-group">
-                <label for="invitation_code">Invitation Code (Optional)</label>
-                <input type="text" id="invitation_code" name="invitation_code" placeholder="Enter invitation code">
+                <label for="invitation_code"><?php echo __t('invitation_code_optional', 'Invitation Code (Optional)'); ?></label>
+                <input type="text" id="invitation_code" name="invitation_code" placeholder="<?php echo htmlspecialchars(__t('enter_invitation_code', 'Enter invitation code')); ?>">
             </div>
             
-            <button type="submit" class="btn">Create Account</button>
+            <button type="submit" class="btn"><?php echo __t('create_account', 'Create Account'); ?></button>
         </form>
         
         <div class="login-link">
-            Already have an account? <a href="login.php">Login</a>
+            <?php echo __t('already_have_account', 'Already have an account?'); ?> <a href="login.php"><?php echo __t('login', 'Login'); ?></a>
         </div>
     </div>
 </body>

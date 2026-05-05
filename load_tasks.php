@@ -48,20 +48,6 @@ try {
         exit;
     }
 
-    $nextTaskNumber = $stats['completed'] + 1;
-    $combo = htg_pending_combo_for_task_number($conn, $userId, $level, $nextTaskNumber);
-    if ($combo) {
-        echo json_encode([
-            'success' => true,
-            'combo_required' => true,
-            'combo' => $combo,
-            'task' => null,
-            'progress' => $stats['completed'] . '/' . $stats['total'],
-            'dashboard_stats' => htg_dashboard_stats($conn, $userId, $level),
-        ]);
-        exit;
-    }
-
     $currentTask = htg_next_task($conn, $userId, $level);
     if (!$currentTask) {
         echo json_encode([
@@ -75,6 +61,8 @@ try {
     echo json_encode([
         'success' => true,
         'task' => $currentTask,
+        'combo' => htg_active_combo_for_task_number($conn, $userId, $level, $currentTask['task_number']),
+        'combo_required' => false,
         'all_tasks' => htg_all_task_progress($conn, $userId, $level),
         'progress' => $stats['completed'] . '/' . $stats['total'],
         'dashboard_stats' => htg_dashboard_stats($conn, $userId, $level),

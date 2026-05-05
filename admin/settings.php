@@ -35,7 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'meta_title',
         'meta_description',
         'meta_keywords',
-        'meta_robots'
+        'meta_robots',
+        'privacy_policy_content',
+        'terms_content'
     ];
 
     foreach ($fields as $field) {
@@ -105,7 +107,9 @@ $current_settings = [
     'homepage_hero_image' => get_setting('homepage_hero_image', 'assets/images/hero-bg.jpg'),
     'homepage_about_image' => get_setting('homepage_about_image', 'assets/images/about-image.jpg'),
     'homepage_banner_image' => get_setting('homepage_banner_image', 'assets/images/banner.jpg'),
-    'homepage_logo_strip' => get_setting('homepage_logo_strip', '')
+    'homepage_logo_strip' => get_setting('homepage_logo_strip', ''),
+    'privacy_policy_content' => get_setting('privacy_policy_content', ''),
+    'terms_content' => get_setting('terms_content', '')
 ];
 ?>
 
@@ -661,6 +665,21 @@ $current_settings = [
                         <div class="form-group">
                             <label class="form-label">HomepageLogoStripImages</label>
                             <textarea name="homepage_logo_strip" class="form-control-textarea" placeholder="Enter logo strip URLs or descriptions, one per line"><?php echo htmlspecialchars($current_settings['homepage_logo_strip'] ?? ''); ?></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- LEGAL Section -->
+                    <div class="settings-section">
+                        <div class="section-title">LEGAL PAGES</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Privacy Policy Content</label>
+                            <textarea name="privacy_policy_content" class="form-control-textarea" placeholder="Leave blank to use the default Privacy Policy"><?php echo htmlspecialchars($current_settings['privacy_policy_content'] ?? ''); ?></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Terms of Service Content</label>
+                            <textarea name="terms_content" class="form-control-textarea" placeholder="Leave blank to use the default Terms of Service"><?php echo htmlspecialchars($current_settings['terms_content'] ?? ''); ?></textarea>
                         </div>
                     </div>
                     

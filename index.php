@@ -90,6 +90,7 @@ $support_link = get_telegram_link();
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: var(--text);
+            background: #eef2ff;
             overflow-x: hidden;
         }
 
@@ -278,18 +279,15 @@ $support_link = get_telegram_link();
 
         /* Animated Logo Strip */
         .logo-strip {
-            <?php $logo_strip = get_setting('homepage_logo_strip', '', true); ?>
-            <?php if ($logo_strip): ?>
-                background: var(--white);
-                padding: 40px 0;
-                overflow: hidden;
-                border-bottom: 1px solid var(--border);
-            <?php endif; ?>
+            background: var(--white);
+            padding: 40px 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
         }
 
         .logo-track {
             display: flex;
-            animation: scrollLeft 30s linear infinite;
+            animation: scrollRight 42s linear infinite;
             width: fit-content;
         }
 
@@ -695,27 +693,44 @@ $support_link = get_telegram_link();
             <?php 
             $logo_strip = get_setting('homepage_logo_strip', '', true);
             $logo_items = $logo_strip ? explode("\n", $logo_strip) : [];
-            foreach ($logo_items as $item): ?>
+            foreach ($logo_items as $item):
+                if (trim($item) === '') { continue; }
+            ?>
                 <div class="logo-item">
                     <?php echo htmlspecialchars(trim($item)); ?>
                 </div>
             <?php endforeach; ?>
-        </div>
             <div class="logo-item">
                 <i class="fas fa-dollar-sign"></i>
-                Daily Earnings
+                <?php echo __t('daily_earnings', 'Daily Earnings'); ?>
             </div>
             <div class="logo-item">
                 <i class="fas fa-clock"></i>
-                Flexible Hours
+                <?php echo __t('flexible_hours', 'Flexible Hours'); ?>
             </div>
             <div class="logo-item">
                 <i class="fas fa-shield-alt"></i>
-                Secure Payments
+                <?php echo __t('secure_payments', 'Secure Payments'); ?>
             </div>
             <div class="logo-item">
                 <i class="fas fa-users"></i>
-                Growing Community
+                <?php echo __t('growing_community', 'Growing Community'); ?>
+            </div>
+            <div class="logo-item">
+                <i class="fas fa-dollar-sign"></i>
+                <?php echo __t('daily_earnings', 'Daily Earnings'); ?>
+            </div>
+            <div class="logo-item">
+                <i class="fas fa-clock"></i>
+                <?php echo __t('flexible_hours', 'Flexible Hours'); ?>
+            </div>
+            <div class="logo-item">
+                <i class="fas fa-shield-alt"></i>
+                <?php echo __t('secure_payments', 'Secure Payments'); ?>
+            </div>
+            <div class="logo-item">
+                <i class="fas fa-users"></i>
+                <?php echo __t('growing_community', 'Growing Community'); ?>
             </div>
         </div>
     </section>
@@ -817,8 +832,8 @@ $support_link = get_telegram_link();
                 <a href="login.php">Login</a>
                 <a href="register.php">Register</a>
                 <a href="<?php echo $support_link; ?>" target="_blank">Support</a>
-                <a href="#" onclick="window.open('privacy.php', '_blank')">Privacy Policy</a>
-                <a href="#" onclick="window.open('terms.php', '_blank')">Terms of Service</a>
+                <a href="privacy.php">Privacy Policy</a>
+                <a href="terms.php">Terms of Service</a>
             </div>
             <p>&copy; <?php echo date('Y'); ?> <?php echo get_setting('site_name', 'HandToGlobal'); ?>. All rights reserved.</p>
         </div>

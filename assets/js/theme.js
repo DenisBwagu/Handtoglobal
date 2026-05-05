@@ -83,8 +83,6 @@
         // Set up theme toggle listeners
         setupThemeToggle();
         
-        // Apply theme CSS variables
-        updateCSSVariables(savedTheme);
     }
 
     // Apply theme to the page
@@ -99,6 +97,7 @@
         // Apply new theme
         html.setAttribute('data-theme', theme);
         body.classList.add(theme + '-mode');
+        updateCSSVariables(theme);
         
         // Update theme icon
         updateThemeIcon(theme);
