@@ -994,47 +994,14 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <?php if ($active_combo): ?>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
-                            <?php echo $active_combo['multiplier']; ?>x Multiplier
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f0f4ff; border: 1px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 12px 0; color: #333;">DEPOSIT</h4>
-                        <div style="margin-bottom: 16px;">
-                            <strong>Task range:</strong><br>
-                            Tasks: <?php echo htmlspecialchars($active_combo['start_task_id']); ?> → <?php echo htmlspecialchars($active_combo['end_task_id']); ?> (<?php echo ($active_combo['end_task_id'] - $active_combo['start_task_id'] + 1); ?> tasks)
-                        </div>
-                        <div style="margin-bottom: 16px;">
-                            <strong>Deposit Required:</strong><br>
-                            $<?php echo number_format($active_combo['deposit_amount'], 2); ?>
-                        </div>
-                        <div>
-                            <strong>Earnings Multiplier:</strong><br>
-                            <?php echo htmlspecialchars($active_combo['multiplier']); ?>x
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 16px;">
-                        <p style="color: #6b7280;"><?php echo htmlspecialchars($active_combo['message'] ?? 'Complete the task range to activate your combo multiplier!'); ?></p>
-                    </div>
-                <?php else: ?>
-                    <div style="text-align: center; padding: 40px;">
-                        <i class="fas fa-info-circle" style="font-size: 48px; color: #667eea;"></i>
-                        <h4 style="margin: 16px 0 8px 0;">No Active Combos</h4>
-                        <p style="color: #6b7280;">You don't have any active combos at the moment.</p>
-                    </div>
-                <?php endif; ?>
+            <div class="modal-body" id="comboModalBody">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
+                    <h4 style="margin: 0 0 8px 0;">Loading Combo...</h4>
+                    <p style="color: #6b7280;">Please wait while we load your combo details.</p>
+                </div>
             </div>
-            <div class="modal-footer">
-                <?php if ($active_combo): ?>
-                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
-                        Deposit via Telegram
-                    </button>
-                <?php endif; ?>
+            <div class="modal-footer" id="comboModalFooter">
                 <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>
             </div>
         </div>
@@ -1416,6 +1383,79 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 event.target.classList.remove('active');
             }
         }
+        
+        // Combo functions
+        function checkForCombo(taskId) {
+            fetch('check_user_combo.php?task_id=' + taskId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.combo_found && data.combo) {
+                        showComboModal(data.combo);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking combo:', error);
+                });
+        }
+        
+        function showComboModal(combo) {
+            const modal = document.getElementById('comboModal');
+            const body = document.getElementById('comboModalBody');
+            const footer = document.getElementById('comboModalFooter');
+            
+            body.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
+                    <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
+                        $${parseFloat(combo.amount).toFixed(2)}
+                    </div>
+                </div>
+                
+                <div style="background: #f0f4ff; border: 1px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">COMBO DETAILS</h4>
+                    <div style="margin-bottom: 16px;">
+                        <strong>Task range:</strong><br>
+                        Tasks: ${combo.start_task} → ${combo.end_task} (${combo.end_task - combo.start_task + 1} tasks)
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <strong>Deposit Amount:</strong><br>
+                        $${parseFloat(combo.amount).toFixed(2)}
+                    </div>
+                    <div>
+                        <strong>Message:</strong><br>
+                        ${combo.message}
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <p style="color: #6b7280; font-weight: 600;">${combo.message}</p>
+                </div>
+            `;
+            
+            footer.innerHTML = `
+                <button class="btn btn-support" onclick="window.open('${getSupportLink()}', '_blank')" style="background: #f59e0b; color: white;">
+                    Deposit via Telegram
+                </button>
+                <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        function closeComboModal() {
+            const modal = document.getElementById('comboModal');
+            modal.classList.remove('active');
+        }
+        
+        // Override submitTask function to check for combos
+        const originalSubmitTask = window.submitTask;
+        window.submitTask = function(taskId, level) {
+            // Check for combo before submitting task
+            checkForCombo(taskId);
+            
+            // Don't proceed with task submission if combo is active
+            // The combo check will show the modal if needed
+        };
         
         // Show combo modal if user has active combo
         <?php if ($active_combo): ?>

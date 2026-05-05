@@ -28,7 +28,7 @@ try {
     $stmt = $conn->prepare("
         SELECT id, title
         FROM tasks
-        WHERE level = ?
+        WHERE level = ? AND active = 1
         ORDER BY id ASC
     ");
     $stmt->execute([$level]);
