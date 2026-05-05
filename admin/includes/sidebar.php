@@ -5,6 +5,7 @@
  */
 
 require_once '../includes/settings_helpers.php';
+require_once '../includes/language_helpers.php';
 
 // Get current page for active state
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
@@ -32,50 +33,51 @@ $siteName = get_site_name();
     
     <!-- MANAGEMENT Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title">MANAGEMENT</div>
+        <div class="sidebar-section-title"><?php echo __t('MANAGEMENT'); ?></div>
         <ul class="sidebar-menu">
-            <li><a href="dashboard.php" class="<?php echo isMenuActive('dashboard', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="users.php" class="<?php echo isMenuActive('users', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-users"></i> Users</a></li>
-            <li><a href="employees.php" class="<?php echo isMenuActive('employees', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-user-tie"></i> Employees</a></li>
+            <li><a href="dashboard.php" class="<?php echo isMenuActive('dashboard', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-tachometer-alt"></i> <?php echo __t('dashboard', 'Dashboard'); ?></a></li>
+            <li><a href="users.php" class="<?php echo isMenuActive('users', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-users"></i> <?php echo __t('Users'); ?></a></li>
+            <li><a href="employees.php" class="<?php echo isMenuActive('employees', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-user-tie"></i> <?php echo __t('Employees'); ?></a></li>
         </ul>
     </div>
     
     <!-- PLATFORM Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title">PLATFORM</div>
+        <div class="sidebar-section-title"><?php echo __t('PLATFORM'); ?></div>
         <ul class="sidebar-menu">
-            <li><a href="levels.php" class="<?php echo isMenuActive('levels', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-layer-group"></i> Levels</a></li>
-            <li><a href="tasks.php" class="<?php echo isMenuActive('tasks', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-tasks"></i> Tasks</a></li>
-            <li><a href="combos.php" class="<?php echo isMenuActive('combos', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-link"></i> Combos</a></li>
-            <li><a href="invitation-codes.php" class="<?php echo isMenuActive('invitation-codes', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+            <li><a href="levels.php" class="<?php echo isMenuActive('levels', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-layer-group"></i> <?php echo __t('levels', 'Levels'); ?></a></li>
+            <li><a href="tasks.php" class="<?php echo isMenuActive('tasks', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-tasks"></i> <?php echo __t('tasks', 'Tasks'); ?></a></li>
+            <li><a href="combos.php" class="<?php echo isMenuActive('combos', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-link"></i> <?php echo __t('Combos'); ?></a></li>
+            <li><a href="invitation-codes.php" class="<?php echo isMenuActive('invitation-codes', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-ticket-alt"></i> <?php echo __t('invitation_codes'); ?></a></li>
         </ul>
     </div>
     
     <!-- FINANCE Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title">FINANCE</div>
+        <div class="sidebar-section-title"><?php echo __t('FINANCE'); ?></div>
         <ul class="sidebar-menu">
-            <li><a href="finance_analysis.php" class="<?php echo isMenuActive('finance_analysis', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
-            <li><a href="withdrawals.php" class="<?php echo isMenuActive('withdrawals', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+            <li><a href="finance_analysis.php" class="<?php echo isMenuActive('finance_analysis', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-chart-line"></i> <?php echo __t('finance_analysis', 'Finance Analysis'); ?></a></li>
+            <li><a href="withdrawals.php" class="<?php echo isMenuActive('withdrawals', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-arrow-up"></i> <?php echo __t('withdrawals', 'Withdrawals'); ?></a></li>
+            <li><a href="withdrawals.php" class="<?php echo isMenuActive('withdrawals', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-arrow-up"></i> <?php echo __t('withdrawals'); ?></a></li>
         </ul>
     </div>
     
     <!-- MONITORING Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title">MONITORING</div>
+        <div class="sidebar-section-title"><?php echo __t('MONITORING'); ?></div>
         <ul class="sidebar-menu">
-            <li><a href="contacts.php" class="<?php echo isMenuActive('contacts', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-address-book"></i> Contacts</a></li>
-            <li><a href="testimonials.php" class="<?php echo isMenuActive('testimonials', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-comments"></i> Testimonials</a></li>
+            <li><a href="contacts.php" class="<?php echo isMenuActive('contacts', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-address-book"></i> <?php echo __t('Contacts'); ?></a></li>
+            <li><a href="testimonials.php" class="<?php echo isMenuActive('testimonials', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-comments"></i> <?php echo __t('Testimonials'); ?></a></li>
         </ul>
     </div>
     
     <!-- SYSTEM Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title">SYSTEM</div>
+        <div class="sidebar-section-title"><?php echo __t('SYSTEM'); ?></div>
         <ul class="sidebar-menu">
-            <li><a href="settings.php" class="<?php echo isMenuActive('settings', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-cog"></i> Settings</a></li>
-            <li><a href="languages.php" class="<?php echo isMenuActive('languages', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-language"></i> Languages</a></li>
-            <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="settings.php" class="<?php echo isMenuActive('settings', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-cog"></i> <?php echo __t('Settings'); ?></a></li>
+            <li><a href="languages.php" class="<?php echo isMenuActive('languages', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-language"></i> <?php echo __t('Languages'); ?></a></li>
+            <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> <?php echo __t('Logout'); ?></a></li>
         </ul>
     </div>
 </div>

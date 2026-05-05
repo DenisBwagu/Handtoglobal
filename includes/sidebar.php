@@ -4,6 +4,10 @@
  * Shared sidebar for all user pages
  */
 
+require_once __DIR__ . '/language_helpers.php';
+
+require_once __DIR__ . '/language_helpers.php';
+
 // Get current page for active state
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
