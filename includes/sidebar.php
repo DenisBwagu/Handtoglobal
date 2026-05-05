@@ -59,7 +59,7 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     <!-- User Balance Card -->
     <?php if (!isset($hideBalanceCard)) : ?>
         <div class="user-balance-card">
-            <div class="balance-label"><?php echo get_translation('current_balance', 'Current Balance'); ?></div>
+            <div class="balance-label"><?php echo __t('current_balance', 'Current Balance'); ?></div>
             <div class="balance-amount">$<?php echo number_format($userBalance, 2); ?></div>
             <div class="user-level">
                 <span class="level-badge level-<?php echo htmlspecialchars($levelClass); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
@@ -69,7 +69,7 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     
     <!-- MAIN Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title"><?php echo get_translation('main', 'MAIN'); ?></div>
+        <div class="sidebar-section-title"><?php echo __t('main', 'MAIN'); ?></div>
         <ul class="sidebar-menu">
             <li>
                 <a href="dashboard.php" class="sidebar-menu-item <?php echo isUserMenuActive('dashboard', $currentPage) ? 'active' : ''; ?>">
@@ -80,7 +80,7 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
             <li>
                 <a href="task_history.php" class="sidebar-menu-item <?php echo (isUserMenuActive('task_history', $currentPage) || isUserMenuActive('records', $currentPage)) ? 'active' : ''; ?>">
                     <i class="fas fa-history"></i> 
-                    <?php echo get_translation('task_history', 'Task History'); ?>
+                    <?php echo __t('task_history', 'Task History'); ?>
                 </a>
             </li>
         </ul>
@@ -88,7 +88,7 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     
     <!-- ACCOUNT Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title"><?php echo get_translation('account', 'ACCOUNT'); ?></div>
+        <div class="sidebar-section-title"><?php echo __t('account', 'ACCOUNT'); ?></div>
         <ul class="sidebar-menu">
             <li>
                 <a href="withdrawals.php" class="sidebar-menu-item <?php echo isUserMenuActive('withdrawals', $currentPage) ? 'active' : ''; ?>">
@@ -113,12 +113,12 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     
     <!-- SUPPORT Section -->
     <div class="sidebar-section">
-        <div class="sidebar-section-title"><?php echo get_translation('support', 'SUPPORT'); ?></div>
+        <div class="sidebar-section-title"><?php echo __t('support', 'SUPPORT'); ?></div>
         <ul class="sidebar-menu">
             <li>
                 <a href="<?php echo htmlspecialchars($supportLink); ?>" class="sidebar-menu-item" target="_blank" rel="noopener">
                     <i class="fas fa-headset"></i> 
-                    <?php echo get_translation('support', 'Support'); ?>
+                    <?php echo __t('support', 'Support'); ?>
                 </a>
             </li>
         </ul>

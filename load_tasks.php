@@ -6,13 +6,13 @@ require_once __DIR__ . '/includes/settings_helpers.php';
 require_once __DIR__ . '/includes/task_flow_helpers.php';
 
 if (!isLoggedIn()) {
-    echo json_encode(['error' => 'Please login to access tasks']);
+    echo json_encode(['error' => __t('please_login_access_tasks', 'Please login to access tasks')]);
     exit;
 }
 
 $level = normalizeLevelName($_GET['level'] ?? '');
 if ($level === '') {
-    echo json_encode(['error' => 'Level not specified']);
+    echo json_encode(['error' => __t('level_not_specified', 'Level not specified')]);
     exit;
 }
 
@@ -23,7 +23,7 @@ try {
     if (!isLevelUnlockedForUser($userId, $level)) {
         echo json_encode([
             'locked' => true,
-            'error' => 'Level is locked. Please contact support to unlock this level.',
+            'error' => __t('level_locked_contact_support', 'Level is locked. Please contact support to unlock this level.')
         ]);
         exit;
     }
@@ -32,8 +32,8 @@ try {
     if ($stats['total'] === 0) {
         echo json_encode([
             'completed' => true,
-            'message' => 'No active tasks are available for this level yet.',
-            'progress' => '0/40',
+            'message' => __t('no_active_tasks_level', 'No active tasks are available for this level yet.'),
+            'progress' => "0/40",
         ]);
         exit;
     }
@@ -41,7 +41,7 @@ try {
     if ($stats['completed'] >= $stats['total']) {
         echo json_encode([
             'completed' => true,
-            'message' => 'All tasks completed for this level!',
+            'message' => __t('all_tasks_completed_level', 'All tasks completed for this level!'),
             'progress' => $stats['completed'] . '/' . $stats['total'],
         ]);
         exit;
@@ -65,7 +65,7 @@ try {
     if (!$currentTask) {
         echo json_encode([
             'completed' => true,
-            'message' => 'All tasks completed for this level!',
+            'message' => __t('all_tasks_completed_level', 'All tasks completed for this level!'),
             'progress' => $stats['completed'] . '/' . $stats['total'],
         ]);
         exit;
@@ -80,5 +80,5 @@ try {
     ]);
 } catch (Throwable $e) {
     error_log('load_tasks failed: ' . $e->getMessage());
-    echo json_encode(['error' => 'Failed to load tasks. Please try again.']);
+    echo json_encode(['error' => __t('failed_load_tasks_try_again', 'Failed to load tasks. Please try again.')]);
 }

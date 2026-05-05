@@ -6,7 +6,7 @@ require_once __DIR__ . '/includes/settings_helpers.php';
 require_once __DIR__ . '/includes/task_flow_helpers.php';
 
 if (!isLoggedIn()) {
-    echo json_encode(['error' => 'Please login to submit tasks']);
+    echo json_encode(['error' => __t('please_login_submit_tasks', 'Please login to submit tasks')]);
     exit;
 }
 
@@ -15,7 +15,7 @@ $answer = trim((string)($_POST['answer'] ?? ''));
 $level = normalizeLevelName($_POST['level'] ?? '');
 
 if ($taskId <= 0 || $answer === '' || $level === '') {
-    echo json_encode(['error' => 'Missing required task data']);
+    echo json_encode(['error' => __t('missing_required_task_data', 'Missing required task data')]);
     exit;
 }
 
@@ -24,7 +24,7 @@ $userId = (int)$_SESSION['user_id'];
 
 try {
     if (!isLevelUnlockedForUser($userId, $level)) {
-        echo json_encode(['error' => 'This level is locked. Please contact support to unlock it.']);
+        echo json_encode(['error' => __t('level_locked_contact_support', 'Level is locked. Please contact support to unlock this level.')]);
         exit;
     }
 
@@ -33,20 +33,20 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$task) {
-        echo json_encode(['error' => 'Task not found']);
+        echo json_encode(['error' => __t('task_not_found', 'Task not found')]);
         exit;
     }
 
     $taskLevel = normalizeLevelName($task['level'] ?? $level);
     if (!in_array($taskLevel, htg_level_aliases($level), true)) {
-        echo json_encode(['error' => 'Task does not belong to the selected level']);
+        echo json_encode(['error' => __t('task_not_belong_level', 'Task does not belong to the selected level')]);
         exit;
     }
 
     $stmt = $conn->prepare("SELECT id FROM completed_tasks WHERE user_id = ? AND task_id = ? LIMIT 1");
     $stmt->execute([$userId, $taskId]);
     if ($stmt->fetch()) {
-        echo json_encode(['error' => 'Task already completed']);
+        echo json_encode(['error' => __t('task_already_completed', 'Task already completed')]);
         exit;
     }
 
@@ -55,7 +55,7 @@ try {
         echo json_encode([
             'success' => true,
             'level_completed' => true,
-            'message' => 'All tasks completed for this level!',
+            'message' => __t('all_tasks_completed_level', 'All tasks completed for this level!'),
             'dashboard_stats' => htg_dashboard_stats($conn, $userId, $level),
         ]);
         exit;
@@ -158,5 +158,5 @@ try {
     }
 
     error_log('task_action failed: ' . $e->getMessage());
-    echo json_encode(['error' => 'Failed to submit task. Please try again.']);
+    echo json_encode(['error' => __t('failed_submit_task_try_again', 'Failed to submit task. Please try again.')]);
 }

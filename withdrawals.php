@@ -100,29 +100,29 @@ $siteName = get_site_name();
         <div class="content-area">
             <div class="page-header">
                 <div>
-                    <h1>Withdrawals</h1>
-                    <p>View your withdrawal requests and their approval status.</p>
+                    <h1><?php echo __t('withdrawals', 'Withdrawals'); ?></h1>
+                    <p><?php echo __t('view_withdrawal_requests_status', 'View your withdrawal requests and their approval status.'); ?></p>
                 </div>
                 <div class="actions" style="margin-top:0">
-                    <a class="btn btn-primary" href="request_withdrawal.php"><i class="fas fa-plus"></i> Request Withdrawal</a>
-                    <a class="btn btn-secondary" href="dashboard.php"><i class="fas fa-arrow-left"></i> Dashboard</a>
-                    <a class="btn btn-support" href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" rel="noopener"><i class="fas fa-headset"></i> Support</a>
+                    <a class="btn btn-primary" href="request_withdrawal.php"><i class="fas fa-plus"></i> <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?></a>
+                    <a class="btn btn-secondary" href="dashboard.php"><i class="fas fa-arrow-left"></i> <?php echo __t('dashboard', 'Dashboard'); ?></a>
+                    <a class="btn btn-support" href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" rel="noopener"><i class="fas fa-headset"></i> <?php echo __t('support', 'Support'); ?></a>
                 </div>
             </div>
 
             <section class="panel">
-                <h2>Withdrawal History</h2>
+                <h2><?php echo __t('withdrawal_history', 'Withdrawal History'); ?></h2>
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>AMOUNT</th>
-                                <th>ASSET/NETWORK</th>
-                                <th>WALLET</th>
-                                <th>MEMO</th>
-                                <th>STATUS</th>
-                                <th>NOTE</th>
-                                <th>DATE</th>
+                                <th><?php echo __t('amount', 'AMOUNT'); ?></th>
+                                <th><?php echo __t('asset_network', 'ASSET/NETWORK'); ?></th>
+                                <th><?php echo __t('wallet', 'WALLET'); ?></th>
+                                <th><?php echo __t('memo', 'MEMO'); ?></th>
+                                <th><?php echo __t('status', 'STATUS'); ?></th>
+                                <th><?php echo __t('note', 'NOTE'); ?></th>
+                                <th><?php echo __t('date', 'DATE'); ?></th>
                             </tr>
                         </thead>
                         <tbody>

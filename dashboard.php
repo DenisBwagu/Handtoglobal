@@ -797,7 +797,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <div class="level-badge"><?php echo __t('current_level', 'CURRENT LEVEL'); ?></div>
                     <div class="level-header">
                         <div class="level-name current-level" id="currentLevelName"><?php echo htmlspecialchars($stats['current_level']); ?></div>
-                        <div class="level-category">Name Items</div>
+                        <div class="level-category"><?php echo __t('name_items', 'Name Items'); ?></div>
                     </div>
                     <div class="progress-container">
                         <div class="progress-bar">
@@ -977,7 +977,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 <!-- Combo content will be populated dynamically -->
             </div>
             <div class="modal-footer" id="comboModalFooter">
-                <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>
+                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
             </div>
         </div>
     </div>
@@ -1118,9 +1118,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444;"></i>
-                                <h4 style="margin: 16px 0 8px 0;">Error</h4>
+                                <h4 style="margin: 16px 0 8px 0;"><?php echo __t('error', 'Error'); ?></h4>
                                 <p style="color: #6b7280;">${data.error}</p>
-                                <button class="btn btn-primary" onclick="closeTaskModal()">Close</button>
+                                <button class="btn btn-primary" onclick="closeTaskModal()"><?php echo __t('close', 'Close'); ?></button>
                             </div>
                         `;
                         return;
@@ -1133,7 +1133,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b;"></i>
-                                <h4 style="margin: 16px 0 8px 0;">Combo Required</h4>
+                                <h4 style="margin: 16px 0 8px 0;"><?php echo __t('combo_required', 'Combo Required'); ?></h4>
                                 <p style="color: #6b7280;">Tasks are paused for this level until admin activates the combo.</p>
                             </div>
                         `;
@@ -1145,9 +1145,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         body.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981;"></i>
-                                <h4 style="margin: 16px 0 8px 0;">All Tasks Completed!</h4>
-                                <p style="color: #6b7280;">${data.message || 'No tasks available for this level'}</p>
-                                <button class="btn btn-primary" onclick="closeTaskModal()">Close</button>
+                                <h4 style="margin: 16px 0 8px 0;"><?php echo __t('all_tasks_completed', 'All Tasks Completed!'); ?></h4>
+                                <p style="color: #6b7280;"><?php echo __t('no_tasks_available_level', 'No tasks available for this level'); ?></p>
+                                <button class="btn btn-primary" onclick="closeTaskModal()"><?php echo __t('close', 'Close'); ?></button>
                                 <button type="button" onclick="window.location.href=window.SUPPORT_LINK || 'support.php'" style="
     margin-top:12px;
     background:#0ea5e9;
@@ -1158,7 +1158,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
     font-weight:700;
     cursor:pointer;
 ">
-    Contact Customer Support
+    <?php echo __t('contact_customer_support', 'Contact Customer Support'); ?>
 </button>
                             </div>
                         `;
@@ -1179,9 +1179,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     body.innerHTML = `
                         <div style="text-align: center; padding: 40px;">
                             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444;"></i>
-                            <h4 style="margin: 16px 0 8px 0;">Error</h4>
-                            <p style="color: #6b7280;">Failed to load tasks</p>
-                            <button class="btn btn-primary" onclick="closeTaskModal()">Close</button>
+                            <h4 style="margin: 16px 0 8px 0;"><?php echo __t('error', 'Error'); ?></h4>
+                            <p style="color: #6b7280;"><?php echo __t('failed_load_tasks', 'Failed to load tasks'); ?></p>
+                            <button class="btn btn-primary" onclick="closeTaskModal()"><?php echo __t('close', 'Close'); ?></button>
                         </div>
                     `;
                 });
@@ -1216,27 +1216,27 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                    <h5 style="margin: 0 0 8px 0; color: #333;">${taskIndex + 1}. ${task.title || 'Are you familiar with this brand?'}</h5>
-                    <p style="margin: 0; color: #6b7280; font-size: 14px;">${task.description || 'Here we are exploring the visibility and popularity of a product'}</p>
+                    <h5 style="margin: 0 0 8px 0; color: #333;"><?php echo __t('task_number_title', 'Task'); ?> ${taskIndex + 1}. ${task.title || '<?php echo __t('familiar_brand', 'Are you familiar with this brand?'); ?>'}</h5>
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;"><?php echo __t('exploring_visibility_popularity', 'Here we are exploring the visibility and popularity of a product'); ?></p>
                 </div>
                 
                 ${task.image ? `
                     <div style="margin-bottom: 20px; text-align: center;">
-                        <img src="uploads/tasks/${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <img src="uploads/tasks/${task.image}" alt="<?php echo __t('task_image', 'Task Image'); ?>" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
                     </div>
                 ` : ''}
                 
                 <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">INSTRUCTIONS</div>
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;"><?php echo __t('instructions', 'INSTRUCTIONS'); ?></div>
                     <div style="color: #92400e; font-size: 14px;">${task.instructions || 'YES or NO'}</div>
                 </div>
                 
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${level}')" style="flex: 1;">
-                        <i class="fas fa-check"></i> I Know This Item
+                        <i class="fas fa-check"></i> <?php echo __t('i_know_this_item', 'I Know This Item'); ?>
                     </button>
                     <button class="btn" onclick="completeTask(${task.id}, 'no', '${level}')" style="flex: 1; background: #ef4444; color: white;">
-                        <i class="fas fa-times"></i> I Don't Know
+                        <i class="fas fa-times"></i> <?php echo __t('i_dont_know', 'I Don\'t Know'); ?>
                     </button>
                 </div>
             `;
@@ -1411,7 +1411,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <div class="task-content">
                     <div class="task-image">
-                        <img src="${task.image || 'https://via.placeholder.com/300x200'}" alt="${task.title}">
+                        <img src="${task.image || 'https://via.placeholder.com/300x200'}" alt="${task.title}"
                     </div>
                     
                     <div class="task-description">
@@ -1420,16 +1420,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 </div>
                 
                 <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">INSTRUCTIONS</div>
-                    <div style="color: #92400e; font-size: 14px;">YES or NO</div>
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;"><?php echo __t('instructions', 'INSTRUCTIONS'); ?></div>
+                    <div style="color: #92400e; font-size: 14px;"><?php echo __t('yes_or_no', 'YES or NO'); ?></div>
                 </div>
                 
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${task.level}')" style="flex: 1;">
-                        <i class="fas fa-check"></i> I Know This Item
+                        <i class="fas fa-check"></i> <?php echo __t('i_know_this_item', 'I Know This Item'); ?>
                     </button>
                     <button class="btn" onclick="completeTask(${task.id}, 'no', '${task.level}')" style="flex: 1; background: #ef4444; color: white;">
-                        <i class="fas fa-times"></i> I Don't Know
+                        <i class="fas fa-times"></i> <?php echo __t('i_dont_know', 'I Don\'t Know'); ?>
                     </button>
                 </div>
             `;
@@ -1451,16 +1451,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                         <i class="fas fa-check" style="font-size: 32px;"></i>
                     </div>
-                    <h3 style="color: #10b981; margin-bottom: 12px;"> Level Completed!</h3>
-                    <p style="color: #6b7280; margin-bottom: 20px;">You've completed all tasks in this level!</p>
+                    <h3 style="color: #10b981; margin-bottom: 12px;"> <?php echo __t('level_completed', 'Level Completed!'); ?></h3>
+                    <p style="color: #6b7280; margin-bottom: 20px;"><?php echo __t('completed_all_tasks_level', 'You\'ve completed all tasks in this level!'); ?></p>
                     <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                        <div style="font-weight: 600; color: #166534; margin-bottom: 8px;">Level Statistics</div>
+                        <div style="font-weight: 600; color: #166534; margin-bottom: 8px;"><?php echo __t('level_statistics', 'Level Statistics'); ?></div>
                         <div style="color: #166534; font-size: 14px;">
                             40/40 tasks completed
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="closeTaskModal()">
-                        <i class="fas fa-check"></i> Continue
+                        <i class="fas fa-check"></i> <?php echo __t('continue', 'Continue'); ?>
                     </button>
                 </div>
             `;
@@ -1567,16 +1567,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                         <i class="fas fa-check" style="font-size: 32px;"></i>
                     </div>
-                    <h3 style="color: #10b981; margin-bottom: 12px;"> Level Completed!</h3>
-                    <p style="color: #6b7280; margin-bottom: 20px;">You've completed all tasks in this level!</p>
+                    <h3 style="color: #10b981; margin-bottom: 12px;"> <?php echo __t('level_completed', 'Level Completed!'); ?></h3>
+                    <p style="color: #6b7280; margin-bottom: 20px;"><?php echo __t('completed_all_tasks_level', 'You\'ve completed all tasks in this level!'); ?></p>
                     <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                        <div style="font-weight: 600; color: #166534; margin-bottom: 8px;">Level Statistics</div>
+                        <div style="font-weight: 600; color: #166534; margin-bottom: 8px;"><?php echo __t('level_statistics', 'Level Statistics'); ?></div>
                         <div style="color: #166534; font-size: 14px;">
                             ${data.current_level_completed || 0} / ${data.current_level_total || 0} tasks completed
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="closeTaskModal()">
-                        <i class="fas fa-check"></i> Continue
+                        <i class="fas fa-check"></i> <?php echo __t('continue', 'Continue'); ?>
                     </button>
                 </div>
             `;
@@ -1762,7 +1762,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     <div style="margin-bottom: 20px; display: flex; justify-content: center; align-items: stretch;">
                         <div style="background: #f3f4f6; width: 20%; border-radius: 8px 0 0 8px;"></div>
                         <div style="flex: 1; text-align: center;">
-                            <img src="uploads/tasks/${task.image}" alt="Task Image" style="max-width: 100%; height: auto; border-radius: 0; border: 1px solid #e5e7eb;">
+                            <img src="uploads/tasks/${task.image}" alt="<?php echo __t('task_image', 'Task Image'); ?>" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e5e7eb;">
                         </div>
                         <div style="background: #f3f4f6; width: 20%; border-radius: 0 8px 8px 0;"></div>
                     </div>
@@ -1770,17 +1770,17 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <!-- Instructions box -->
                 <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">INSTRUCTIONS</div>
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;"><?php echo __t('instructions', 'INSTRUCTIONS'); ?></div>
                     <div style="color: #92400e; font-size: 14px;">${task.instructions || 'YES or NO'}</div>
                 </div>
                 
                 <!-- Fixed buttons at bottom -->
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-primary" onclick="completeTask(${task.id}, 'yes', '${task.level}')" style="flex: 1;">
-                        <i class="fas fa-check"></i> I Know This Item
+                        <i class="fas fa-check"></i> <?php echo __t('i_know_this_item', 'I Know This Item'); ?>
                     </button>
                     <button class="btn" onclick="completeTask(${task.id}, 'no', '${task.level}')" style="flex: 1; background: #ef4444; color: white;">
-                        <i class="fas fa-times"></i> I Don't Know
+                        <i class="fas fa-times"></i> <?php echo __t('i_dont_know', 'I Don\'t Know'); ?>
                     </button>
                 </div>
             `;
@@ -1878,9 +1878,9 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             
             footer.innerHTML = `
                 <button class="btn btn-support" onclick="window.open(window.SUPPORT_LINK || '#', '_blank')" style="background: #f59e0b; color: white;">
-                    Deposit via Telegram
+                    <?php echo __t('deposit_via_telegram', 'Deposit via Telegram'); ?>
                 </button>
-                <button class="btn btn-secondary" onclick="closeComboModal()">Close</button>
+                <button class="btn btn-secondary" onclick="closeComboModal()"><?php echo __t('close', 'Close'); ?></button>
             `;
             
             modal.classList.add('active');

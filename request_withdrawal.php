@@ -5,7 +5,7 @@ require_once 'get_translation.php';
 
 requireLogin();
 
-// Hide balance card from Request Withdrawal page
+// Hide balance card from <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?> page
 $hideBalanceCard = true;
 
 $conn = getConnection();
@@ -49,19 +49,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validation
     if ($amount <= 0) {
-        $error = 'Amount is required and must be greater than 0.';
+        $error = __t('amount_required_greater_zero', 'Amount is required and must be greater than 0.') . '';
     } elseif ($amount > $availableBalance) {
-        $error = 'Amount cannot exceed your available balance.';
+        $error = __t('amount_exceed_balance', 'Amount cannot exceed your available balance.') . '';
     } elseif ($amount < $minWithdrawal) {
-        $error = 'Minimum withdrawal amount is $' . number_format($minWithdrawal, 2) . '. Please enter a higher amount.';
+        $error = __t('minimum_withdrawal_amount', 'Minimum withdrawal amount is $') . number_format($minWithdrawal, 2) . '. Please enter a higher amount.';
     } elseif ($walletAddress === '') {
-        $error = 'Wallet address is required.';
+        $error = __t('wallet_address_required', 'Wallet address is required.') . '';
     } elseif ($coinAsset === '') {
-        $error = 'Coin asset is required.';
+        $error = __t('coin_asset_required', 'Coin asset is required.') . '';
     } elseif ($network === '') {
-        $error = 'Network is required.';
+        $error = __t('network_required', 'Network is required.') . '';
     } elseif ($userLevelRank < $effectiveMinWithdrawalLevel) {
-        $error = 'You must reach at least level ' . $effectiveMinWithdrawalLevel . ' to request withdrawals.';
+        $error = __t('must_reach_level', 'You must reach at least level') . ' ' . $effectiveMinWithdrawalLevel . ' ' . __t('to_request_withdrawals', 'to request withdrawals.') . '';
     } else {
         // Insert into withdrawals table
         $stmt = $conn->prepare("
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Redirect to withdrawals page to show the new request
             redirect('withdrawals.php');
         } else {
-            $error = 'Failed to submit withdrawal request. Please try again.';
+            $error = __t('failed_submit_withdrawal', 'Failed to submit withdrawal request. Please try again.') . '';
         }
     }
 }
@@ -87,7 +87,7 @@ $siteName = get_site_name();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Withdrawal - <?php echo htmlspecialchars($siteName); ?></title>
+    <title><?php echo __t('request_withdrawal', 'Request Withdrawal'); ?> - <?php echo htmlspecialchars($siteName); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -135,12 +135,12 @@ $siteName = get_site_name();
         <div class="content-area">
             <div class="page-header">
                 <div>
-                    <h1>Request Withdrawal</h1>
-                    <p>Submit a withdrawal request to your preferred wallet.</p>
+                    <h1><?php echo __t('request_withdrawal', 'Request Withdrawal'); ?></h1>
+                    <p><?php echo __t('submit_withdrawal_request', 'Submit a withdrawal request to your preferred wallet.'); ?></p>
                 </div>
                 <div class="actions" style="margin-top:0">
-                    <a class="btn btn-secondary" href="withdrawals.php"><i class="fas fa-arrow-left"></i> Back to Withdrawals</a>
-                    <a class="btn btn-support" href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" rel="noopener"><i class="fas fa-headset"></i> Support</a>
+                    <a class="btn btn-secondary" href="withdrawals.php"><i class="fas fa-arrow-left"></i> <?php echo __t('back_to_withdrawals', 'Back to Withdrawals'); ?></a>
+                    <a class="btn btn-support" href="<?php echo htmlspecialchars($supportLink); ?>" target="_blank" rel="noopener"><i class="fas fa-headset"></i> <?php echo __t('support', 'Support'); ?></a>
                 </div>
             </div>
 
@@ -148,32 +148,32 @@ $siteName = get_site_name();
             <?php if ($error): ?><div class="notice error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
             <section class="panel">
-                <h2>Request Withdrawal</h2>
+                <h2><?php echo __t('request_withdrawal', 'Request Withdrawal'); ?></h2>
                 
                 <div class="balance-display">
-                    <div class="label">Available Balance</div>
+                    <div class="label"><?php echo __t('available_balance', 'Available Balance'); ?></div>
                     <div class="amount">$<?php echo number_format($availableBalance, 2); ?></div>
                 </div>
 
                 <div class="info-row">
                     <div class="info-box">
-                        <div class="label">Min Amount</div>
+                        <div class="label"><?php echo __t('min_amount', 'Min Amount'); ?></div>
                         <div class="value">$<?php echo number_format($minWithdrawal, 2); ?></div>
                     </div>
                     <div class="info-box">
-                        <div class="label">Amount USD</div>
+                        <div class="label"><?php echo __t('amount_usd', 'Amount USD'); ?></div>
                         <div class="value">-</div>
                     </div>
                 </div>
 
                 <form method="post">
                     <div class="form-group">
-                        <label for="amount">Amount USD</label>
+                        <label for="amount"><?php echo __t('amount_usd', 'Amount USD'); ?></label>
                         <input type="number" id="amount" name="amount" step="0.01" min="<?php echo $minWithdrawal; ?>" max="<?php echo $availableBalance; ?>" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="coin_asset">Coin Asset</label>
+                        <label for="coin_asset"><?php echo __t('coin_asset', 'Coin Asset'); ?></label>
                         <select id="coin_asset" name="coin_asset" required>
                             <option value="USDT" selected>USDT</option>
                             <option value="BTC">BTC</option>
@@ -183,7 +183,7 @@ $siteName = get_site_name();
                     </div>
 
                     <div class="form-group">
-                        <label for="network">Network</label>
+                        <label for="network"><?php echo __t('network', 'Network'); ?></label>
                         <select id="network" name="network" required>
                             <option value="Tron (TRC20)" selected>Tron (TRC20)</option>
                             <option value="Ethereum (ERC20)">Ethereum (ERC20)</option>
@@ -193,24 +193,24 @@ $siteName = get_site_name();
                     </div>
 
                     <div class="form-group">
-                        <label for="wallet_address">Wallet Address</label>
+                        <label for="wallet_address"><?php echo __t('wallet_address', 'Wallet Address'); ?></label>
                         <input type="text" id="wallet_address" name="wallet_address" required placeholder="Enter your wallet address">
                     </div>
 
                     <div class="form-group">
-                        <label for="memo_tag">Memo Tag (Optional)</label>
+                        <label for="memo_tag"><?php echo __t('memo_tag_optional', 'Memo Tag (Optional)'); ?></label>
                         <input type="text" id="memo_tag" name="memo_tag" placeholder="Enter memo tag if required">
                     </div>
 
                     <div class="form-group">
-                        <label for="recipient_name">Recipient Name (Optional)</label>
+                        <label for="recipient_name"><?php echo __t('recipient_name_optional', 'Recipient Name (Optional)'); ?></label>
                         <input type="text" id="recipient_name" name="recipient_name" placeholder="Enter recipient name">
                     </div>
 
                     <div class="warning-box">
                         <div class="title">
                             <i class="fas fa-exclamation-triangle"></i>
-                            Warning
+                            <?php echo __t('warning', 'Warning'); ?>
                         </div>
                         <div class="text">
                             Please double-check your wallet address before submitting. Withdrawal requests are processed manually and cannot be cancelled once submitted. Make sure your wallet supports the selected network.
@@ -219,7 +219,7 @@ $siteName = get_site_name();
 
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-paper-plane"></i>
-                        Request Withdrawal
+                        <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?>
                     </button>
                 </form>
             </section>
