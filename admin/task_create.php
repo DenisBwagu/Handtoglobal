@@ -63,6 +63,18 @@ if (isset($_POST['create_task'])) {
             
             $msg = "Task created successfully!";
             
+            // Check if this is an AJAX request
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                // Return JSON response for AJAX
+                echo json_encode([
+                    'success' => true,
+                    'message' => $msg,
+                    'task_level' => $level,
+                    'redirect' => 'tasks.php'
+                ]);
+                exit;
+            }
+            
             // Redirect to tasks list after successful creation
             if (empty($error)) {
                 redirect('tasks.php?msg=' . urlencode('Task created successfully!'));
@@ -642,6 +654,163 @@ if (isset($_POST['create_task'])) {
             } else {
                 document.getElementById('imagePreview').style.display = 'none';
             }
+        }
+        
+        // Handle form submission with AJAX for real-time updates
+        document.querySelector('form[name="create_task"]').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var submitBtn = this.querySelector('button[type="submit"]');
+            var originalText = submitBtn.textContent;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+            
+            // Create AJAX request
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '', true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        
+                        if (response.success) {
+                            // Show success message
+                            showSuccessMessage(response.message);
+                            
+                            // Update level cards if on dashboard
+                            updateLevelCards();
+                            
+                            // Clear form
+                            document.querySelector('form[name="create_task"]').reset();
+                            document.getElementById('imagePreview').style.display = 'none';
+                            
+                            // Redirect after a delay
+                            setTimeout(function() {
+                                window.location.href = response.redirect;
+                            }, 1500);
+                        } else {
+                            showErrorMessage(response.message || 'Failed to create task');
+                        }
+                    } catch (e) {
+                        showErrorMessage('Invalid response from server');
+                    }
+                } else {
+                    showErrorMessage('Server error occurred');
+                }
+                
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            };
+            
+            xhr.onerror = function() {
+                showErrorMessage('Network error occurred');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            };
+            
+            xhr.send(formData);
+        });
+        
+        function updateLevelCards() {
+            // Only update if we're on the dashboard page
+            if (window.location.pathname.includes('dashboard.php')) {
+                fetch('get_level_stats.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update level progress section
+                            updateLevelProgressSection(data.level_stats);
+                            
+                            // Update stats cards
+                            updateStatsCards(data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating level stats:', error);
+                    });
+            }
+        }
+        
+        function updateLevelProgressSection(levelStats) {
+            // Find and update level progress elements
+            Object.keys(levelStats).forEach(function(level) {
+                var levelElement = document.querySelector('[data-level="' + level + '"]');
+                if (levelElement) {
+                    var completedEl = levelElement.querySelector('.level-progress');
+                    var progressEl = levelElement.querySelector('.progress-fill');
+                    var availableEl = levelElement.querySelector('.available-tasks');
+                    
+                    if (completedEl) {
+                        completedEl.textContent = levelStats[level].completed + '/' + levelStats[level].total;
+                    }
+                    if (progressEl) {
+                        progressEl.style.width = levelStats[level].progress + '%';
+                    }
+                    if (availableEl) {
+                        availableEl.textContent = 'Available: ' + levelStats[level].available;
+                    }
+                }
+            });
+        }
+        
+        function updateStatsCards(data) {
+            // Update stats cards if they exist
+            var totalTasksEl = document.querySelector('[data-stat="total_tasks"]');
+            var completedTasksEl = document.querySelector('[data-stat="completed_tasks"]');
+            var activeCombosEl = document.querySelector('[data-stat="active_combos"]');
+            
+            if (totalTasksEl) totalTasksEl.textContent = data.total_tasks;
+            if (completedTasksEl) completedTasksEl.textContent = data.completed_tasks;
+            if (activeCombosEl) activeCombosEl.textContent = data.active_combos;
+        }
+        
+        function showSuccessMessage(message) {
+            showMessage(message, 'success');
+        }
+        
+        function showErrorMessage(message) {
+            showMessage(message, 'error');
+        }
+        
+        function showMessage(message, type) {
+            // Remove existing messages
+            var existingMessages = document.querySelectorAll('.alert-message');
+            existingMessages.forEach(function(msg) {
+                msg.remove();
+            });
+            
+            // Create new message
+            var messageDiv = document.createElement('div');
+            messageDiv.className = 'alert-message alert-' + type;
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                z-index: 9999;
+                max-width: 300px;
+                word-wrap: break-word;
+                ${type === 'success' ? 'background: #22c55e;' : 'background: #ef4444;'}
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            // Remove message after 3 seconds
+            setTimeout(function() {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
         }
     </script>
 </body>

@@ -33,15 +33,19 @@ try {
         $stats['levels'][$level] = $levelProgress;
     }
     
-    // Calculate current level if not stored in users table
-    if (empty($user['level'])) {
-        foreach ($levels as $level) {
-            $levelProgress = $stats['levels'][$level];
-            if ($levelProgress['completed'] < $levelProgress['total']) {
-                $current_level = $level;
-                break;
-            }
+    // Always calculate current level based on actual progress
+    $current_level = null;
+    foreach ($levels as $level) {
+        $levelProgress = $stats['levels'][$level];
+        if ($levelProgress['completed'] < $levelProgress['total']) {
+            $current_level = $level;
+            break;
         }
+    }
+    
+    // If all levels are completed, use the highest level
+    if (!$current_level && !empty($levels)) {
+        $current_level = end($levels);
     }
     
     $stats['current_level'] = $current_level;
@@ -1274,7 +1278,11 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 }
                 
                 // Update dashboard stats immediately
-                updateDashboardStats(data);
+                if (data.dashboard_stats) {
+                    updateDashboardElements(data.dashboard_stats);
+                } else {
+                    updateDashboardStats(data);
+                }
                 
                 // Check if combo is required
                 if (data.combo_required) {
@@ -1452,6 +1460,97 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             
             // Ensure modal is open
             modal.classList.add('active');
+        }
+        
+        function updateDashboardElements(stats) {
+            // Update current level text
+            const currentLevelElements = document.querySelectorAll('.current-level, #currentLevelName, #welcomeLevelText');
+            currentLevelElements.forEach(el => {
+                if (el.id === 'welcomeLevelText') {
+                    el.textContent = `${stats.current_level} - ${stats.completed_tasks} tasks completed`;
+                } else {
+                    el.textContent = stats.current_level;
+                }
+            });
+            
+            // Update balance
+            const balanceElements = document.querySelectorAll('#balanceText, .balance');
+            balanceElements.forEach(el => {
+                el.textContent = '$' + stats.balance.toFixed(2);
+            });
+            
+            // Update progress bar and text
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(el => {
+                el.style.width = stats.progress + '%';
+            });
+            
+            const progressTexts = document.querySelectorAll('.progress-text, .level-progress');
+            progressTexts.forEach(el => {
+                el.textContent = `${stats.level_completed_tasks}/${stats.level_total_tasks}`;
+            });
+            
+            // Update available tasks
+            const availableElements = document.querySelectorAll('.available-tasks');
+            availableElements.forEach(el => {
+                el.textContent = 'Available: ' + stats.available_tasks;
+            });
+            
+            // Update completed tasks
+            const completedElements = document.querySelectorAll('.completed-count');
+            completedElements.forEach(el => {
+                el.textContent = stats.completed_tasks;
+            });
+            
+            // Update pending withdrawals
+            const pendingElements = document.querySelectorAll('.pending-withdrawals');
+            pendingElements.forEach(el => {
+                el.textContent = stats.pending_withdrawals;
+            });
+            
+            // Update performance score
+            const scoreElements = document.querySelectorAll('.performance-score');
+            scoreElements.forEach(el => {
+                el.textContent = stats.performance_score.toFixed(2);
+            });
+            
+            // Update today's progress
+            const todayProgressElements = document.querySelectorAll('#todayProgressText');
+            todayProgressElements.forEach(el => {
+                // Calculate today's progress (this would need to be returned from backend)
+                el.textContent = `${stats.completed_tasks}/40 tasks`;
+            });
+            
+            // Update level cards
+            if (stats.all_levels) {
+                Object.keys(stats.all_levels).forEach(level => {
+                    const levelCard = document.querySelector(`[data-level="${level}"]`);
+                    if (levelCard) {
+                        const completedEl = levelCard.querySelector('.level-progress');
+                        const progressEl = levelCard.querySelector('.progress-fill');
+                        const availableEl = levelCard.querySelector('.available-tasks');
+                        
+                        if (completedEl) {
+                            completedEl.textContent = stats.all_levels[level].completed + '/' + stats.all_levels[level].total;
+                        }
+                        if (progressEl) {
+                            progressEl.style.width = stats.all_levels[level].progress + '%';
+                        }
+                        if (availableEl) {
+                            availableEl.textContent = 'Available: ' + stats.all_levels[level].available;
+                        }
+                        
+                        // Update current level indicator
+                        if (level === stats.current_level) {
+                            levelCard.classList.add('current');
+                        } else {
+                            levelCard.classList.remove('current');
+                        }
+                    }
+                });
+            }
+            
+            console.log('Dashboard elements updated with stats:', stats);
         }
         
         // Handle support button click

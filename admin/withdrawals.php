@@ -976,9 +976,9 @@ if ($total_withdrawals == 0) {
                                 </td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-view" onclick="viewWithdrawal(<?php echo $withdrawal['id']; ?>)">
+                                        <a href="view_withdrawal.php?id=<?php echo $withdrawal['id']; ?>" class="btn-view" style="text-decoration: none; display: inline-block; padding: 8px 16px;">
                                             View
-                                        </button>
+                                        </a>
                                         <?php if ($withdrawal['status'] === 'Pending'): ?>
                                             <button class="btn-view" onclick="approveWithdrawal(<?php echo $withdrawal['id']; ?>)">
                                                 Approve
@@ -1147,12 +1147,11 @@ if ($total_withdrawals == 0) {
                         
                         document.getElementById('viewModal').classList.add('show');
                     } else {
-                        alert(data.message || 'Failed to load withdrawal details');
+                        console.error('Failed to load withdrawal details:', data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to load withdrawal details');
                 });
         }
         

@@ -273,13 +273,42 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
         $level_completed = true;
     }
 
+    // Calculate dashboard stats
+    $pending_withdrawals = 0;
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM withdrawals WHERE user_id = ? AND status = 'pending'");
+    $stmt->execute([$user_id]);
+    $pending_withdrawals = $stmt->fetch()['count'];
+    
+    $performance_score = 0.00;
+    if (isset($_SESSION['user_rating'])) {
+        $performance_score = (float)$_SESSION['user_rating'];
+    } else {
+        // Get user rating from database
+        $stmt = $conn->prepare("SELECT rating FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+        $user_data = $stmt->fetch();
+        $performance_score = $user_data ? (float)$user_data['rating'] : 0.00;
+        $_SESSION['user_rating'] = $performance_score;
+    }
+    
     $response = [
         'success' => true,
         'balance' => (float)$new_balance,
         'completed_tasks' => $stats[$current_level]['completed'],
         'progress' => round($stats[$current_level]['progress'], 1),
         'current_level' => $current_level,
-        'level_completed' => $level_completed
+        'level_completed' => $level_completed,
+        'dashboard_stats' => [
+            'current_level' => $current_level,
+            'level_completed_tasks' => $stats[$current_level]['completed'],
+            'level_total_tasks' => $stats[$current_level]['total'],
+            'available_tasks' => $stats[$current_level]['available'],
+            'completed_tasks' => $stats[$current_level]['completed'],
+            'pending_withdrawals' => $pending_withdrawals,
+            'performance_score' => $performance_score,
+            'balance' => (float)$new_balance,
+            'all_levels' => $stats
+        ]
     ];
     
     if ($level_completed) {
