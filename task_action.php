@@ -118,9 +118,9 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
     $conn->commit();
     
     // Check for combo after task completion
-    $current_task_number = $stats[$current_level]['completed'];
+    $current_task_number = $stats[$current_level]['completed'] + 1; // Next task number
     
-    // Check if user has reached an active combo for this task
+    // Check if the NEXT task is within an active combo range
     $stmt = $conn->prepare("
         SELECT c.*
         FROM combos c
@@ -161,36 +161,31 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
         $startTaskTitle = $taskTitles[0] ?? 'Task ' . $combo['start_task'];
         $endTaskTitle = $taskTitles[1] ?? ($combo['start_task'] == $combo['end_task'] ? $startTaskTitle : 'Task ' . $combo['end_task']);
         
-        // Return combo_required response
+        // Return combo_required response with correct format
         echo json_encode([
+            'success' => true,
+            'next_task' => null,
             'combo_required' => true,
             'combo' => [
-                'id' => $combo['id'],
+                'amount' => number_format($combo['amount'], 2),
+                'message' => $combo['message'],
                 'level' => $combo['level'],
+                'task_number' => $current_task_number,
                 'start_task' => $combo['start_task'],
                 'end_task' => $combo['end_task'],
-                'amount' => $combo['amount'],
-                'message' => $combo['message'],
-                'multiplier' => $combo['multiplier'] ?? 1,
-                'start_task_title' => $combo['start_task'] . '. ' . $startTaskTitle,
-                'end_task_title' => $combo['end_task'] . '. ' . $endTaskTitle,
-                'task_count' => $combo['end_task'] - $combo['start_task'] + 1
+                'id' => $combo['id']
             ],
-            'success' => true,
-            'message' => 'Task completed but combo required!',
-            'task_title' => $task_title,
-            'reward' => number_format($reward, 2),
             'balance' => number_format($new_balance, 2),
-            'current_level' => $current_level,
-            'current_level_completed' => $stats[$current_level]['completed'],
-            'current_level_total' => $stats[$current_level]['total'],
-            'available_tasks' => $stats[$current_level]['available'],
             'completed_tasks' => $stats[$current_level]['completed'],
-            'today_completed' => $today_completed,
-            'daily_limit' => $daily_limit,
-            'progress_percent' => round($stats[$current_level]['progress'], 1),
-            'all_levels' => $stats,
-            'live_activity_message' => "You submitted {$task_title}. Reward added: \${reward}. Current level progress: {$stats[$current_level]['completed']}/{$stats[$current_level]['total']}"
+            'current_level' => $current_level,
+            'dashboard_stats' => [
+                'balance' => number_format($new_balance, 2),
+                'completed_tasks' => $stats[$current_level]['completed'],
+                'available_tasks' => $stats[$current_level]['available'],
+                'current_level' => $current_level,
+                'performance_score' => $performance_score,
+                'pending_withdrawals' => $pending_withdrawals
+            ]
         ]);
         exit;
     }
@@ -314,6 +309,7 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
         $response['message'] = 'Level completed!';
         $response['current_level_completed'] = $stats[$current_level]['completed'];
         $response['current_level_total'] = $stats[$current_level]['total'];
+        $response['level_completed'] = true;
     } else if ($next_task) {
         $response['next_task'] = [
             'id' => (int)$next_task['id'],
@@ -329,6 +325,13 @@ if (!isLevelUnlockedForUser($user_id, $level)) {
             'available_count' => $stats[$current_level]['available'],
             'progress_text' => $stats[$current_level]['completed'] . '/40'
         ];
+        $response['combo_required'] = false;
+        $response['combo'] = null;
+        $response['level_completed'] = false;
+    } else {
+        $response['combo_required'] = false;
+        $response['combo'] = null;
+        $response['level_completed'] = true;
     }
     
     // Debug: Log the response before sending

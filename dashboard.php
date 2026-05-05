@@ -1308,7 +1308,14 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 console.log("AUTO NEXT CHECK:");
                 console.log("success:", data.success);
                 console.log("next_task:", data.next_task);
+                console.log("combo_required:", data.combo_required);
                 console.log("level_completed:", data.level_completed);
+                
+                if (data.success && data.combo_required && data.combo) {
+                    console.log("COMBO REQUIRED - Showing combo modal");
+                    showComboModal(data.combo);
+                    return;
+                }
                 
                 if (data.success && data.next_task) {
                     console.log("RENDERING NEXT TASK NOW");
@@ -1852,7 +1859,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         
         function showComboModal(combo) {
             // Validate combo data before showing popup
-            if (!combo || !combo.amount || !combo.message || !combo.multiplier) {
+            if (!combo || !combo.amount || !combo.message) {
                 console.log('Invalid combo data - not showing popup');
                 return;
             }
@@ -1865,7 +1872,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 <div style="text-align: center; margin-bottom: 20px;">
                     <i class="fas fa-bolt" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
                     <div style="background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block; margin-bottom: 8px;">
-                        ${combo.multiplier ? combo.multiplier + 'x Multiplier' : '1x Multiplier'}
+                        Special Combo Offer
                     </div>
                 </div>
                 
@@ -1875,16 +1882,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                         ${combo.message || 'Special combo offer available!'}
                     </div>
                     <div style="margin-bottom: 16px;">
-                        <strong>Tasks:</strong><br>
-                        ${combo.start_task_title ? combo.start_task_title + ' → ' + (combo.end_task_title || combo.start_task_title) : 'Task ' + combo.start_task + ' → Task ' + combo.end_task} (${combo.task_count || (combo.end_task - combo.start_task + 1)} tasks)
+                        <strong>Current Task:</strong><br>
+                        Task ${combo.task_number} in ${combo.level}
                     </div>
                     <div style="margin-bottom: 16px;">
-                        <strong>Deposit Required:</strong><br>
+                        <strong>Combo Amount:</strong><br>
                         $${parseFloat(combo.amount).toFixed(2)}
                     </div>
                     <div>
-                        <strong>Earnings Multiplier:</strong><br>
-                        ${combo.multiplier ? combo.multiplier + 'x' : '1x'}
+                        <strong>Combo Range:</strong><br>
+                        Tasks ${combo.start_task} to ${combo.end_task}
                     </div>
                 </div>
             `;
