@@ -515,67 +515,7 @@ $current_settings = get_all_settings();
     
     <!-- Admin Layout -->
     <div class="admin-layout">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <?php $site_logo = get_setting('site_logo'); ?>
-                <?php if ($site_logo): ?>
-                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
-                <?php else: ?>
-                    <i class="fas fa-hand-holding-usd"></i>
-                <?php endif; ?>
-                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
-            </div>
-            
-            <!-- MANAGEMENT Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">MANAGEMENT</div>
-                <ul class="sidebar-menu">
-                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
-                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
-                </ul>
-            </div>
-            
-            <!-- PLATFORM Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">PLATFORM</div>
-                <ul class="sidebar-menu">
-                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
-                    <li><a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a></li>
-                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
-                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
-                </ul>
-            </div>
-            
-            <!-- FINANCE Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">FINANCE</div>
-                <ul class="sidebar-menu">
-                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
-                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
-                </ul>
-            </div>
-            
-            <!-- MONITORING Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">MONITORING</div>
-                <ul class="sidebar-menu">
-                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
-                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
-                </ul>
-            </div>
-            
-            <!-- SYSTEM Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">SYSTEM</div>
-                <ul class="sidebar-menu">
-                    <li><a href="settings.php" class="active"><i class="fas fa-cog"></i> Settings</a></li>
-                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
-                    <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                </ul>
-            </div>
-        </div>
+        <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
         
         <!-- Main Content -->
         <div class="main-content">

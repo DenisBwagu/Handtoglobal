@@ -90,6 +90,64 @@ try {
     
     $conn->commit();
     
+    // Check for combo after task completion
+    $current_task_number = $stats[$current_level]['completed'];
+    
+    // Check if user has reached an active combo for this task
+    $stmt = $conn->prepare("
+        SELECT c.*
+        FROM combos c
+        LEFT JOIN user_combo_status ucs 
+            ON ucs.combo_id = c.id 
+            AND ucs.user_id = ?
+        WHERE c.level = ?
+            AND c.status = 'active'
+            AND c.start_task <= ?
+            AND c.end_task >= ?
+            AND (ucs.status IS NULL OR ucs.status = 'pending')
+        LIMIT 1
+    ");
+    $stmt->execute([$user_id, $current_level, $current_task_number, $current_task_number]);
+    $combo = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($combo) {
+        // Insert pending status for this user if not already exists
+        $stmt = $conn->prepare("
+            INSERT IGNORE INTO user_combo_status (user_id, combo_id, status)
+            VALUES (?, ?, 'pending')
+        ");
+        $stmt->execute([$user_id, $combo['id']]);
+        
+        // Return combo_required response
+        echo json_encode([
+            'combo_required' => true,
+            'combo' => [
+                'id' => $combo['id'],
+                'level' => $combo['level'],
+                'start_task' => $combo['start_task'],
+                'end_task' => $combo['end_task'],
+                'message' => $combo['message'],
+                'amount' => $combo['amount']
+            ],
+            'success' => true,
+            'message' => 'Task completed but combo required!',
+            'task_title' => $task_title,
+            'reward' => number_format($reward, 2),
+            'balance' => number_format($new_balance, 2),
+            'current_level' => $current_level,
+            'current_level_completed' => $stats[$current_level]['completed'],
+            'current_level_total' => $stats[$current_level]['total'],
+            'available_tasks' => $stats[$current_level]['available'],
+            'completed_tasks' => $stats[$current_level]['completed'],
+            'today_completed' => $today_completed,
+            'daily_limit' => $daily_limit,
+            'progress_percent' => round($stats[$current_level]['progress'], 1),
+            'all_levels' => $stats,
+            'live_activity_message' => "You submitted {$task_title}. Reward added: \${reward}. Current level progress: {$stats[$current_level]['completed']}/{$stats[$current_level]['total']}"
+        ]);
+        exit;
+    }
+    
     // Get task title for activity message
     $stmt = $conn->prepare("SELECT title FROM tasks WHERE id = ?");
     $stmt->execute([$task_id]);

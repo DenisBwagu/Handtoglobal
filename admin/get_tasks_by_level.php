@@ -4,7 +4,7 @@
  * This script returns tasks for a specific level in JSON format
  */
 
-require_once '../config.php';
+require_once __DIR__ . '/../config.php';
 
 header('Content-Type: application/json');
 
@@ -26,7 +26,7 @@ try {
     
     // Get tasks for the specified level
     $stmt = $conn->prepare("
-        SELECT id, title
+        SELECT id, title, level
         FROM tasks
         WHERE level = ? AND active = 1
         ORDER BY id ASC
@@ -39,7 +39,8 @@ try {
     foreach ($tasks as $task) {
         $formattedTasks[] = [
             'id' => $task['id'],
-            'title' => "Task {$task['id']} - {$task['title']}"
+            'title' => $task['title'],
+            'level' => $task['level']
         ];
     }
     

@@ -1280,6 +1280,16 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                     return;
                 }
                 
+                // Check if combo is required
+                if (data.combo_required) {
+                    // Update UI first
+                    updateDashboardStats(data);
+                    // Close task modal and show combo modal
+                    closeTaskModal();
+                    showComboModal(data.combo);
+                    return;
+                }
+                
                 // Update UI immediately
                 updateDashboardStats(data);
                 

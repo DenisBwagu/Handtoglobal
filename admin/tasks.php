@@ -92,302 +92,59 @@ if ($total_tasks == 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tasks - HandToGlobal Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/global-theme.css">
-    <script src="../assets/js/theme.js" defer></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-                 
-       .main-content {
-    margin-left: 260px;
-    padding: 30px;
-    min-height: calc(100vh - 56px);
-    background: #f5f7fb;
-}
-        
- .tasks-container {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-}
-        
-        /* Controls Section */
-        .controls-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .level-filter {
-            padding: 6px 12px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--white);
-            color: var(--text);
-            font-size: 14px;
-            min-width: 120px;
-        }
-        
-        .add-btn {
-            background: #059669;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        
-        .add-btn:hover {
-            background: #047857;
-        }
-        
-        /* Table Card */
-        .table-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    overflow: hidden;
-    width: 100%;
-}
-        
-        /* Table Styles */
-        .tasks-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .tasks-table th {
-    padding: 14px 16px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f8fafc;
-}
-        
-        .tasks-table td {
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    vertical-align: middle;
-}
-        
-        .tasks-table tr:hover {
-            background: var(--bg);
-        }
-        
-        /* Type Badge */
-        .type-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            background: #f3f4f6;
-            color: #374151;
-        }
-        
-        /* Active Badge */
-        .active-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        /* Actions */
-        .actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .edit-link {
-            color: #059669;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .edit-link:hover {
-            color: #047857;
-            text-decoration: underline;
-        }
-        
-        .delete-link {
-            color: var(--danger);
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .delete-link:hover {
-            color: #dc2626;
-            text-decoration: underline;
-        }
-        
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-top: 1px solid var(--border);
-            background: var(--bg);
-        }
-        
-        .pagination-info {
-            font-size: 14px;
-            color: var(--muted);
-        }
-        
-        .pagination-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        .pagination-btn {
-            background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 14px;
-            color: var(--text);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-        
-        .pagination-btn:hover {
-            background: var(--bg);
-        }
-        
-        .pagination-btn.active {
-            background: var(--warning);
-            color: white;
-            border-color: var(--warning);
-        }
-        
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Alert Messages */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
-        
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .alert-danger {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--muted);
-        }
-        
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-        
-        .empty-state h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-        
-        .empty-state p {
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="includes/admin_styles.css">
 </head>
 <body>
-<?php require_once 'includes/topbar.php'; ?>
-<?php require_once 'includes/sidebar.php'; ?>
-
-<div class="main-content">
-    <div class="tasks-container">
+    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    
     <!-- Admin Layout -->
-            
+    <div class="admin-layout">
+        <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
+        
         <!-- Main Content -->
         <div class="main-content">
-    <div class="tasks-container">
-
-        <!-- Page Header -->
-        <div style="margin-bottom: 28px;">
-    <h1 style="font-size: 26px; font-weight: 700; margin: 0 0 8px;">Tasks Management</h1>
-    <p style="color: #6b7280; font-size: 14px; margin: 0;">Manage all tasks</p>
-</div>
-
-        <?php if ($msg): ?>
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($error): ?>
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <!-- Controls Section -->
-                <div class="controls-section">
-                    <div>
-                        <select class="level-filter" onchange="window.location.href='?level=' + this.value">
-                            <option value="AllLevels" <?php echo $level_filter === 'AllLevels' ? 'selected' : ''; ?>>AllLevels</option>
+            <?php if ($msg): ?>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="page-header">
+                <h1>Tasks Management</h1>
+                <p>Manage all tasks</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">All Tasks</h2>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select class="level-filter" onchange="window.location.href='?level=' + this.value" style="padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;">
+                            <option value="AllLevels" <?php echo $level_filter === 'AllLevels' ? 'selected' : ''; ?>>All Levels</option>
                             <option value="Bronze" <?php echo $level_filter === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
-                            <option value="Sliver" <?php echo $level_filter === 'Sliver' ? 'selected' : ''; ?>>Sliver</option>
+                            <option value="Silver" <?php echo $level_filter === 'Silver' ? 'selected' : ''; ?>>Silver</option>
                             <option value="Gold" <?php echo $level_filter === 'Gold' ? 'selected' : ''; ?>>Gold</option>
                             <option value="VIP 1" <?php echo $level_filter === 'VIP 1' ? 'selected' : ''; ?>>VIP 1</option>
                         </select>
-                    </div>
-                    <div>
-                        <a href="task_create.php" class="add-btn">Add</a>
+                        <a href="task_create.php" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Task
+                        </a>
                     </div>
                 </div>
-                
-                <!-- Table Card -->
-                <div class="table-card">
-                    <table class="tasks-table">
+                <div class="card-body">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>TITLE</th>
                                 <th>TYPE</th>
                                 <th>LEVEL</th>
                                 <th>ACTIVE</th>
-                                <th>Actions</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -395,20 +152,20 @@ if ($total_tasks == 0) {
                                 <tr>
                                     <td><?php echo htmlspecialchars($task['title']); ?></td>
                                     <td>
-                                        <span class="type-badge"><?php echo htmlspecialchars($task['type']); ?></span>
+                                        <span class="badge"><?php echo htmlspecialchars($task['type']); ?></span>
                                     </td>
                                     <td><?php echo htmlspecialchars($task['level']); ?></td>
                                     <td>
                                         <?php if ($task['active']): ?>
-                                            <span class="active-badge">Active</span>
+                                            <span class="badge badge-active">Active</span>
                                         <?php else: ?>
-                                            <span class="type-badge">Inactive</span>
+                                            <span class="badge badge-inactive">Inactive</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="actions">
-                                            <a href="task_edit.php?id=<?= $task['id'] ?>" class="edit-link">Edit</a>
-                                            <a href="?delete=<?php echo $task['id']; ?>" class="delete-link" 
+                                            <a href="task_edit.php?id=<?= $task['id'] ?>" class="action-link">Edit</a>
+                                            <a href="?delete=<?php echo $task['id']; ?>" class="action-link delete" 
                                                onclick="return confirm('Are you sure you want to delete this task?')">
                                                 Delete
                                             </a>
@@ -420,8 +177,8 @@ if ($total_tasks == 0) {
                     </table>
                     
                     <?php if (empty($tasks)): ?>
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
+                        <div class="empty-state" style="text-align: center; padding: 40px; color: #6c757d;">
+                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px;"></i>
                             <h3>No tasks found</h3>
                             <p>No tasks match the selected criteria.</p>
                         </div>

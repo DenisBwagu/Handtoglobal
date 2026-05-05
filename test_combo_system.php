@@ -21,7 +21,7 @@ try {
     $stmt->execute();
     $comboColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
     
-    $requiredComboColumns = ['id', 'level', 'start_task_id', 'end_task_id', 'message', 'deposit_required', 'multiplier', 'status', 'created_at'];
+    $requiredComboColumns = ['id', 'level', 'start_task', 'end_task', 'amount', 'message', 'status', 'is_active', 'created_at', 'updated_at'];
     foreach ($requiredComboColumns as $column) {
         if (in_array($column, $comboColumns)) {
             echo "   ✅ combos.$column exists\n";
@@ -34,7 +34,7 @@ try {
     $stmt->execute();
     $userComboColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
     
-    $requiredUserComboColumns = ['id', 'user_id', 'combo_id', 'status', 'triggered_at', 'resolved_at'];
+    $requiredUserComboColumns = ['id', 'user_id', 'combo_id', 'status', 'created_at', 'updated_at'];
     foreach ($requiredUserComboColumns as $column) {
         if (in_array($column, $userComboColumns)) {
             echo "   ✅ user_combo_status.$column exists\n";
@@ -51,9 +51,9 @@ try {
     
     echo "   Found " . count($combos) . " combos:\n";
     foreach ($combos as $combo) {
-        echo "   - ID: {$combo['id']}, Level: {$combo['level']}, Tasks: {$combo['start_task_id']}-{$combo['end_task_id']}, Status: {$combo['status']}\n";
+        echo "   - ID: {$combo['id']}, Level: {$combo['level']}, Tasks: {$combo['start_task']}-{$combo['end_task']}, Status: {$combo['status']}\n";
         echo "     Message: " . substr($combo['message'], 0, 50) . "...\n";
-        echo "     Deposit: \${$combo['deposit_required']}, Multiplier: {$combo['multiplier']}x\n";
+        echo "     Amount: \${$combo['amount']}\n";
     }
     
     // Test 3: Test admin get_tasks_by_level API
@@ -107,9 +107,8 @@ try {
             echo "   ✅ Combo found for task $taskId\n";
             echo "   - Combo ID: {$comboData['combo']['id']}\n";
             echo "   - Level: {$comboData['combo']['level']}\n";
-            echo "   - Task Range: {$comboData['combo']['start_task_id']}-{$comboData['combo']['end_task_id']}\n";
-            echo "   - Deposit: \${$comboData['combo']['deposit_required']}\n";
-            echo "   - Multiplier: {$comboData['combo']['multiplier']}x\n";
+            echo "   - Task Range: {$comboData['combo']['start_task']}-{$comboData['combo']['end_task']}\n";
+            echo "   - Amount: \${$comboData['combo']['amount']}\n";
             echo "   - Message: " . substr($comboData['combo']['message'], 0, 50) . "...\n";
         } else {
             echo "   ℹ️  No combo found for task $taskId (this is normal if no combo exists for this task)\n";
@@ -127,7 +126,7 @@ try {
     
     echo "   Found " . count($userComboStatuses) . " combo statuses for user $testUserId:\n";
     foreach ($userComboStatuses as $status) {
-        echo "   - Combo ID: {$status['combo_id']}, Status: {$status['status']}, Triggered: {$status['triggered_at']}\n";
+        echo "   - Combo ID: {$status['combo_id']}, Status: {$status['status']}, Created: {$status['created_at']}\n";
     }
     
     // Test 6: Test admin activate/resolve functionality
@@ -142,7 +141,7 @@ try {
         // Simulate admin activate
         $stmt = $conn->prepare("
             UPDATE user_combo_status 
-            SET status = 'resolved', resolved_at = NOW() 
+            SET status = 'activated', updated_at = NOW() 
             WHERE combo_id = ? AND status = 'pending'
         ");
         $result = $stmt->execute([$comboId]);
@@ -176,8 +175,8 @@ try {
         $testComboId = $stmt->lastInsertId() ?: 0;
         
         $stmt = $conn->prepare("
-            INSERT INTO combos (level, start_task_id, end_task_id, message, deposit_required, multiplier, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO combos (level, start_task, end_task, message, amount, status)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
         $result = $stmt->execute([
             'Bronze',
@@ -185,7 +184,6 @@ try {
             $bronzeTasks[1]['id'],
             'Test Combo for System Verification - Complete tasks to unlock special rewards!',
             25.00,
-            1.5,
             'active'
         ]);
         
@@ -194,8 +192,7 @@ try {
             echo "   ✅ Test combo created with ID: $testComboId\n";
             echo "   - Level: Bronze\n";
             echo "   - Tasks: {$bronzeTasks[0]['id']}-{$bronzeTasks[1]['id']}\n";
-            echo "   - Deposit: $25.00\n";
-            echo "   - Multiplier: 1.5x\n";
+            echo "   - Amount: $25.00\n";
             
             // Test combo detection for this new combo
             echo "\n8. Testing combo detection for new combo...\n";
