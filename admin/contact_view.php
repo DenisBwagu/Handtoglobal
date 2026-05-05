@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -432,22 +434,7 @@ try {
         }
     </style>
 </head>
-<body>
-    <!-- Topbar Header -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <div class="topbar-title">View Contact</div>
-        </div>
-        <div class="topbar-right">
-            <div class="admin-badge">ADMIN</div>
-            <div class="profile-info">
-                <div class="profile-avatar">
-                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
-                </div>
-                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
-            </div>
-        </div>
-    </div>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">
@@ -514,6 +501,7 @@ try {
         
         <!-- Main Content -->
         <div class="main-content">
+            <?php admin_back_button('contacts.php'); ?>
             <?php if ($error): ?>
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>

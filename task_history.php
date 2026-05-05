@@ -1,7 +1,7 @@
 <?php
 require_once 'config.php';
-require_once '../includes/settings_helpers.php';
-require_once 'get_translation.php';
+require_once __DIR__ . '/includes/settings_helpers.php';
+require_once __DIR__ . '/includes/language_helpers.php';
 
 requireLogin();
 
@@ -147,7 +147,7 @@ function historyQuery(array $overrides = []) {
 </head>
 <body>
     <?php require 'includes/sidebar.php'; ?>
-    <?php require 'includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
 
     <main class="main-content">
         <div class="content-area">

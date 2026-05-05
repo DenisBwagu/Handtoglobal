@@ -20,6 +20,9 @@ $search = trim($_GET['search'] ?? '');
 if (isset($_GET['deleted'])) {
     $msg = 'Employee deleted successfully.';
 }
+if (isset($_GET['updated'])) {
+    $msg = 'Employee updated successfully.';
+}
 
 if (isset($_GET['delete'])) {
     $employeeId = (int)$_GET['delete'];
@@ -75,7 +78,7 @@ try {
 </head>
         </head>
 <body>
-    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">

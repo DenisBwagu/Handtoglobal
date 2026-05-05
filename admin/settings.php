@@ -463,36 +463,7 @@ $current_settings = [
     </style>
 </head>
 <body>
-    <!-- Topbar Header -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <div class="topbar-title">Settings</div>
-        </div>
-        <div class="topbar-right">
-            <div class="admin-badge">ADMIN</div>
-            <form class="language-form" method="post" action="../language_action.php">
-                <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/settings.php'); ?>">
-                <input type="hidden" name="context" value="admin">
-                <select name="language" onchange="this.form.submit()">
-                    <?php foreach (['english' => 'English', 'chinese' => 'Chinese'] as $code => $label): ?>
-                        <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($_SESSION['admin_language'] ?? $_SESSION['language'] ?? 'english') === $code ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </form>
-            <div class="topbar-icon theme-toggle" id="themeToggle">
-                <i class="fas fa-moon theme-icon" id="themeIcon"></i>
-            </div>
-            <a href="/handtoglobal/admin/logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            <div class="profile-info">
-                <div class="profile-avatar">
-                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
-                </div>
-                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
-            </div>
-        </div>
-    </div>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">

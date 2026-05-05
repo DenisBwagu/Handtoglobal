@@ -456,7 +456,7 @@ try {
         }
     </style>
 </head>
-<body>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     <div class="header">
         <div class="container">
             <div class="nav-menu">

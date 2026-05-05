@@ -141,9 +141,11 @@ try {
 }
 
 // Helper function to get setting value
-function getSetting($key, $default = '') {
-    global $current_settings;
-    return $current_settings[$key] ?? $default;
+if (!function_exists('getSetting')) {
+    function getSetting($key, $default = '') {
+        global $current_settings;
+        return $current_settings[$key] ?? $default;
+    }
 }
 ?>
 

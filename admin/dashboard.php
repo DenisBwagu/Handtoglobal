@@ -101,7 +101,7 @@ $topPerformersToday = $conn->query("
 </head>
         </head>
 <body>
-    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">

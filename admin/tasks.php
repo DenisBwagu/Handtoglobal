@@ -95,7 +95,7 @@ if ($total_tasks == 0) {
     <link rel="stylesheet" href="includes/admin_styles.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">

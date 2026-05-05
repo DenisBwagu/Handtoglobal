@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -327,7 +329,7 @@ if (isset($_POST['action'])) {
     </style>
 </head>
 <body>
-    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">
@@ -335,6 +337,7 @@ if (isset($_POST['action'])) {
         
         <!-- Main Content -->
         <div class="main-content">
+            <?php admin_back_button('withdrawals.php'); ?>
             <!-- Breadcrumb -->
             <div class="breadcrumb">
                 <a href="withdrawals.php">Withdrawals</a>

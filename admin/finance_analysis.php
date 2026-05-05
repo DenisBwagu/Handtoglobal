@@ -715,30 +715,8 @@ try {
         }
     </style>
 </head>
-<body>
-    <!-- Topbar Header -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <div class="menu-icon">
-                <i class="fas fa-bars"></i>
-            </div>
-            <div class="topbar-title">FinanceAnalysis</div>
-        </div>
-        <div class="topbar-right">
-            <div class="admin-badge">ADMIN</div>
-            <div class="topbar-icon">
-                <i class="fas fa-moon"></i>
-            </div>
-            <div class="profile-info">
-                <div class="profile-avatar">A</div>
-                <div class="profile-name">Admin</div>
-                <div class="dropdown-arrow">
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
+    
     <!-- Admin Layout -->
     <div class="admin-layout">
         <?php require_once __DIR__ . '/includes/sidebar.php'; ?>

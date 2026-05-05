@@ -525,22 +525,7 @@ try {
         }
     </style>
 </head>
-<body>
-    <!-- Topbar Header -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <div class="topbar-title">Testimonials</div>
-        </div>
-        <div class="topbar-right">
-            <div class="admin-badge">ADMIN</div>
-            <div class="profile-info">
-                <div class="profile-avatar">
-                    <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
-                </div>
-                <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
-            </div>
-        </div>
-    </div>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">

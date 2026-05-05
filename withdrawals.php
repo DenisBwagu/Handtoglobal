@@ -94,7 +94,7 @@ $siteName = get_site_name();
 </head>
 <body>
     <?php require 'includes/sidebar.php'; ?>
-    <?php require 'includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
 
     <main class="main-content">
         <div class="content-area">

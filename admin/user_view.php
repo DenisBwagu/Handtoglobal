@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -875,8 +876,9 @@ if ($check_column->rowCount() > 0) {
         }
     </style>
 </head>
-<body>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     <div class="container">
+        <?php admin_back_button('users.php'); ?>
         <?php if ($success): ?>
             <div class="alert alert-success">
                 <?php echo htmlspecialchars($success); ?>

@@ -185,6 +185,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         .dashboard-layout {
             display: flex;
             min-height: 100vh;
+            padding-top: 62px;
         }
         
         /* Sidebar */
@@ -731,6 +732,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
     </style>
 </head>
 <body>
+    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -777,40 +779,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Bar -->
-            <header class="top-bar">
-                <div class="top-bar-left">
-                    <button class="btn btn-secondary" onclick="toggleSidebar()" style="display: none;">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <?php if (isset($_SESSION['admin_temp_id'])): ?>
-                        <a href="return_to_admin.php" class="btn btn-support" style="margin-right: 10px;">
-                            <i class="fas fa-arrow-left"></i> Return to Admin
-                        </a>
-                    <?php endif; ?>
-                </div>
-                <div class="top-bar-right">
-                    <form class="language-form" method="post" action="language_action.php" style="display:inline-flex; margin-right:10px;">
-                        <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'dashboard.php'); ?>">
-                        <input type="hidden" name="context" value="user">
-                        <select name="language" onchange="this.form.submit()">
-                            <?php foreach (['english' => 'English', 'ukrainian' => 'Ukraine', 'greek' => 'Greek', 'german' => 'German'] as $code => $label): ?>
-                                <option value="<?php echo htmlspecialchars($code); ?>" <?php echo get_current_language() === $code ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </form>
-                    <button type="button" class="btn btn-secondary theme-toggle" id="themeToggle" style="margin-right:10px;">
-                        <i class="fas fa-moon theme-icon" id="themeIcon"></i>
-                    </button>
-                    <div class="user-balance balance-amount">
-                        Balance: $<?php echo number_format($user['balance'], 2); ?>
-                    </div>
-                    <a href="logout.php" class="btn btn-support" style="margin-left:10px;">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
-            </header>
-            
             <!-- Content Area -->
             <div class="content-area">
                 <!-- Welcome Card -->

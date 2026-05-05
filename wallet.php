@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once '../includes/settings_helpers.php';
+require_once __DIR__ . '/includes/settings_helpers.php';
 
 // Get Telegram link from settings
 $supportLink = get_setting('telegram_link', '<?php echo htmlspecialchars($supportLink); ?>');
@@ -12,12 +12,25 @@ $stats = getUserStats($_SESSION['user_id']);
 
 // Get recent transactions
 $conn = getConnection();
-$stmt = $conn->prepare("(SELECT *, 'deposit' as type FROM deposits WHERE user_id = ?)
-                       UNION ALL
-                       (SELECT *, 'withdrawal' as type FROM withdrawals WHERE user_id = ?)
-                       ORDER BY created_at DESC LIMIT 10");
-$stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-$transactions = $stmt->fetchAll();
+$stmt = $conn->prepare("SELECT id, user_id, amount, status, created_at FROM deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$_SESSION['user_id']]);
+$transactions = array_map(function ($row) {
+    $row['type'] = 'deposit';
+    return $row;
+}, $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+$stmt = $conn->prepare("SELECT id, user_id, amount, status, created_at FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$_SESSION['user_id']]);
+$withdrawalTransactions = array_map(function ($row) {
+    $row['type'] = 'withdrawal';
+    return $row;
+}, $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+$transactions = array_merge($transactions, $withdrawalTransactions);
+usort($transactions, function ($a, $b) {
+    return strtotime($b['created_at'] ?? '1970-01-01') <=> strtotime($a['created_at'] ?? '1970-01-01');
+});
+$transactions = array_slice($transactions, 0, 10);
 
 // Get pending deposits and withdrawals
 $stmt = $conn->prepare("SELECT * FROM deposits WHERE user_id = ? AND status = 'Pending'");
@@ -41,6 +54,7 @@ $pendingWithdrawals = $stmt->fetchAll();
     </style>
 </head>
 <body>
+    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
     <div class="layout-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -92,39 +106,6 @@ $pendingWithdrawals = $stmt->fetchAll();
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="menu-toggle" id="menuToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search...">
-                    </div>
-                </div>
-                <div class="topbar-right">
-                    <div class="notification-dropdown">
-                        <button class="notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge"><?php echo count(getUnreadNotifications($_SESSION['user_id'])); ?></span>
-                        </button>
-                    </div>
-                    <div class="profile-dropdown">
-                        <button class="profile-btn">
-                            <div class="avatar">
-                                <?php echo strtoupper(substr($user['fullname'], 0, 1)); ?>
-                            </div>
-                            <div class="profile-info">
-                                <span class="profile-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
-                                <span class="profile-level"><?php echo htmlspecialchars($user['level']); ?></span>
-                            </div>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
             <!-- Wallet Content -->
             <main class="wallet-content">
                 <div class="page-header">

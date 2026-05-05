@@ -3,6 +3,7 @@
  * Language Translation System
  */
 
+if (!function_exists('get_current_language')) {
 function get_current_language() {
     // Try to get language from settings, fallback to session, then to English
     $language = get_setting('user_locale', 'english');
@@ -14,7 +15,9 @@ function get_current_language() {
     
     return $language;
 }
+}
 
+if (!function_exists('set_language')) {
 function set_language($language) {
     // Save to session
     $_SESSION['language'] = $language;
@@ -22,7 +25,9 @@ function set_language($language) {
     // Also save to database for persistence
     setSetting('user_locale', $language);
 }
+}
 
+if (!function_exists('get_translation')) {
 function get_translation($key, $fallback = '') {
     static $translations = [];
     
@@ -36,7 +41,9 @@ function get_translation($key, $fallback = '') {
     // Return translation or fallback
     return $translations[$language][$key] ?? $fallback;
 }
+}
 
+if (!function_exists('load_language_file')) {
 function load_language_file($language) {
     $base_path = __DIR__ . '/translations/';
     
@@ -391,11 +398,14 @@ function load_language_file($language) {
     // Merge with default translations
     return array_merge($default_translations, $language_translations[$language] ?? []);
 }
+}
 
 /**
  * Helper function to echo translation
  */
+if (!function_exists('t')) {
 function t($key, $fallback = '') {
     echo get_translation($key, $fallback);
+}
 }
 ?>

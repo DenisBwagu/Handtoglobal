@@ -6,6 +6,7 @@
  * @param bool $refresh Force refresh cache
  * @return mixed Setting value or default
  */
+if (!function_exists('get_setting')) {
 function get_setting($key, $default = '', $refresh = false) {
     static $settings_cache = [];
     
@@ -28,12 +29,14 @@ function get_setting($key, $default = '', $refresh = false) {
     
     return $settings_cache[$key] ?? $default;
 }
+}
 
 /**
  * Get all settings as array
  * @param bool $refresh Force refresh cache
  * @return array All settings
  */
+if (!function_exists('get_all_settings')) {
 function get_all_settings($refresh = false) {
     static $all_settings_cache = null;
     
@@ -55,6 +58,7 @@ function get_all_settings($refresh = false) {
     
     return $all_settings_cache;
 }
+}
 
 /**
  * Update setting value
@@ -62,6 +66,7 @@ function get_all_settings($refresh = false) {
  * @param mixed $value Setting value
  * @return bool Success status
  */
+if (!function_exists('update_setting')) {
 function update_setting($key, $value) {
     try {
         $conn = getConnection();
@@ -84,5 +89,6 @@ function update_setting($key, $value) {
     } catch(PDOException $e) {
         return false;
     }
+}
 }
 ?>

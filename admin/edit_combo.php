@@ -6,12 +6,8 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/settings_helpers.php';
+require_once __DIR__ . '/../includes/admin_helpers.php';
 
-// Check if admin is logged in
-if (!isAdminLoggedIn()) {
-    header('Location: ../login.php');
-    exit;
-}
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
     header('Location: ../login.php');
@@ -164,41 +160,24 @@ $siteName = get_setting('site_name', 'HandToGlobal');
 </head>
 <body>
     <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
- require_once __DIR__ . '/includes/topbar.php'; ?>
+
+ require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">
         <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  require_once __DIR__ . '/includes/sidebar.php'; ?>
         
         <!-- Main Content -->
         <div class="main-content">
+            <?php admin_back_button('combos.php'); ?>
             <div class="page-header">
                 <div style="display: flex; align-items: center; gap: 16px;">
-                    <a href="combos.php" class="btn btn-secondary" style="text-decoration: none;">
-                        <i class="fas fa-arrow-left"></i> Back to Combos
-                    </a>
                     <div>
                         <h1 class="page-title">Edit Combo</h1>
                         <p class="page-subtitle">Modify combo settings for ID: <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $comboId; ?></p>
                     </div>
                 </div>
@@ -218,44 +197,19 @@ if (!function_exists('get_setting')) {
                                 <select id="level" name="level" required onchange="loadTasksByLevel()">
                                     <option value="">Select Level</option>
                                     <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  foreach ($levels as $level): ?>
                                         <option value="<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo htmlspecialchars($level); ?>" <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['level'] === $level ? 'selected' : ''; ?>>
                                             <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo htmlspecialchars($level); ?>
                                         </option>
                                     <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  endforeach; ?>
                                 </select>
                             </div>
@@ -263,20 +217,10 @@ if (!function_exists('get_setting')) {
                                 <label for="user_select">Select User</label>
                                 <div class="user-select-container">
                                     <input type="text" id="user_select" name="user_select" placeholder="Search user by name or email..." autocomplete="off" value="<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $assignedUser ? htmlspecialchars($assignedUser['fullname'] . ' - ' . $assignedUser['email']) : ''; ?>">
                                     <input type="hidden" id="user_id" name="user_id" value="<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['user_id'] ?: ''; ?>">
                                     <div id="user_search_results" class="user-search-results" style="display: none;"></div>
                                 </div>
@@ -302,32 +246,17 @@ if (!function_exists('get_setting')) {
                             <div class="form-group">
                                 <label for="amount">Amount ($)</label>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0" value="<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['amount']; ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select id="status" name="status" required>
                                     <option value="active" <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['status'] === 'active' ? 'selected' : ''; ?>>Active</option>
                                     <option value="inactive" <?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['status'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
                                 </select>
                             </div>
@@ -336,24 +265,14 @@ if (!function_exists('get_setting')) {
                         <div class="form-group">
                             <label for="message">Message</label>
                             <textarea id="message" name="message" required placeholder="Enter combo message for users" rows="3"><?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo htmlspecialchars($combo['message']); ?></textarea>
                         </div>
                         
                         <div class="form-group">
                             <label for="multiplier">Multiplier</label>
                             <input type="number" id="multiplier" name="multiplier" step="0.1" min="1" value="<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['multiplier']; ?>" required>
                         </div>
                         
@@ -481,20 +400,10 @@ if (!function_exists('get_setting')) {
                     
                     // Preselect current values
                     startSelect.value = '<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['start_task']; ?>';
                     endSelect.value = '<?php
-require_once __DIR__ . '/../config.php';
-if (!function_exists('get_setting')) {
-    function get_setting($key, $default = '') {
-        return $default;
-    }
-}
+
  echo $combo['end_task']; ?>';
                 })
                 .catch(error => {

@@ -4,25 +4,27 @@
  * This file contains all functions to manage and retrieve settings
  */
 
-function get_setting($key, $default = '') {
-    global $pdo;
+if (!function_exists('get_setting')) {
+    function get_setting($key, $default = '') {
+        global $pdo;
 
-    try {
-        if (!$pdo) {
-            $pdo = getConnection();
+        try {
+            if (!$pdo) {
+                $pdo = getConnection();
+            }
+
+            $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ? LIMIT 1");
+            $stmt->execute([$key]);
+            $value = $stmt->fetchColumn();
+
+            if ($value !== false && $value !== null && $value !== '') {
+                return $value;
+            }
+
+            return $default;
+        } catch (Exception $e) {
+            return $default;
         }
-
-        $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ? LIMIT 1");
-        $stmt->execute([$key]);
-        $value = $stmt->fetchColumn();
-
-        if ($value !== false && $value !== null && $value !== '') {
-            return $value;
-        }
-
-        return $default;
-    } catch (Exception $e) {
-        return $default;
     }
 }
 

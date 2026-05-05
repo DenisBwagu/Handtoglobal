@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 if (!isAdminLoggedIn()) {
     redirect('../login.php');
@@ -48,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE id = ?
                 ");
                 $stmt->execute([$name, $name, $email, $phone ?: null, $role, $status, $employeeId]);
-                redirect('employee_view.php?id=' . $employeeId . '&updated=1');
+                redirect('employees.php?updated=1');
             }
         } catch (Throwable $e) {
             $error = 'Failed to update employee: ' . $e->getMessage();
@@ -68,10 +70,11 @@ $name = $employee['name'] ?: ($employee['fullname'] ?? '');
     <link rel="stylesheet" href="includes/admin_styles.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     <div class="admin-layout">
         <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
         <div class="main-content">
+            <?php admin_back_button('employees.php'); ?>
             <?php if ($error): ?>
                 <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>

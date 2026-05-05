@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -301,7 +303,7 @@ try {
         }
     </style>
 </head>
-<body>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     <div class="container">
         <!-- Breadcrumb -->
         <div class="breadcrumb">

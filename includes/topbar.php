@@ -1,552 +1,354 @@
 <?php
-/**
- * Shared Topbar Component
- * Used by both admin and user sides
- */
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/settings_helpers.php';
+require_once __DIR__ . '/language_helpers.php';
 
-// Determine if we're in admin area
-$isAdmin = strpos($_SERVER['REQUEST_URI'], '/admin/') !== false;
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+$isAdminArea = strpos($requestPath, '/admin/') !== false;
+$baseUrl = '/handtoglobal/';
+$assetPrefix = $baseUrl;
 
-// Get user data based on context
-if ($isAdmin) {
-    $userName = $_SESSION['admin_name'] ?? 'Admin';
-    $userEmail = $_SESSION['admin_email'] ?? 'admin@handtoglobal.com';
-    $userBadge = 'ADMIN';
-    $logoutUrl = '/handtoglobal/admin/logout.php';
-    $profileUrl = 'settings.php';
+$pageTitles = [
+    'dashboard.php' => 'Dashboard',
+    'users.php' => 'Users',
+    'user_view.php' => 'User Details',
+    'tasks.php' => 'Tasks',
+    'task_create.php' => 'Add Task',
+    'task_edit.php' => 'Edit Task',
+    'combos.php' => 'Combos',
+    'combo_create.php' => 'Add Combo',
+    'edit_combo.php' => 'Edit Combo',
+    'combo_edit.php' => 'Edit Combo',
+    'settings.php' => 'Settings',
+    'withdrawals.php' => 'Withdrawals',
+    'view_withdrawal.php' => 'Withdrawal Details',
+    'employees.php' => 'Employees',
+    'employee_create.php' => 'Add Employee',
+    'employee_edit.php' => 'Edit Employee',
+    'employee_view.php' => 'Employee Details',
+    'levels.php' => 'Levels',
+    'levels_create.php' => 'Add Level',
+    'levels_edit.php' => 'Edit Level',
+    'languages.php' => 'Languages',
+    'testimonials.php' => 'Testimonials',
+    'testimonial_create.php' => 'Add Testimonial',
+    'testimonial_edit.php' => 'Edit Testimonial',
+    'contacts.php' => 'Contacts',
+    'contact_view.php' => 'Contact Details',
+    'profile.php' => 'Profile',
+    'task_history.php' => 'Task History',
+    'request_withdrawal.php' => 'Request Withdrawal',
+];
+
+$currentFile = basename($requestPath);
+$pageTitle = $pageTitles[$currentFile] ?? ($isAdminArea ? 'Admin Panel' : 'Dashboard');
+
+if ($isAdminArea && isAdminLoggedIn()) {
+    $displayName = 'Admin';
+    $displayEmail = $_SESSION['admin_email'] ?? 'admin@handtoglobal.com';
+    $showAdminBadge = true;
+    $logoutUrl = $baseUrl . 'admin/logout.php';
 } else {
-    // User side - get from session or database
-    $userId = $_SESSION['user_id'] ?? null;
-    if ($userId) {
+    $showAdminBadge = false;
+    $logoutUrl = $baseUrl . 'logout.php';
+    $displayName = $_SESSION['user_name'] ?? $_SESSION['user_fullname'] ?? 'User';
+    $displayEmail = $_SESSION['user_email'] ?? '';
+
+    if (!empty($_SESSION['user_id'])) {
         try {
             $conn = getConnection();
-            $stmt = $conn->prepare("SELECT fullname, email FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch();
-            $userName = $user['fullname'] ?? 'User';
-            $userEmail = $user['email'] ?? 'user@handtoglobal.com';
-        } catch (Exception $e) {
-            $userName = $_SESSION['user_name'] ?? 'User';
-            $userEmail = 'user@handtoglobal.com';
+            $stmt = $conn->prepare("SELECT fullname, email FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$_SESSION['user_id']]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $displayName = $row['fullname'] ?: $displayName;
+                $displayEmail = $row['email'] ?: $displayEmail;
+            }
+        } catch (Throwable $e) {
+            // Session values are enough for the topbar.
         }
-    } else {
-        $userName = $_SESSION['user_name'] ?? 'User';
-        $userEmail = 'user@handtoglobal.com';
     }
-    $userBadge = '';
-    $logoutUrl = 'logout.php';
-    $profileUrl = 'profile.php';
 }
 
-// Get first letter for avatar
-$avatarLetter = strtoupper(substr($userName, 0, 1));
-$assetPrefix = $isAdmin ? '../' : '';
-$currentLanguage = function_exists('get_current_language') ? get_current_language() : ($_SESSION['language'] ?? 'english');
-$languageOptions = $isAdmin
-    ? ['english' => 'English', 'chinese' => 'Chinese']
-    : ['english' => 'English', 'ukrainian' => 'Ukraine', 'greek' => 'Greek', 'german' => 'German'];
+$siteName = get_setting('site_name', 'HandToGlobal');
+$siteLogo = get_setting('site_logo', '');
+$supportTelegram = get_setting('support_telegram', get_setting('telegram_link', ''));
+$avatarLetter = strtoupper(substr(trim($displayName) !== '' ? trim($displayName) : 'U', 0, 1));
+$currentLanguage = current_language();
+$languages = available_languages();
 ?>
 
 <link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/global-theme.css">
 <script src="<?php echo $assetPrefix; ?>assets/js/theme.js" defer></script>
 
-<!-- Topbar Header -->
-<div class="topbar" id="topbar">
-    <?php if (!empty($_SESSION['is_impersonating'])): ?>
-        <div style="background:#ff9800; color:#fff; padding:8px; text-align:center; width:100%; position:absolute; top:0; left:0; right:0; z-index:1001;">
-            You are viewing as user
-            <a href="/handtoglobal/admin/return_to_admin.php" style="color:#fff; font-weight:bold; margin-left:10px; text-decoration:none;">
-                Return to Admin
-            </a>
-        </div>
-        <div class="topbar-left" style="margin-top:32px;">
-    <?php else: ?>
-        <div class="topbar-left">
-    <?php endif; ?>
-        <div class="menu-icon" id="menuToggle">
+<div class="topbar htg-topbar" id="topbar" data-support-link="<?php echo htmlspecialchars($supportTelegram); ?>">
+    <div class="topbar-left htg-topbar-left">
+        <button type="button" class="menu-icon htg-menu-btn" id="menuToggle" aria-label="Toggle sidebar">
             <i class="fas fa-bars"></i>
-        </div>
-        <div class="topbar-title">
-            <?php 
-            if ($isAdmin) {
-                echo get_translation('admin_panel', 'Admin Panel');
-            } else {
-                echo get_translation('dashboard', 'Dashboard');
-            }
-            ?>
+        </button>
+        <div class="topbar-title htg-page-title"><?php echo htmlspecialchars($pageTitle); ?></div>
+        <div class="htg-brand">
+            <?php if ($siteLogo !== ''): ?>
+                <img src="<?php echo htmlspecialchars($siteLogo); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
+            <?php endif; ?>
+            <span><?php echo htmlspecialchars($siteName); ?></span>
         </div>
     </div>
-    <div class="topbar-right">
-        <?php if ($userBadge): ?>
-            <div class="admin-badge"><?php echo $userBadge; ?></div>
+
+    <div class="topbar-right htg-topbar-right">
+        <?php if ($showAdminBadge): ?>
+            <span class="admin-badge htg-admin-badge">ADMIN</span>
         <?php endif; ?>
 
-        <form class="language-form" method="post" action="<?php echo $assetPrefix; ?>language_action.php">
-            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'dashboard.php'); ?>">
-            <input type="hidden" name="context" value="<?php echo $isAdmin ? 'admin' : 'user'; ?>">
-            <label class="sr-only" for="languageSelect">Language</label>
-            <select id="languageSelect" name="language" onchange="this.form.submit()">
-                <?php foreach ($languageOptions as $code => $label): ?>
+        <form class="language-form htg-language-form" method="post" action="<?php echo $baseUrl; ?>language_action.php">
+            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? $baseUrl); ?>">
+            <input type="hidden" name="context" value="<?php echo $isAdminArea ? 'admin' : 'user'; ?>">
+            <select name="language" onchange="this.form.submit()" aria-label="Language">
+                <?php foreach ($languages as $code => $label): ?>
                     <option value="<?php echo htmlspecialchars($code); ?>" <?php echo $currentLanguage === $code ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($label); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
         </form>
-        
-        <div class="topbar-icon" id="themeToggle">
-            <i class="fas fa-moon" id="themeIcon"></i>
-        </div>
 
-        <a href="<?php echo $logoutUrl; ?>" class="topbar-logout">
+        <button type="button" class="topbar-icon htg-theme-btn" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+
+        <a href="<?php echo htmlspecialchars($logoutUrl); ?>" class="topbar-logout htg-logout">
             <i class="fas fa-sign-out-alt"></i>
-            <?php echo get_translation('logout', 'Logout'); ?>
+            <span><?php echo htmlspecialchars(__t('logout', 'Logout')); ?></span>
         </a>
-        
-        <div class="profile-dropdown">
-            <div class="profile-info" id="profileToggle">
-                <div class="profile-avatar">
-                    <?php echo $avatarLetter; ?>
-                </div>
-                <div class="profile-name"><?php echo htmlspecialchars($userName); ?></div>
-                <div class="dropdown-arrow">
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-            
-            <div class="dropdown-menu" id="profileDropdown">
-                <div class="dropdown-header">
-                    <div class="dropdown-avatar">
-                        <?php echo $avatarLetter; ?>
-                    </div>
-                    <div class="dropdown-info">
-                        <div class="dropdown-name"><?php echo htmlspecialchars($userName); ?></div>
-                        <div class="dropdown-email"><?php echo htmlspecialchars($userEmail); ?></div>
-                    </div>
-                </div>
-                <div class="dropdown-divider"></div>
-                <a href="<?php echo $profileUrl; ?>" class="dropdown-item">
-                    <i class="fas fa-user"></i>
-                    <?php echo get_translation('profile', 'Profile'); ?>
-                </a>
-                <a href="<?php echo $logoutUrl; ?>" class="dropdown-item logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <?php echo get_translation('logout', 'Logout'); ?>
-                </a>
-            </div>
+
+        <div class="profile-info htg-profile-info">
+            <div class="profile-avatar htg-avatar"><?php echo htmlspecialchars($avatarLetter); ?></div>
+            <div class="profile-name htg-profile-name"><?php echo htmlspecialchars($displayName); ?></div>
         </div>
     </div>
 </div>
 
+<?php if (!empty($_SESSION['is_impersonating'])): ?>
+    <div class="htg-impersonation-bar">
+        Viewing as user
+        <a href="<?php echo $baseUrl; ?>admin/return_to_admin.php">Return to Admin</a>
+    </div>
+<?php endif; ?>
+
 <style>
-/* Topbar Styles */
-.topbar {
+.htg-topbar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 56px;
-    background: var(--topbar-bg, #ffffff);
+    height: 62px;
+    background: var(--topbar-bg, #fff);
     border-bottom: 1px solid var(--border, #e5e7eb);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
     z-index: 1000;
-    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
 }
-
-.topbar-left {
+.htg-topbar-left,
+.htg-topbar-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
+    min-width: 0;
 }
-
-.menu-icon {
-    cursor: pointer;
-    color: var(--text, #1a1a1a);
-    font-size: 18px;
-    padding: 8px;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
-}
-
-.menu-icon:hover {
-    background: var(--hover-bg, #f3f4f6);
-}
-
-.topbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text, #1a1a1a);
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.admin-badge {
-    background: var(--primary, #4f46e5);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.topbar-icon {
-    cursor: pointer;
-    color: var(--muted, #6b7280);
-    font-size: 16px;
-    padding: 8px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.language-form select {
-    height: 34px;
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 6px;
-    padding: 0 10px;
-    background: var(--surface, #ffffff);
-    color: var(--text, #1a1a1a);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+.htg-menu-btn,
+.htg-theme-btn {
     border: 0;
+    background: transparent;
+    color: var(--text-primary, #374151);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 16px;
 }
-
-.topbar-icon:hover {
-    background: var(--hover-bg, #f3f4f6);
-    color: var(--text, #1a1a1a);
+.htg-menu-btn:hover,
+.htg-theme-btn:hover {
+    background: var(--hover, #f3f4f6);
 }
-
-.topbar-logout {
+.htg-page-title {
+    color: var(--text-primary, #111827);
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.htg-brand {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 34px;
-    padding: 0 12px;
-    border-radius: 6px;
-    background: var(--danger, #dc2626);
+    color: var(--text-secondary, #374151);
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 0;
+}
+.htg-brand img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+}
+.htg-admin-badge {
+    background: #16a34a;
     color: #fff;
+    border-radius: 4px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 800;
+}
+.htg-language-form select {
+    height: 34px;
+    border: 1px solid var(--input-border, #d1d5db);
+    border-radius: 5px;
+    background: var(--input-bg, #fff);
+    color: var(--input-color, #111827);
+    padding: 0 28px 0 10px;
+    font-weight: 600;
+}
+.htg-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 6px;
+    background: #dc2626;
+    color: #fff !important;
     text-decoration: none;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
 }
-
-.topbar-logout:hover {
+.htg-logout:hover {
     background: #b91c1c;
-    color: #fff;
 }
-
-.profile-dropdown {
-    position: relative;
-}
-
-.profile-info {
+.htg-profile-info {
     display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
-    padding: 6px 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    color: var(--text-primary, #111827);
+    font-weight: 700;
 }
-
-.profile-info:hover {
-    background: var(--hover-bg, #f3f4f6);
-}
-
-.profile-avatar {
+.htg-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--primary, #4f46e5);
-    display: flex;
+    background: #0d6efd;
+    color: #fff;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 800;
+}
+.htg-profile-name {
     font-size: 14px;
+    white-space: nowrap;
 }
-
-.profile-name {
-    font-weight: 500;
-    color: var(--text, #1a1a1a);
-    font-size: 14px;
-}
-
-.dropdown-arrow {
-    color: var(--muted, #6b7280);
-    font-size: 12px;
-    transition: transform 0.2s ease;
-}
-
-.profile-dropdown.active .dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
+.htg-impersonation-bar {
+    position: fixed;
+    top: 62px;
+    left: 0;
     right: 0;
-    background: var(--surface, #ffffff);
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    min-width: 240px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-    z-index: 1001;
-}
-
-.profile-dropdown.active .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-}
-
-.dropdown-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--primary, #4f46e5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 16px;
-}
-
-.dropdown-info {
-    flex: 1;
-}
-
-.dropdown-name {
-    font-weight: 600;
-    color: var(--text, #1a1a1a);
-    font-size: 14px;
-    margin-bottom: 2px;
-}
-
-.dropdown-email {
-    color: var(--muted, #6b7280);
-    font-size: 12px;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: var(--border, #e5e7eb);
-    margin: 0;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    color: var(--text, #1a1a1a);
-    text-decoration: none;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-}
-
-.dropdown-item:hover {
-    background: var(--hover-bg, #f3f4f6);
-}
-
-.dropdown-item.logout {
-    color: var(--danger, #dc2626);
-}
-
-.dropdown-item.logout:hover {
-    background: rgba(220, 38, 38, 0.1);
-}
-
-.dropdown-item i {
-    width: 16px;
+    background: #f59e0b;
+    color: #fff;
     text-align: center;
+    padding: 7px;
+    z-index: 999;
+    font-weight: 700;
 }
-
-/* Dark mode styles */
-[data-theme="dark"] .topbar {
-    background: var(--surface-dark, #1e293b);
-    border-bottom-color: var(--border-dark, #334155);
+.htg-impersonation-bar a {
+    color: #fff;
+    margin-left: 10px;
 }
-
-[data-theme="dark"] .menu-icon:hover,
-[data-theme="dark"] .topbar-icon:hover,
-[data-theme="dark"] .profile-info:hover {
-    background: var(--hover-bg-dark, #334155);
+body.dark-mode,
+[data-theme="dark"] body {
+    background: var(--body-bg, #0f172a);
+    color: var(--body-color, #f8fafc);
 }
-
-[data-theme="dark"] .dropdown-menu {
-    background: var(--surface-dark, #1e293b);
-    border-color: var(--border-dark, #334155);
+body.dark-mode .sidebar,
+[data-theme="dark"] .sidebar {
+    background: var(--sidebar-bg, #1e293b) !important;
+    border-color: var(--sidebar-border, #334155) !important;
 }
-
-[data-theme="dark"] .dropdown-item:hover {
-    background: var(--hover-bg-dark, #334155);
+body.dark-mode .card,
+body.dark-mode table,
+body.dark-mode .modal-content,
+body.dark-mode .panel,
+[data-theme="dark"] .card,
+[data-theme="dark"] table,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .panel {
+    background: var(--card-bg, #1e293b) !important;
+    color: var(--text-primary, #f8fafc) !important;
+    border-color: var(--card-border, #334155) !important;
+}
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: var(--input-bg, #0f172a) !important;
+    color: var(--input-color, #f8fafc) !important;
+    border-color: var(--input-border, #475569) !important;
+}
+.sidebar {
+    transition: transform .25s ease, margin-left .25s ease, width .25s ease;
+}
+.sidebar.htg-sidebar-collapsed {
+    transform: translateX(-105%);
+}
+.main-content.htg-main-expanded {
+    margin-left: 0 !important;
+}
+@media (max-width: 900px) {
+    .htg-brand span,
+    .htg-profile-name,
+    .htg-logout span {
+        display: none;
+    }
+    .htg-topbar {
+        padding: 0 10px;
+    }
+    .htg-topbar-left,
+    .htg-topbar-right {
+        gap: 8px;
+    }
 }
 </style>
 
 <script>
-// Topbar functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Theme toggle
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    const html = document.documentElement;
-    
-    if (!window.ThemeSystem && themeToggle) {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        html.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-        });
-
-        function updateThemeIcon(theme) {
-            themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-    
-    // Profile dropdown
-    const profileToggle = document.getElementById('profileToggle');
-    const profileDropdown = document.getElementById('profileDropdown');
-    const profileDropdownParent = profileToggle.closest('.profile-dropdown');
-    
-    profileToggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        profileDropdownParent.classList.toggle('active');
-    });
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!profileDropdownParent.contains(e.target)) {
-            profileDropdownParent.classList.remove('active');
-        }
-    });
-    
-    // Sidebar toggle
+document.addEventListener('DOMContentLoaded', function () {
     const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
-    
-    if (sidebar && mainContent) {
-        // Load saved sidebar state
-        const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (sidebarCollapsed) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
+    const sidebar = document.querySelector('.sidebar, #sidebar');
+    const mainContent = document.querySelector('.main-content, main');
+    const collapsedKey = 'htgSidebarCollapsed';
+
+    function applySidebarState() {
+        if (!sidebar) return;
+        const collapsed = localStorage.getItem(collapsedKey) === 'true';
+        sidebar.classList.toggle('htg-sidebar-collapsed', collapsed);
+        if (mainContent) {
+            mainContent.classList.toggle('htg-main-expanded', collapsed);
+            mainContent.classList.toggle('expanded', collapsed);
         }
-        
-        menuToggle.addEventListener('click', function() {
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                sidebar.classList.remove('collapsed');
-                mainContent.classList.remove('expanded');
-                localStorage.setItem('sidebarCollapsed', 'false');
-            } else {
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('expanded');
-                localStorage.setItem('sidebarCollapsed', 'true');
-            }
+    }
+
+    applySidebarState();
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', function () {
+            const collapsed = !sidebar.classList.contains('htg-sidebar-collapsed');
+            localStorage.setItem(collapsedKey, collapsed ? 'true' : 'false');
+            applySidebarState();
         });
     }
-});
-
-// CSS Variables for theme
-document.addEventListener('DOMContentLoaded', function() {
-    const style = document.createElement('style');
-    style.textContent = `
-        :root {
-            --topbar-bg: #ffffff;
-            --surface: #ffffff;
-            --text: #1a1a1a;
-            --muted: #6b7280;
-            --border: #e5e7eb;
-            --hover-bg: #f3f4f6;
-            --primary: #4f46e5;
-            --danger: #dc2626;
-        }
-        
-        [data-theme="dark"] {
-            --topbar-bg: #1e293b;
-            --surface: #1e293b;
-            --surface-dark: #1e293b;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --border: #334155;
-            --border-dark: #334155;
-            --hover-bg: #f8fafc;
-            --hover-bg-dark: #334155;
-            --primary: #4f46e5;
-            --danger: #dc2626;
-        }
-        
-        .sidebar {
-            transition: margin-left 0.3s ease, width 0.3s ease;
-        }
-        
-        .sidebar.collapsed {
-            margin-left: -260px;
-        }
-        
-        .main-content {
-            transition: margin-left 0.3s ease;
-        }
-        
-        .main-content.expanded {
-            margin-left: 0;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -260px;
-                transition: left 0.3s ease;
-            }
-            
-            .sidebar.collapsed {
-                left: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
 });
 </script>

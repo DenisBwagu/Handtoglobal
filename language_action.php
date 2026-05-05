@@ -1,35 +1,31 @@
 <?php
-require_once 'config.php';
-require_once '../includes/settings_helpers.php';
-require_once 'get_translation.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/settings_helpers.php';
+require_once __DIR__ . '/includes/language_helpers.php';
 
-$context = $_POST['context'] ?? 'user';
-$language = $_POST['language'] ?? 'english';
-$redirectTo = $_POST['redirect'] ?? 'dashboard.php';
-
-$userLanguages = ['english', 'ukrainian', 'greek', 'german'];
-$adminLanguages = ['english', 'chinese'];
-$allowed = $context === 'admin' ? $adminLanguages : $userLanguages;
-
-if (!in_array($language, $allowed, true)) {
-    $language = 'english';
-}
+$language = normalize_language_code($_POST['language'] ?? 'english');
+$context = ($_POST['context'] ?? 'user') === 'admin' ? 'admin' : 'user';
+$redirectTo = $_POST['redirect'] ?? ($context === 'admin' ? '/handtoglobal/admin/dashboard.php' : '/handtoglobal/dashboard.php');
 
 $_SESSION['language'] = $language;
 
-if ($context === 'admin') {
-    $_SESSION['admin_language'] = $language;
-    try {
-        setSetting('admin_locale', $language);
-    } catch (Throwable $e) {
-        // Session language still applies immediately.
+try {
+    if ($context === 'admin') {
+        $_SESSION['admin_language'] = $language;
+        update_setting('admin_locale', $language);
+    } else {
+        set_user_language($language);
     }
-} else {
-    set_user_language($language);
+} catch (Throwable $e) {
+    // Session language applies even if persistence fails.
 }
 
 if (!is_string($redirectTo) || $redirectTo === '' || preg_match('/^https?:\/\//i', $redirectTo)) {
-    $redirectTo = $context === 'admin' ? 'admin/dashboard.php' : 'dashboard.php';
+    $redirectTo = $context === 'admin' ? '/handtoglobal/admin/dashboard.php' : '/handtoglobal/dashboard.php';
+}
+
+if ($redirectTo[0] !== '/') {
+    $redirectTo = '/handtoglobal/' . ltrim($redirectTo, '/');
 }
 
 header('Location: ' . $redirectTo);

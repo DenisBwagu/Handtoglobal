@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/settings_helpers.php';
+require_once '../includes/admin_helpers.php';
+require_once '../includes/admin_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -282,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
-<body>
+<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     <div class="container">
         <div class="breadcrumb">
             <a href="levels.php">Levels</a> > Edit
