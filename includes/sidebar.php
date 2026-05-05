@@ -74,7 +74,7 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
             <li>
                 <a href="dashboard.php" class="sidebar-menu-item <?php echo isUserMenuActive('dashboard', $currentPage) ? 'active' : ''; ?>">
                     <i class="fas fa-tachometer-alt"></i> 
-                    <?php echo get_translation('dashboard', 'Dashboard'); ?>
+                    <?php echo __t('dashboard', 'Dashboard'); ?>
                 </a>
             </li>
             <li>
@@ -93,19 +93,19 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
             <li>
                 <a href="withdrawals.php" class="sidebar-menu-item <?php echo isUserMenuActive('withdrawals', $currentPage) ? 'active' : ''; ?>">
                     <i class="fas fa-arrow-up"></i> 
-                    <?php echo get_translation('withdrawals', 'Withdrawals'); ?>
+                    <?php echo __t('withdrawals', 'Withdrawals'); ?>
                 </a>
             </li>
             <li>
                 <a href="profile.php" class="sidebar-menu-item <?php echo isUserMenuActive('profile', $currentPage) ? 'active' : ''; ?>">
                     <i class="fas fa-user"></i> 
-                    <?php echo get_translation('profile', 'Profile'); ?>
+                    <?php echo __t('profile', 'Profile'); ?>
                 </a>
             </li>
             <li>
                 <a href="logout.php" class="sidebar-menu-item">
                     <i class="fas fa-sign-out-alt"></i> 
-                    <?php echo get_translation('logout', 'Logout'); ?>
+                    <?php echo __t('logout', 'Logout'); ?>
                 </a>
             </li>
         </ul>

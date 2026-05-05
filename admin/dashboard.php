@@ -110,8 +110,8 @@ $topPerformersToday = $conn->query("
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
-                <h1>Dashboard</h1>
-                <p>Admin dashboard overview</p>
+                <h1><?php echo __t('dashboard', 'Dashboard'); ?></h1>
+                <p><?php echo __t('admin_dashboard_overview', 'Admin dashboard overview'); ?></p>
             </div>
             
             <!-- Stats Cards Grid -->
@@ -123,7 +123,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-users"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Users</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('total_users', 'Total Users'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;"><?php echo $totalUsers; ?></div>
                             </div>
                         </div>
@@ -133,7 +133,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Active Users</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('active_users', 'Active Users'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;"><?php echo $activeUsers; ?></div>
                             </div>
                         </div>
@@ -143,7 +143,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Employees</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('employees', 'Employees'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;"><?php echo $totalEmployees; ?></div>
                             </div>
                         </div>
@@ -153,9 +153,9 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-clipboard-check"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Tasks Completed</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('tasks_completed', 'Tasks Completed'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;" data-stat="completed_tasks"><?php echo $tasksCompleted; ?></div>
-                                <div style="font-size: 11px; color: #6c757d; margin-top: 2px;">Today: <?php echo $todayTasksCompleted; ?></div>
+                                <div style="font-size: 11px; color: #6c757d; margin-top: 2px;"><?php echo __t('today', 'Today'); ?>: <?php echo $todayTasksCompleted; ?></div>
                             </div>
                         </div>
                         
@@ -164,7 +164,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Pending Withdrawals</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('pending_withdrawals', 'Pending Withdrawals'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;"><?php echo $pendingWithdrawals; ?></div>
                             </div>
                         </div>
@@ -174,7 +174,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-wallet"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Paid Out</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('total_paid_out', 'Total Paid Out'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;">$<?php echo number_format($totalPaidOut, 2); ?></div>
                             </div>
                         </div>
@@ -184,7 +184,7 @@ $topPerformersToday = $conn->query("
                                 <i class="fas fa-bolt"></i>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Active Combos</div>
+                                <div style="font-size: 12px; color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;"><?php echo __t('active_combos', 'Active Combos'); ?></div>
                                 <div style="font-size: 24px; font-weight: 700; color: #212529;" data-stat="active_combos"><?php echo $activeCombos; ?></div>
                             </div>
                         </div>
@@ -193,13 +193,13 @@ $topPerformersToday = $conn->query("
                     <!-- Action Buttons -->
                     <div style="display: flex; gap: 15px; margin-bottom: 30px;">
                         <a href="employees.php?action=create" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create Employee
+                            <i class="fas fa-plus"></i> <?php echo __t('create_employee', 'Create Employee'); ?>
                         </a>
                         <a href="invitation-codes.php" class="btn btn-secondary">
-                            <i class="fas fa-ticket-alt"></i> Generate Codes
+                            <i class="fas fa-ticket-alt"></i> <?php echo __t('generate_codes', 'Generate Codes'); ?>
                         </a>
                         <a href="withdrawals.php" class="btn btn-secondary">
-                            <i class="fas fa-arrow-up"></i> View Withdrawals
+                            <i class="fas fa-arrow-up"></i> <?php echo __t('view_withdrawals', 'View Withdrawals'); ?>
                         </a>
                     </div>
                 </div>
@@ -210,7 +210,7 @@ $topPerformersToday = $conn->query("
                 <!-- Level Progress -->
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Level Progress (Live)</h2>
+                        <h2 class="card-title"><?php echo __t('level_progress_live', 'Level Progress (Live)'); ?></h2>
                     </div>
                     <div class="card-body">
                         <div style="display: grid; gap: 15px;">
@@ -223,7 +223,7 @@ $topPerformersToday = $conn->query("
                                     <div style="background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden;">
                                         <div class="progress-fill" style="background: #4f46e5; height: 100%; width: <?php echo $stats['progress']; ?>%; transition: width 0.3s ease;"></div>
                                     </div>
-                                    <div style="font-size: 12px; color: #666; margin-top: 4px;" class="available-tasks">Available: <?php echo $stats['available']; ?> tasks</div>
+                                    <div style="font-size: 12px; color: #666; margin-top: 4px;" class="available-tasks"><?php echo __t('available', 'Available'); ?>: <?php echo $stats['available']; ?> <?php echo __t('tasks', 'tasks'); ?></div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -233,12 +233,12 @@ $topPerformersToday = $conn->query("
                 <!-- Recent Activity Feed -->
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Recent Activity Feed</h2>
+                        <h2 class="card-title"><?php echo __t('recent_activity_feed', 'Recent Activity Feed'); ?></h2>
                     </div>
                     <div class="card-body">
                         <div style="max-height: 400px; overflow-y: auto;">
                             <?php if (empty($recentActivity)): ?>
-                                <div style="text-align: center; color: #666; padding: 20px;">No recent activity</div>
+                                <div style="text-align: center; color: #666; padding: 20px;"><?php echo __t('no_recent_activity', 'No recent activity'); ?></div>
                             <?php else: ?>
                                 <?php foreach ($recentActivity as $activity): ?>
                                     <div style="border-bottom: 1px solid #e9ecef; padding: 12px 0;">
@@ -269,11 +269,11 @@ $topPerformersToday = $conn->query("
             <!-- Top Performers Today -->
             <div class="card" style="margin-bottom: 30px;">
                 <div class="card-header">
-                    <h2 class="card-title">Top Performers Today</h2>
+                    <h2 class="card-title"><?php echo __t('top_performers_today', 'Top Performers Today'); ?></h2>
                 </div>
                 <div class="card-body">
                     <?php if (empty($topPerformersToday)): ?>
-                        <div style="text-align: center; color: #666; padding: 20px;">No activity today</div>
+                        <div style="text-align: center; color: #666; padding: 20px;"><?php echo __t('no_activity_today', 'No activity today'); ?></div>
                     <?php else: ?>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                             <?php foreach ($topPerformersToday as $performer): ?>
@@ -283,11 +283,11 @@ $topPerformersToday = $conn->query("
                                     <div style="display: flex; justify-content: space-around; align-items: center;">
                                         <div>
                                             <div style="font-size: 24px; font-weight: 700; color: #4f46e5;"><?php echo $performer['tasks_completed']; ?></div>
-                                            <div style="font-size: 11px; color: #666;">Tasks</div>
+                                            <div style="font-size: 11px; color: #666;"><?php echo __t('tasks', 'Tasks'); ?></div>
                                         </div>
                                         <div>
                                             <div style="font-size: 20px; font-weight: 700; color: #22c55e;">$<?php echo number_format($performer['total_earned'], 2); ?></div>
-                                            <div style="font-size: 11px; color: #666;">Earned</div>
+                                            <div style="font-size: 11px; color: #666;"><?php echo __t('earned', 'Earned'); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -300,17 +300,17 @@ $topPerformersToday = $conn->query("
             <!-- Recent Users Table -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Recent Users</h2>
+                    <h2 class="card-title"><?php echo __t('recent_users', 'Recent Users'); ?></h2>
                 </div>
                 <div class="card-body">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Level</th>
-                                <th>Balance</th>
-                                <th>Joined</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('level', 'Level'); ?></th>
+                                <th><?php echo __t('balance', 'Balance'); ?></th>
+                                <th><?php echo __t('joined', 'Joined'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -329,7 +329,7 @@ $topPerformersToday = $conn->query("
                             <?php if (empty($recentUsers)): ?>
                                 <tr>
                                     <td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">
-                                        No users found
+                                        <?php echo __t('no_users_found', 'No users found'); ?>
                                     </td>
                                 </tr>
                             <?php endif; ?>

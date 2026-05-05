@@ -750,28 +750,28 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             
             <nav class="sidebar-menu">
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">MAIN</div>
+                    <div class="sidebar-section-title"><?php echo __t('main', 'MAIN'); ?></div>
                     <a href="dashboard.php" class="sidebar-menu-item active">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                        <i class="fas fa-tachometer-alt"></i> <?php echo __t('dashboard', 'Dashboard'); ?>
                     </a>
                     <a href="task_history.php" class="sidebar-menu-item">
-                        <i class="fas fa-history"></i> Task History
+                        <i class="fas fa-history"></i> <?php echo __t('task_history', 'Task History'); ?>
                     </a>
                 </div>
                 
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">ACCOUNT</div>
+                    <div class="sidebar-section-title"><?php echo __t('account', 'ACCOUNT'); ?></div>
                     <a href="withdrawals.php" class="sidebar-menu-item">
-                        <i class="fas fa-money-bill-wave"></i> Withdrawals
+                        <i class="fas fa-money-bill-wave"></i> <?php echo __t('withdrawals', 'Withdrawals'); ?>
                     </a>
                     <a href="profile.php" class="sidebar-menu-item">
-                        <i class="fas fa-user"></i> Profile
+                        <i class="fas fa-user"></i> <?php echo __t('profile', 'Profile'); ?>
                     </a>
                     <a href="<?php echo htmlspecialchars($supportLink); ?>" class="sidebar-menu-item" target="_blank" rel="noopener">
-                        <i class="fas fa-headset"></i> Support
+                        <i class="fas fa-headset"></i> <?php echo __t('support', 'Support'); ?>
                     </a>
                     <a href="logout.php" class="sidebar-menu-item">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?>
                     </a>
                 </div>
             </nav>
@@ -784,8 +784,8 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 <!-- Welcome Card -->
                 <div class="card welcome-card">
                     <div class="welcome-info">
-                        <h2>Welcome back, <?php echo htmlspecialchars($user['fullname']); ?></h2>
-                        <p id="welcomeLevelText"><?php echo htmlspecialchars($stats['current_level']); ?> - <?php echo $stats['completed_tasks']; ?> tasks completed</p>
+                        <h2><?php echo __t('welcome_back', 'Welcome back'); ?>, <?php echo htmlspecialchars($user['fullname']); ?></h2>
+                        <p id="welcomeLevelText"><?php echo htmlspecialchars($stats['current_level']); ?> - <?php echo $stats['completed_tasks']; ?> <?php echo __t('tasks_completed', 'tasks completed'); ?></p>
                     </div>
                     <div class="welcome-balance balance" id="balanceText">
                         $<?php echo number_format($user['balance'], 2); ?>
@@ -794,7 +794,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 
                 <!-- Current Level Card -->
                 <div class="card current-level-card">
-                    <div class="level-badge">CURRENT LEVEL</div>
+                    <div class="level-badge"><?php echo __t('current_level', 'CURRENT LEVEL'); ?></div>
                     <div class="level-header">
                         <div class="level-name current-level" id="currentLevelName"><?php echo htmlspecialchars($stats['current_level']); ?></div>
                         <div class="level-category">Name Items</div>
@@ -807,7 +807,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             ?>%"></div>
                         </div>
                         <div style="text-align: right;">
-                            <a href="#" class="level-link" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')">Start Tasks →</a>
+                            <a href="#" class="level-link" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')"><?php echo __t('start_tasks', 'Start Tasks'); ?> →</a>
                         </div>
                     </div>
                 </div>
@@ -815,8 +815,8 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 <!-- Today's Progress -->
                 <div class="card">
                     <div class="today-progress">
-                        <div class="today-label">Today's progress</div>
-                        <div class="today-count" id="todayProgressText"><?php echo $stats['today_completed']; ?>/<?php echo $stats['daily_task_limit']; ?> tasks</div>
+                        <div class="today-label"><?php echo __t('today_progress', "Today's progress"); ?></div>
+                        <div class="today-count" id="todayProgressText"><?php echo $stats['today_completed']; ?>/<?php echo $stats['daily_task_limit']; ?> <?php echo __t('tasks', 'tasks'); ?></div>
                     </div>
                 </div>
                 
@@ -828,7 +828,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             <i class="fas fa-tasks"></i>
                         </div>
                         <div class="stat-number" id="availableTasksCount"><?php echo $stats['available_tasks']; ?></div>
-                        <div class="stat-label">Available Tasks</div>
+                        <div class="stat-label"><?php echo __t('available_tasks', 'Available Tasks'); ?></div>
                     </div>
                     
                     <div class="stat-card">
@@ -836,7 +836,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-number" id="completedTasksCount"><?php echo $stats['completed_tasks']; ?></div>
-                        <div class="stat-label">Completed Tasks</div>
+                        <div class="stat-label"><?php echo __t('completed_tasks', 'Completed Tasks'); ?></div>
                     </div>
                     
                     <div class="stat-card">
@@ -844,7 +844,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-number"><?php echo $stats['pending_withdrawals']; ?></div>
-                        <div class="stat-label">Pending Withdrawals</div>
+                        <div class="stat-label"><?php echo __t('pending_withdrawals', 'Pending Withdrawals'); ?></div>
                     </div>
                     
                     <div class="stat-card">
@@ -852,27 +852,27 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                             <i class="fas fa-star"></i>
                         </div>
                         <div class="stat-number"><?php echo number_format($stats['performance_score'], 2); ?></div>
-                        <div class="stat-label">Performance Score</div>
+                        <div class="stat-label"><?php echo __t('performance_score', 'Performance Score'); ?></div>
                     </div>
                 </div>
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="startLevel('<?php echo htmlspecialchars($stats['current_level']); ?>', '1')"
-                        <i class="fas fa-play"></i> Start Tasks
+                        <i class="fas fa-play"></i> <?php echo __t('start_tasks', 'Start Tasks'); ?>
                     </button>
                     <a href="withdrawals.php" class="btn btn-secondary">
-                        <i class="fas fa-money-bill-wave"></i> Request Withdrawal
+                        <i class="fas fa-money-bill-wave"></i> <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?>
                     </a>
-                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
-                        <i class="fas fa-headset"></i> Customer Support
+                    <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')"
+                        <i class="fas fa-headset"></i> <?php echo __t('customer_support', 'Customer Support'); ?>
                     </button>
                 </div>
                 
                 <!-- All Levels -->
                 <div class="card">
-                    <div class="card-title">All Levels</div>
-                    <p style="color: #6b7280; margin-bottom: 20px;">Click a level to start working on tasks</p>
+                    <div class="card-title"><?php echo __t('all_levels', 'All Levels'); ?></div>
+                    <p style="color: #6b7280; margin-bottom: 20px;"><?php echo __t('click_level_start_tasks', 'Click a level to start working on tasks'); ?></p>
                     
                     <div class="levels-grid">
                         <?php foreach ($levels as $level): ?>
@@ -890,13 +890,13 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                                         <?php echo strtoupper($level_status); ?>
                                     </div>
                                 </div>
-                                <div class="level-category">Name Items</div>
-                                <div class="level-progress-text">Progress</div>
+                                <div class="level-category"><?php echo __t('name_items', 'Name Items'); ?></div>
+                                <div class="level-progress-text"><?php echo __t('progress', 'Progress'); ?></div>
                                 <div class="progress-bar">
                                     <div class="progress-fill" style="width: <?php echo min(($level_data['completed'] / max($level_data['total'], 1)) * 100, 100); ?>%"></div>
                                 </div>
                                 <div class="level-progress-text level-progress"><?php echo $level_data['completed']; ?>/<?php echo $level_data['total']; ?> tasks</div>
-                                <div class="available-tasks">Available: <?php echo $level_data['available']; ?></div>
+                                <div class="available-tasks"><?php echo __t('available', 'Available'); ?>: <?php echo $level_data['available']; ?> <?php echo __t('tasks', 'tasks'); ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -905,8 +905,8 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
                 <!-- Testimonials -->
                 <?php if (!empty($testimonials)): ?>
                     <div class="card">
-                        <div class="card-title">What Our Community Says</div>
-                        <p style="color: #6b7280; margin-bottom: 20px;">Our clients and users trust us to deliver quality services and reliable earnings. Here's what they have to say.</p>
+                        <div class="card-title"><?php echo __t('what_community_says', 'What Our Community Says'); ?></div>
+                        <p style="color: #6b7280; margin-bottom: 20px;"><?php echo __t('community_trust_text', 'Our clients and users Trust us to deliver quality services and reliable earnings. Here\'s what They Have to say.'); ?></p>
                         
                         <?php foreach ($testimonials as $testimonial): ?>
                             <div class="testimonial-card">
@@ -932,7 +932,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
     <div class="modal" id="taskModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="taskModalTitle">Tasks</h3>
+                <h3 class="modal-title" id="taskModalTitle"><?php echo __t('tasks', 'Tasks'); ?></h3>
                 <button class="modal-close" onclick="closeTaskModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -947,19 +947,19 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
     <div class="modal" id="lockedModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="lockedModalTitle">Unlock Level</h3>
+                <h3 class="modal-title" id="lockedModalTitle"><?php echo __t('unlock_level', 'Unlock Level'); ?></h3>
                 <button class="modal-close" onclick="closeLockedModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p>This level requires additional setup to proceed. Please contact our customer service for personal assistance to continue with this level.</p>
+                <p><?php echo __t('level_requires_setup', 'This level requires additional setup to proceed. Please contact our customer service for personal assistance to continue with this level.'); ?></p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-support" onclick="window.open('<?php echo htmlspecialchars(getSupportLink()); ?>', '_blank')">
-                    Contact Customer Service
+                    <?php echo __t('contact_customer_service', 'Contact Customer Service'); ?>
                 </button>
-                <button class="btn btn-secondary" onclick="closeLockedModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeLockedModal()"><?php echo __t('cancel', 'Cancel'); ?></button>
             </div>
         </div>
     </div>
@@ -968,7 +968,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
     <div class="modal" id="comboModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Combo Available!</h3>
+                <h3 class="modal-title"><?php echo __t('combo_available', 'Combo Available!'); ?></h3>
                 <button class="modal-close" onclick="closeComboModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -987,18 +987,6 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
         <div class="completed-modal">
             <div style="text-align: center; margin-bottom: 20px;">
                 <i class="fas fa-trophy" style="font-size: 48px; color: #f59e0b;"></i>
-            </div>
-            <h3 style="margin: 0 0 8px 0; color: #333; text-align: center;" id="completedModalTitle">All tasks completed in Bronze level!</h3>
-            <p style="margin: 0 0 24px 0; color: #6b7280; text-align: center; font-size: 14px;">Need help or want to upgrade level?</p>
-            <div style="display: flex; gap: 12px; justify-content: center;">
-                <button class="btn btn-secondary" onclick="closeCompletedModal()">Close</button>
-                <button type="button" class="btn btn-primary" id="completedSupportBtn">
-                    <i class="fas fa-headset"></i> Contact Customer Support
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <script>
         // Support link from global function
         window.SUPPORT_LINK = "<?php echo htmlspecialchars(getSupportLink(), ENT_QUOTES); ?>";
@@ -1014,13 +1002,13 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             const title = document.getElementById('taskModalTitle');
             const body = document.getElementById('taskModalBody');
             
-            title.textContent = level + ' Tasks';
+            title.textContent = level + ' ' + __t('tasks', 'Tasks') + '';
             
             // Load tasks via AJAX or show task content
             body.innerHTML = `
                 <div style="text-align: center; padding: 40px;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #667eea;"></i>
-                    <p style="margin-top: 16px; color: #6b7280;">Loading tasks...</p>
+                    <p style="margin-top: 16px; color: #6b7280;"><?php echo __t('loading_tasks', 'Loading tasks...'); ?></p>
                 </div>
             `;
             
@@ -1040,7 +1028,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             const modal = document.getElementById('lockedModal');
             const title = document.getElementById('lockedModalTitle');
             
-            title.textContent = 'Unlock ' + level;
+            title.textContent = '<?php echo __t('unlock', 'Unlock'); ?> ' + level;
             modal.classList.add('active');
         }
         
@@ -1059,7 +1047,7 @@ error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? '
             const supportBtn = document.getElementById('completedSupportBtn');
             
             // Update title with dynamic level name
-            title.textContent = `All tasks completed in ${levelName} level!`;
+            title.textContent = `<?php echo __t('all_tasks_completed_in_level', 'All tasks completed in'); ?> ${levelName} <?php echo __t('level_exclamation', 'level!'); ?>`;
             
             // Update support button link
             supportBtn.onclick = function() {
