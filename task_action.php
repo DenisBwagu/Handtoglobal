@@ -77,6 +77,32 @@ try {
     }
 
     $reward = (float)($task['reward'] ?? 0);
+
+$comboMultiplier = 1;
+
+// 🔥 CHECK ACTIVE OR JUST RELEASED COMBO
+$stmt = $conn->prepare("
+    SELECT c.*, ucs.status as user_status
+    FROM combos c
+    LEFT JOIN user_combo_status ucs ON ucs.combo_id = c.id AND ucs.user_id = ?
+    WHERE c.level = ?
+    AND c.start_task = ?
+    AND (c.user_id IS NULL OR c.user_id = ?)
+    ORDER BY c.id DESC
+    LIMIT 1
+");
+
+$stmt->execute([$userId, $level, $taskNumber, $userId]);
+$combo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($combo) {
+    $multiplier = (float)($combo['multiplier'] ?? 1);
+
+    if ($multiplier > 1) {
+        $reward = $reward * $multiplier;
+        $comboMultiplier = $multiplier;
+    }
+}
     if ($reward <= 0) {
         $rewardByLevel = [
             'Bronze' => 1.80,
@@ -149,7 +175,7 @@ try {
         'combo_applied' => false,
         'base_reward' => $baseReward,
         'reward' => $reward,
-        'combo_multiplier' => 1,
+        'combo_multiplier' => $comboMultiplier,
         'level_completed' => !$nextTask,
         'next_task' => $nextTask,
         'dashboard_stats' => $dashboardStats,

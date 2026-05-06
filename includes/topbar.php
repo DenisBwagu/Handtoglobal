@@ -87,7 +87,10 @@ $languages = available_languages();
 ?>
 
 <link rel="stylesheet" href="<?php echo $assetPrefix; ?>assets/css/global-theme.css">
-<link rel="icon" href="<?php echo htmlspecialchars($faviconUrl); ?>" type="image/x-icon">
+<?php
+$favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
+?>
+<link rel="icon" href="<?php echo htmlspecialchars($favicon); ?>?v=<?php echo time(); ?>" type="image/x-icon">
 <script src="<?php echo $assetPrefix; ?>assets/js/theme.js" defer></script>
 
 <div class="topbar htg-topbar" id="topbar" data-support-link="<?php echo htmlspecialchars($supportTelegram); ?>">

@@ -133,7 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta property="og:title" content="<?php echo htmlspecialchars(get_meta_title()); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
-    <link rel="icon" href="<?php echo htmlspecialchars(get_favicon()); ?>" type="image/x-icon">
+    <?php
+$favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
+?>
+<link rel="icon" href="<?php echo htmlspecialchars($favicon); ?>?v=<?php echo time(); ?>" type="image/x-icon">
     <link rel="stylesheet" href="assets/css/global-theme.css">
     <script src="assets/js/theme.js" defer></script>
     <style>

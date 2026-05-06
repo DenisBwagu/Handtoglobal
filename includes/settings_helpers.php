@@ -107,25 +107,13 @@ if (!function_exists('get_site_name')) {
 }
 
 if (!function_exists('get_favicon')) {
-    /**
-     * Get the favicon URL
-     * @return string The favicon URL
-     */
     function get_favicon() {
-        $favicon = get_setting('site_favicon', get_setting('favicon', 'assets/images/favicon.ico'));
-        if ($favicon === '') {
-            $favicon = 'assets/images/favicon.ico';
-        }
-
-        if (preg_match('/^(https?:)?\/\//i', $favicon)) {
-            return $favicon;
-        }
-
-        $path = strtok($favicon, '?');
-        $absolutePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($path, '/'));
-        $version = is_file($absolutePath) ? filemtime($absolutePath) : time();
-        $separator = strpos($favicon, '?') === false ? '?' : '&';
-        return $favicon . $separator . 'v=' . $version;
+        return get_setting('site_favicon', 'assets/images/favicon.ico');
+    }
+}
+if (!function_exists('get_telegram_link')) {
+    function get_telegram_link() {
+        return get_setting('telegram_link', 'https://t.me/chica256');
     }
 }
 

@@ -156,7 +156,8 @@ if (!function_exists('htg_pending_combo_for_task_number')) {
             LEFT JOIN user_combo_status ucs ON ucs.combo_id = c.id AND ucs.user_id = ?
             WHERE c.level IN ($placeholders)
               AND c.is_active = 1
-              AND LOWER(c.status) = 'active'
+             AND LOWER(c.status) = 'active'
+AND (ucs.status IS NULL OR ucs.status = 'pending')
               AND c.start_task = ?
               AND (c.user_id IS NULL OR c.user_id = ?)
             ORDER BY c.id ASC
@@ -170,6 +171,10 @@ if (!function_exists('htg_pending_combo_for_task_number')) {
         }
 
         $status = strtolower((string)($combo['user_combo_status'] ?? ''));
+        // 🚨 DO NOT BLOCK if admin has deactivated
+if (strtolower($combo['status']) !== 'active') {
+    return null;
+}
         if ($status === 'activated' || $status === 'cleared' || $status === 'released' || $status === 'cancelled') {
             return null;
         }

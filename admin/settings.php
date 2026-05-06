@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $imageFields = [
         'site_logo',
-        'favicon',
+        'site_favicon',
         'og_image',
         'homepage_hero_image',
         'homepage_about_image',
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES[$field]['name']) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
 
             $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
-            $allowed = $field === 'favicon'
+            $allowed = $field === 'site_favicon'
                 ? ['ico', 'png', 'jpg', 'jpeg', 'webp']
                 : ['jpg','jpeg','png','webp','gif','ico'];
 
@@ -522,6 +522,16 @@ $current_settings = [
                                     <img src="../<?php echo htmlspecialchars($current_settings['site_logo']); ?>" alt="Current Logo">
                                 </div>
                             <?php endif; ?>
+      
+<div class="file-upload-group">
+    <label class="form-label">Homepage Main Photo</label>
+    <?php if (!empty($current_settings['homepage_hero_image'])): ?>
+        <div class="file-preview">
+            <img src="../<?php echo htmlspecialchars($current_settings['homepage_hero_image']); ?>?v=<?php echo time(); ?>" alt="Homepage Main Photo">
+        </div>
+    <?php endif; ?>
+    <input type="file" name="homepage_hero_image" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp">
+</div>
                             <input type="file" name="site_logo" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp,image/svg">
                         </div>
                     </div>
@@ -619,12 +629,12 @@ $current_settings = [
                         
                         <div class="file-upload-group">
                             <label class="form-label">Favicon</label>
-                            <?php if (!empty($current_settings['favicon'])): ?>
+                            <?php if (!empty($current_settings['site_favicon'])): ?>
                                 <div class="file-preview">
-                                    <img src="../<?php echo htmlspecialchars($current_settings['favicon']); ?>" alt="Current Favicon">
+                                    <img src="../<?php echo htmlspecialchars($current_settings['site_favicon']); ?>?v=<?php echo time(); ?>" alt="Current Favicon">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" name="favicon" class="file-input" accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/jpeg,image/webp,.ico,.png,.jpg,.jpeg,.webp">
+                            <input type="file" name="site_favicon" class="file-input" accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/jpeg,image/webp,.ico,.png,.jpg,.jpeg,.webp">
                         </div>
                         
                         <div class="form-group">

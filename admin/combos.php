@@ -23,7 +23,7 @@ if (isset($_GET['action'])) {
             switch ($action) {
                 case 'activate':
                     // Set combo to active and resolve all pending user combos for this combo
-                    $stmt = $conn->prepare("UPDATE combos SET status = 'active', is_active = 1, updated_at = NOW() WHERE id = ?");
+                    $stmt = $conn->prepare("UPDATE combos SET status = 'deactivated', is_active = 0, is_active = 1, updated_at = NOW() WHERE id = ?");
                     $stmt->execute([$combo_id]);
                     
                     $stmt = $conn->prepare("
