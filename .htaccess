@@ -1,0 +1,15 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Keep the explicit database repair endpoint reachable for localhost repair runs.
+    RewriteRule ^database_repair\.php$ - [L]
+
+    # Block diagnostic, setup, repair, backup, and test scripts from public access.
+    RewriteCond %{REQUEST_URI} (^|/)(test_|debug_|check_|setup_|repair_|fix_|add_|create_|drop_|seed_|final_|quick_setup|complete_setup|database_repair|translation_audit|syntax_checker|auth_test|db_test|prepare_for_github) [NC]
+    RewriteRule \.php$ - [F,L]
+
+    RewriteCond %{REQUEST_URI} (_test|_old|_backup|broken_backup|backup_before_|setup_backup|disabled_old_files) [NC]
+    RewriteRule \.php$ - [F,L]
+</IfModule>
