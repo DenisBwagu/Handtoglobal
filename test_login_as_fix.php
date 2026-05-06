@@ -4,7 +4,7 @@
  * This script tests the login as functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING LOGIN AS USER FIX ===\n\n";
 
@@ -51,7 +51,7 @@ try {
         echo "   - Impersonating: {$_SESSION['is_impersonating']}\n";
         
         // Test user authentication function
-        require_once 'config.php';
+        require_once __DIR__ . '/config.php';
         if (function_exists('isUserLoggedIn')) {
             $isLoggedIn = isUserLoggedIn();
             echo "✅ isUserLoggedIn(): " . ($isLoggedIn ? 'true' : 'false') . "\n";

@@ -4,7 +4,7 @@
  * This script tests the entire combo system functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETE COMBO SYSTEM ===\n\n";
 

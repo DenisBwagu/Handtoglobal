@@ -4,7 +4,7 @@
  * This script checks the current database structure for tasks and completed_tasks tables
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== CHECKING DATABASE STRUCTURE ===\n\n";
 

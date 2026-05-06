@@ -4,7 +4,7 @@
  * This script tests the entire activate/deactivate combo system functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETE ACTIVATE/DEACTIVATE COMBO FLOW ===\n\n";
 

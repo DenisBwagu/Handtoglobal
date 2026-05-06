@@ -3,7 +3,7 @@
  * Add user_id column to combos table safely
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== ADDING USER_ID COLUMN TO COMBOS TABLE ===\n\n";
 

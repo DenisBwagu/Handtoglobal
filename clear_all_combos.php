@@ -4,7 +4,7 @@
  * This script removes all existing combos to start fresh
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== CLEARING ALL COMBOS ===\n\n";
 

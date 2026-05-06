@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 require_once '../includes/settings_helpers.php';
 
 // Wrap entire logic in try/catch to catch any PHP/SQL errors

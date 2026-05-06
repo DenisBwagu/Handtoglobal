@@ -1,7 +1,7 @@
 <?php
-require_once 'config.php';
-require_once 'includes/settings_helpers.php';
-require_once 'includes/language_helpers.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/settings_helpers.php';
+require_once __DIR__ . '/includes/language_helpers.php';
 
 $siteName = get_site_name();
 $siteLogo = get_site_logo();

@@ -4,7 +4,7 @@
  * This script verifies that task images are properly loaded and displayed to clients
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING TASK IMAGE VISIBILITY ===\n\n";
 

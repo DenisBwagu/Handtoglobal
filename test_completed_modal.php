@@ -4,7 +4,7 @@
  * This script verifies that the completed modal works correctly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETED MODAL FUNCTIONALITY ===\n\n";
 

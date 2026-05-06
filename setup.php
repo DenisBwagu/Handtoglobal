@@ -125,7 +125,7 @@ try {
     echo "<p class='success'>✓ Created $taskCount sample tasks</p>";
     
     // Test connection with config
-    require_once 'config.php';
+    require_once __DIR__ . '/config.php';
     $conn = getConnection();
     if ($conn) {
         echo "<p class='success'>✓ Configuration test passed</p>";

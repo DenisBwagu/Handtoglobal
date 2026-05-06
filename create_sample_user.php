@@ -4,7 +4,7 @@
  * This script creates a test user account for the HandToGlobal system
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== CREATING SAMPLE USER ACCOUNT ===\n\n";
 

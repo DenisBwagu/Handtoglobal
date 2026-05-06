@@ -4,7 +4,7 @@
  * This script tests the combo system without path issues
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMBO SYSTEM (SIMPLE) ===\n\n";
 

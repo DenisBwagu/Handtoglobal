@@ -4,7 +4,7 @@
  * This script creates the user_limits table with basic functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== CREATING USER_LIMITS TABLE (SIMPLE) ===\n\n";
 

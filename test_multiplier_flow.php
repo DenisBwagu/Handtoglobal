@@ -4,7 +4,7 @@
  * This script tests the entire multiplier combo system functionality as specified
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETE MULTIPLIER COMBO FLOW ===\n\n";
 

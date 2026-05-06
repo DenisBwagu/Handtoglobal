@@ -4,7 +4,7 @@
  * This script tests the entire edit combo system functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETE EDIT COMBO FLOW ===\n\n";
 

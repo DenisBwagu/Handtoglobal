@@ -65,7 +65,7 @@ if (!function_exists('normalizeLevelName')) {
         $lower = strtolower($value);
 
         if ($lower === 'silver' || $lower === 'sliver') {
-            return 'Sliver';
+            return 'Silver';
         }
 
         if ($lower === 'vip' || $lower === 'vip / platinum' || $lower === 'platinum') {
@@ -114,7 +114,7 @@ if (!function_exists('getAppLevels')) {
 
         return [
             ['id' => null, 'name' => 'Bronze', 'sort_order' => 1, 'task_reward' => 1.20, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
-            ['id' => null, 'name' => 'Sliver', 'sort_order' => 2, 'task_reward' => 1.50, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
+            ['id' => null, 'name' => 'Silver', 'sort_order' => 2, 'task_reward' => 1.50, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
             ['id' => null, 'name' => 'Gold', 'sort_order' => 3, 'task_reward' => 2.50, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
             ['id' => null, 'name' => 'VIP 1', 'sort_order' => 4, 'task_reward' => 4.00, 'number_of_tasks' => 40, 'task_type' => 'Name_items'],
         ];
@@ -291,10 +291,6 @@ if (!function_exists('set_language')) {
 
 if (!function_exists('get_translation')) {
     function get_translation($key, $fallback = '') {
-        if (function_exists('__t')) {
-            return __t($key, $fallback);
-        }
-
         static $translations = [];
         $language = get_current_language();
 
@@ -303,6 +299,12 @@ if (!function_exists('get_translation')) {
         }
 
         return $translations[$language][$key] ?? ($fallback !== '' ? $fallback : $key);
+    }
+}
+
+if (!function_exists('__t')) {
+    function __t($key, $fallback = '') {
+        return get_translation($key, $fallback);
     }
 }
 
@@ -841,6 +843,18 @@ if (!function_exists('htg_table_is_usable')) {
     }
 }
 
+if (!function_exists('get_setting')) {
+    function get_setting($key, $default = '') {
+        return getSetting($key, $default);
+    }
+}
+
+if (!function_exists('update_setting')) {
+    function update_setting($key, $value, $type = 'text') {
+        return setSetting($key, $value);
+    }
+}
+
 function createNotification($userId, $title, $message) {
     if (!htg_table_is_usable('notifications')) {
         return false;
@@ -885,7 +899,7 @@ function getUserStats($userId) {
     // Level progress
     $user = getUserById($userId);
     $bronzeProgress = getLevelProgress($userId, 'Bronze');
-    $silverProgress = getLevelProgress($userId, 'Sliver');
+    $silverProgress = getLevelProgress($userId, 'Silver');
     $goldProgress = getLevelProgress($userId, 'Gold');
     $platinumProgress = getLevelProgress($userId, 'VIP 1');
     
@@ -1007,7 +1021,7 @@ if (!function_exists('unlockLevelForUser')) {
             // 2. Update users table columns for backward compatibility
             if ($userLevelsResult) {
                 $levelField = strtolower($level) . '_unlocked';
-                if ($level === 'Sliver') {
+                if ($level === 'Silver') {
                     $levelField = 'silver_unlocked';
                 } elseif ($level === 'VIP 1') {
                     $levelField = 'platinum_unlocked';
@@ -1072,7 +1086,7 @@ if (!function_exists('flushLevelForUser')) {
             
             // 3. Lock the level in users table (specific column)
             $levelField = strtolower($level) . '_unlocked';
-            if ($level === 'Sliver') {
+            if ($level === 'Silver') {
                 $levelField = 'silver_unlocked';
             } elseif ($level === 'VIP 1') {
                 $levelField = 'platinum_unlocked';
@@ -1111,13 +1125,24 @@ if (!function_exists('isLevelUnlockedForUser')) {
             
             $isUnlocked = false;
             
+            $levelAliases = [$level];
+            if ($level === 'Silver') {
+                $levelAliases[] = 'Sliver';
+            } elseif ($level === 'VIP 1') {
+                $levelAliases[] = 'VIP';
+                $levelAliases[] = 'Platinum';
+                $levelAliases[] = 'VIP / Platinum';
+            }
+            $levelAliases = array_values(array_unique($levelAliases));
+            $levelPlaceholders = implode(',', array_fill(0, count($levelAliases), '?'));
+
             // Check user_levels table first
             $stmt = $conn->prepare("
                 SELECT is_unlocked FROM user_levels 
-                WHERE user_id = ? AND level = ?
+                WHERE user_id = ? AND level IN ($levelPlaceholders)
                 LIMIT 1
             ");
-            $stmt->execute([$userId, $level]);
+            $stmt->execute(array_merge([$userId], $levelAliases));
             $userLevelResult = $stmt->fetch();
             
             if ($userLevelResult !== false && (int)$userLevelResult['is_unlocked'] === 1) {
@@ -1128,7 +1153,7 @@ if (!function_exists('isLevelUnlockedForUser')) {
             // Also check users table for backward compatibility
             if (!$isUnlocked) {
                 $levelField = strtolower($level) . '_unlocked';
-                if ($level === 'Sliver') {
+                if ($level === 'Silver') {
                     $levelField = 'silver_unlocked';
                 } elseif ($level === 'VIP 1') {
                     $levelField = 'platinum_unlocked';
@@ -1163,23 +1188,33 @@ if (!function_exists('getLevelProgressForUser')) {
         try {
             $conn = getConnection();
             $level = normalizeLevelName($level);
+            $levelAliases = [$level];
+            if ($level === 'Silver') {
+                $levelAliases[] = 'Sliver';
+            } elseif ($level === 'VIP 1') {
+                $levelAliases[] = 'VIP';
+                $levelAliases[] = 'Platinum';
+                $levelAliases[] = 'VIP / Platinum';
+            }
+            $levelAliases = array_values(array_unique($levelAliases));
+            $levelPlaceholders = implode(',', array_fill(0, count($levelAliases), '?'));
             
             // Get completed tasks count
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as completed
                 FROM completed_tasks ct
                 INNER JOIN tasks t ON ct.task_id = t.id
-                WHERE ct.user_id = ? AND (t.level = ? OR ct.level = ?)
+                WHERE ct.user_id = ? AND (t.level IN ($levelPlaceholders) OR ct.level IN ($levelPlaceholders))
             ");
-            $stmt->execute([$userId, $level, $level]);
+            $stmt->execute(array_merge([$userId], $levelAliases, $levelAliases));
             $result = $stmt->fetch();
             $completed = $result['completed'] ?? 0;
             
             // Get total tasks for level
             $stmt = $conn->prepare("
-                SELECT COUNT(*) as total FROM tasks WHERE level = ? AND active = 1
+                SELECT COUNT(*) as total FROM tasks WHERE level IN ($levelPlaceholders) AND active = 1
             ");
-            $stmt->execute([$level]);
+            $stmt->execute($levelAliases);
             $result = $stmt->fetch();
             $total = $result['total'] ?? 40;
             
@@ -1356,6 +1391,9 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         ensureColumnExists($conn, 'users', 'silver_unlocked', 'TINYINT(1) DEFAULT 0');
         ensureColumnExists($conn, 'users', 'gold_unlocked', 'TINYINT(1) DEFAULT 0');
         ensureColumnExists($conn, 'users', 'platinum_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'vip1_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'vip2_unlocked', 'TINYINT(1) DEFAULT 0');
+        ensureColumnExists($conn, 'users', 'vip3_unlocked', 'TINYINT(1) DEFAULT 0');
         ensureColumnExists($conn, 'users', 'invite_code_used', 'VARCHAR(50) NULL');
         ensureColumnExists($conn, 'users', 'referred_by', 'INT NULL');
         ensureColumnExists($conn, 'users', 'is_blocked', 'TINYINT(1) DEFAULT 0');
@@ -1416,6 +1454,147 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             ensureAuthSchema();
             createUserLevelsTable();
 
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS settings (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    setting_key VARCHAR(100) NOT NULL UNIQUE,
+                    setting_value TEXT NULL,
+                    setting_type VARCHAR(50) DEFAULT 'text',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS levels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(50) NOT NULL,
+                    description TEXT NULL,
+                    reward DECIMAL(10,2) DEFAULT 0.00,
+                    task_reward DECIMAL(10,2) DEFAULT 0.00,
+                    tasks INT DEFAULT 40,
+                    daily_task_limit INT DEFAULT 40,
+                    deposit_amount DECIMAL(10,2) DEFAULT 0.00,
+                    task_type VARCHAR(100) DEFAULT 'Name_items',
+                    icon VARCHAR(100) NULL,
+                    sort_order INT DEFAULT 0,
+                    active TINYINT(1) DEFAULT 1,
+                    is_active TINYINT(1) DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    description TEXT NULL,
+                    instructions TEXT NULL,
+                    image VARCHAR(255) NULL,
+                    level VARCHAR(50) DEFAULT 'Bronze',
+                    reward DECIMAL(10,2) DEFAULT 0.00,
+                    active TINYINT(1) DEFAULT 1,
+                    is_active TINYINT(1) DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS completed_tasks (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    task_id INT NOT NULL,
+                    level VARCHAR(50) NULL,
+                    reward DECIMAL(10,2) DEFAULT 0.00,
+                    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_user_task (user_id, task_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS deposits (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    status VARCHAR(30) DEFAULT 'Pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    message TEXT NULL,
+                    is_read TINYINT(1) DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS combos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NULL,
+                    title VARCHAR(255) NULL,
+                    message TEXT NULL,
+                    level VARCHAR(50) DEFAULT 'Bronze',
+                    amount DECIMAL(10,2) DEFAULT 0.00,
+                    multiplier DECIMAL(10,2) DEFAULT 1.00,
+                    start_task INT DEFAULT 1,
+                    end_task INT DEFAULT 1,
+                    status VARCHAR(30) DEFAULT 'Active',
+                    is_active TINYINT(1) DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS user_combo_status (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    combo_id INT NOT NULL,
+                    status VARCHAR(30) DEFAULT 'pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_user_combo (user_id, combo_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            ensureColumnExists($conn, 'settings', 'setting_type', "VARCHAR(50) DEFAULT 'text'");
+            ensureColumnExists($conn, 'levels', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'levels', 'task_reward', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'levels', 'tasks', 'INT DEFAULT 40');
+            ensureColumnExists($conn, 'levels', 'daily_task_limit', 'INT DEFAULT 40');
+            ensureColumnExists($conn, 'levels', 'deposit_amount', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'levels', 'task_type', "VARCHAR(100) DEFAULT 'Name_items'");
+            ensureColumnExists($conn, 'levels', 'icon', 'VARCHAR(100) NULL');
+            ensureColumnExists($conn, 'levels', 'sort_order', 'INT DEFAULT 0');
+            ensureColumnExists($conn, 'levels', 'active', 'TINYINT(1) DEFAULT 1');
+            ensureColumnExists($conn, 'levels', 'is_active', 'TINYINT(1) DEFAULT 1');
+            ensureColumnExists($conn, 'tasks', 'instructions', 'TEXT NULL');
+            ensureColumnExists($conn, 'tasks', 'image', 'VARCHAR(255) NULL');
+            ensureColumnExists($conn, 'tasks', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
+            ensureColumnExists($conn, 'tasks', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'tasks', 'active', 'TINYINT(1) DEFAULT 1');
+            ensureColumnExists($conn, 'tasks', 'is_active', 'TINYINT(1) DEFAULT 1');
+            ensureColumnExists($conn, 'completed_tasks', 'level', 'VARCHAR(50) NULL');
+            ensureColumnExists($conn, 'completed_tasks', 'answer', 'TEXT NULL');
+            ensureColumnExists($conn, 'completed_tasks', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'deposits', 'status', "VARCHAR(30) DEFAULT 'Pending'");
+            ensureColumnExists($conn, 'notifications', 'is_read', 'TINYINT(1) DEFAULT 0');
+            ensureColumnExists($conn, 'combos', 'user_id', 'INT NULL');
+            ensureColumnExists($conn, 'combos', 'message', 'TEXT NULL');
+            ensureColumnExists($conn, 'combos', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
+            ensureColumnExists($conn, 'combos', 'amount', 'DECIMAL(10,2) DEFAULT 0.00');
+            ensureColumnExists($conn, 'combos', 'multiplier', 'DECIMAL(10,2) DEFAULT 1.00');
+            ensureColumnExists($conn, 'combos', 'start_task', 'INT DEFAULT 1');
+            ensureColumnExists($conn, 'combos', 'end_task', 'INT DEFAULT 1');
+            ensureColumnExists($conn, 'combos', 'status', "VARCHAR(30) DEFAULT 'Active'");
+            ensureColumnExists($conn, 'combos', 'is_active', 'TINYINT(1) DEFAULT 1');
+
             $withdrawalsExists = (bool)$conn->query("SHOW TABLES LIKE 'withdrawals'")->fetchColumn();
             if ($withdrawalsExists) {
                 try {
@@ -1453,6 +1632,7 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             };
 
             $addColumn('admin_note', 'TEXT NULL');
+            $addColumn('coin_asset', "VARCHAR(20) DEFAULT 'USDT'");
             $addColumn('recipient_name', 'VARCHAR(255) NULL');
             $addColumn('processed_at', 'DATETIME NULL');
             $addColumn('processed_by', 'INT NULL');

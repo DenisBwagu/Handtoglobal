@@ -4,7 +4,7 @@
  * This script verifies that the task history filtering works correctly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING TASK HISTORY FILTERING ===\n\n";
 

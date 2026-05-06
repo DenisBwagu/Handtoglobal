@@ -4,7 +4,7 @@
  * This script safely adds missing columns and tables
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== FIXING DATABASE STRUCTURE ===\n\n";
 

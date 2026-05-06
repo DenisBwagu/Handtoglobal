@@ -4,7 +4,7 @@
  * This script properly fixes the combo database structure by removing duplicates
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== FIXING COMBO DATABASE STRUCTURE ===\n\n";
 

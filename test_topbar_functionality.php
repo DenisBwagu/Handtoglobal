@@ -4,7 +4,7 @@
  * This file tests all the topbar features implemented
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 require_once '../includes/settings_helpers.php';
 
 echo "<h2>Topbar Functionality Test</h2>";

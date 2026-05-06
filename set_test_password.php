@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== SETTING TEST PASSWORD ===\n\n";
 

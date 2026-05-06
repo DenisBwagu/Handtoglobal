@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'config.php';
+require_once __DIR__ . '/config.php';
 
 /* SIMPLE ADMIN AUTH */
 if (!isset($_SESSION['admin'])) {

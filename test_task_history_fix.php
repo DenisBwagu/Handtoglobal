@@ -4,7 +4,7 @@
  * This script verifies that the SQL query error is fixed
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING TASK HISTORY SQL FIX ===\n\n";
 

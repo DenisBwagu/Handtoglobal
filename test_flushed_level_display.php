@@ -4,7 +4,7 @@
  * This script verifies that flushed levels show as locked on the dashboard
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING FLUSHED LEVEL DISPLAY ===\n\n";
 

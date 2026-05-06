@@ -3,7 +3,7 @@
  * Add multiplier column to combos table safely
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== ADDING MULTIPLIER COLUMN TO COMBOS TABLE ===\n\n";
 

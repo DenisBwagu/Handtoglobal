@@ -4,7 +4,7 @@
  * This script creates or repairs the settings table with the correct structure
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 try {
     $conn = getConnection();

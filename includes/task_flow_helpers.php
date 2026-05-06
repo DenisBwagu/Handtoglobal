@@ -5,8 +5,8 @@ if (!function_exists('htg_level_aliases')) {
         $normalized = normalizeLevelName($level);
         $aliases = [$normalized];
 
-        if ($normalized === 'Sliver') {
-            $aliases[] = 'Silver';
+        if ($normalized === 'Silver') {
+            $aliases[] = 'Sliver';
         } elseif ($normalized === 'VIP 1') {
             $aliases[] = 'VIP';
             $aliases[] = 'Platinum';

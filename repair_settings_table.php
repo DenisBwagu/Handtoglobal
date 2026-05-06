@@ -4,7 +4,7 @@
  * This script safely repairs the settings table and inserts default values
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // HTML output for browser access
 header('Content-Type: text/html; charset=utf-8');
@@ -250,7 +250,7 @@ try {
     echo '<h2>6. Testing Settings Helpers</h2>';
     
     if (file_exists('includes/settings_helpers.php')) {
-        require_once 'includes/settings_helpers.php';
+        require_once __DIR__ . '/includes/settings_helpers.php';
         
         $test_keys = ['site_name', 'site_logo', 'telegram_link'];
         foreach ($test_keys as $key) {

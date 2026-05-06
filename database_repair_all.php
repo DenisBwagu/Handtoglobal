@@ -17,7 +17,7 @@ echo "=== HANDTOGLOBAL COMPREHENSIVE DATABASE REPAIR ===\n\n";
 
 // Connect to database
 try {
-    require_once 'config.php';
+    require_once __DIR__ . '/config.php';
     $conn = getConnection();
     echo "✅ Database connected successfully\n";
 } catch (Exception $e) {

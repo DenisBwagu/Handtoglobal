@@ -4,7 +4,7 @@
  * This script ensures Bronze level is unlocked for all users
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== FIXING BRONZE LEVEL ACCESS ===\n\n";
 

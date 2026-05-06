@@ -4,7 +4,7 @@
  * This script verifies that flush level works correctly according to requirements
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING FLUSH LEVEL BEHAVIOR ===\n\n";
 

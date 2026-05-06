@@ -4,7 +4,7 @@
  * This script creates settings table using a different approach
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 try {
     $conn = getConnection();
@@ -59,7 +59,7 @@ try {
     echo "✅ Table renamed to settings\n";
     
     // Test the settings helpers
-    require_once 'includes/settings_helpers.php';
+    require_once __DIR__ . '/includes/settings_helpers.php';
     
     echo "\n🧪 Testing settings helpers:\n";
     echo "Site name: " . get_site_name() . "\n";

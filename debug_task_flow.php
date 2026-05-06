@@ -10,7 +10,7 @@ try {
     // Test 1: Verify database structure and data
     echo "1. Checking database structure and data...\n";
     
-    require_once 'config.php';
+    require_once __DIR__ . '/config.php';
     $conn = getConnection();
     
     // Check if tasks table exists and has data

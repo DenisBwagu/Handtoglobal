@@ -4,7 +4,7 @@
  * This script helps debug why admin is being redirected back
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== DEBUGGING LOGIN AS ISSUE ===\n\n";
 

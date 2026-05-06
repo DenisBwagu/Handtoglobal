@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 /**
  * Records a financial activity in the finance_activities table
@@ -19,6 +19,9 @@ require_once 'config.php';
 function recordFinanceActivity($user_id, $admin_id, $type, $category, $amount, $reason, $balance_after, $source_table, $source_id = null) {
     try {
         $conn = getConnection();
+        if (function_exists('htg_table_is_usable') && !htg_table_is_usable('finance_activities')) {
+            return false;
+        }
         
         // Validate inputs
         if (!is_numeric($user_id) || $user_id <= 0) {

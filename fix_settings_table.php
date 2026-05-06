@@ -6,7 +6,7 @@
 
 echo "=== SETTINGS TABLE REPAIR ===\n\n";
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 try {
     $conn = getConnection();
@@ -166,7 +166,7 @@ try {
     echo "\n5. TESTING SETTINGS HELPERS:\n";
     
     if (file_exists('includes/settings_helpers.php')) {
-        require_once 'includes/settings_helpers.php';
+        require_once __DIR__ . '/includes/settings_helpers.php';
         
         $test_keys = ['site_name', 'site_logo', 'telegram_link'];
         foreach ($test_keys as $key) {

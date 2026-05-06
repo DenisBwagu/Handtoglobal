@@ -4,7 +4,7 @@
  * This script checks the current combo database structure and repairs it if needed
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== CHECKING AND REPAIRING COMBO DATABASE ===\n\n";
 

@@ -4,7 +4,7 @@
  * This script creates/repairs the combo system database tables
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== REPAIRING COMBO TABLES ===\n\n";
 

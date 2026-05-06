@@ -4,7 +4,7 @@
  * This script handles the tablespace issue properly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== FINAL USER_LIMITS TABLE FIX ===\n\n";
 

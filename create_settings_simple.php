@@ -4,7 +4,7 @@
  * This script creates the settings table with proper error handling
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 try {
     $conn = getConnection();

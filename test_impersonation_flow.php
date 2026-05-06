@@ -4,7 +4,7 @@
  * This script verifies that the admin "Login As User" feature works correctly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING ADMIN IMPERSONATION FLOW ===\n\n";
 

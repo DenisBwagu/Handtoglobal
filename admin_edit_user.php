@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'config.php';
+require_once __DIR__ . '/config.php';
 if (empty($_SESSION['admin'])) exit();
 
 $id = (int)$_GET['id'];

@@ -33,7 +33,7 @@ try {
     // Test 2: Verify database has tasks
     echo "\n2. Verifying database has tasks...\n";
     
-    require_once 'config.php';
+    require_once __DIR__ . '/config.php';
     $conn = getConnection();
     
     $result = $conn->query("SELECT COUNT(*) as count FROM tasks WHERE active = 1");

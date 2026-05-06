@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 $conn = getConnection();
 $stmt = $conn->prepare("SELECT DISTINCT level FROM tasks WHERE active = 1 ORDER BY level");

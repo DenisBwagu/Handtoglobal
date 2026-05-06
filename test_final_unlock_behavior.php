@@ -4,7 +4,7 @@
  * This script verifies that the final unlock behavior works correctly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING FINAL ADMIN UNLOCK BEHAVIOR ===\n\n";
 

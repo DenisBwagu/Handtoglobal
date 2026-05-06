@@ -4,7 +4,7 @@
  * This script verifies that admin-unlocked levels work correctly
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING ADMIN UNLOCK FUNCTIONALITY ===\n\n";
 

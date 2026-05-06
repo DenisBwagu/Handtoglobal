@@ -6,8 +6,8 @@
 
 echo "=== TESTING GLOBAL SETTINGS SYSTEM ===\n\n";
 
-require_once 'config.php';
-require_once 'includes/settings_helpers.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/settings_helpers.php';
 
 // Test 1: Settings Helper Functions
 echo "1. SETTINGS HELPER FUNCTIONS TEST:\n";

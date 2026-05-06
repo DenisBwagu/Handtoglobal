@@ -4,7 +4,7 @@
  * This script checks if a user has reached an active combo
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 header('Content-Type: application/json');
 

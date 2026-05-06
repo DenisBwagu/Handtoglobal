@@ -4,7 +4,7 @@
  * This script creates sample combos for testing the complete system
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== SETTING UP TEST COMBOS ===\n\n";
 

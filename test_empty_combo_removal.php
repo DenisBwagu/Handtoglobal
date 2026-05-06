@@ -4,7 +4,7 @@
  * This script tests that empty combo modals are completely removed
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING EMPTY COMBO MODAL REMOVAL ===\n\n";
 

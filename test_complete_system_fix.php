@@ -10,7 +10,7 @@ try {
     // Test 1: Database Structure
     echo "1. DATABASE STRUCTURE:\n";
     
-    require_once 'config.php';
+    require_once __DIR__ . '/config.php';
     $conn = getConnection();
     
     // Check tasks table

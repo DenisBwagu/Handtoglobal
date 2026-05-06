@@ -4,7 +4,7 @@
  * This script checks what tables exist and handles tablespace issues
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 try {
     $conn = getConnection();

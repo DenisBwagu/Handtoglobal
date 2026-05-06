@@ -4,7 +4,7 @@
  * This script adds the missing columns to the combos table
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== ADDING MISSING COMBO COLUMNS ===\n\n";
 

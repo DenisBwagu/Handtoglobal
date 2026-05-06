@@ -4,7 +4,7 @@
  * This script tests the entire user targeting combo system functionality
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 echo "=== TESTING COMPLETE USER TARGETING COMBO FLOW ===\n\n";
 

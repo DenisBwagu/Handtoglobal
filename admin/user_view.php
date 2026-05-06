@@ -405,7 +405,7 @@ if ($user) {
 function getUserLevel($balance) {
     if ($balance >= 500) return 'VIP 1';
     if ($balance >= 250) return 'Gold';
-    if ($balance >= 150) return 'Sliver';
+    if ($balance >= 150) return 'Silver';
     if ($balance >= 100) return 'Bronze';
     return 'Bronze';
 }
@@ -1124,7 +1124,7 @@ if ($check_column->rowCount() > 0) {
                             }
                         } catch(PDOException $e) {
                             // Fallback to hardcoded levels if query fails
-                            $defaultLevels = ['Bronze', 'Sliver', 'Gold', 'VIP 1'];
+                            $defaultLevels = ['Bronze', 'Silver', 'Gold', 'VIP 1'];
                             foreach ($defaultLevels as $level) {
                                 echo '<option value="' . htmlspecialchars($level) . '">' . htmlspecialchars($level) . '</option>';
                             }
