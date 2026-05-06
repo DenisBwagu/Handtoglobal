@@ -813,13 +813,49 @@ function getNextUncompletedTask($userId, $level) {
     return $stmt->fetch();
 }
 
+if (!function_exists('htg_table_is_usable')) {
+    function htg_table_is_usable($table) {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', (string)$table)) {
+            return false;
+        }
+
+        try {
+            $conn = getConnection();
+            $stmt = $conn->prepare('
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+            ');
+            $stmt->execute([DB_NAME, $table]);
+
+            if ((int)$stmt->fetchColumn() === 0) {
+                return false;
+            }
+
+            $conn->query("SELECT 1 FROM `$table` LIMIT 1");
+            return true;
+        } catch (Throwable $e) {
+            error_log("Database table check failed for $table: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
 function createNotification($userId, $title, $message) {
+    if (!htg_table_is_usable('notifications')) {
+        return false;
+    }
+
     $conn = getConnection();
     $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)");
-    $stmt->execute([$userId, $title, $message]);
+    return $stmt->execute([$userId, $title, $message]);
 }
 
 function getUnreadNotifications($userId) {
+    if (!htg_table_is_usable('notifications')) {
+        return [];
+    }
+
     $conn = getConnection();
     $stmt = $conn->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
     $stmt->execute([$userId]);
