@@ -142,16 +142,16 @@ foreach ($levels as $level) {
     // Bronze is always unlocked, check others normally
     if ($level === 'Bronze') {
         $unlocked_levels[$level] = true;
-        error_log("DEBUG: Dashboard - Bronze level: ALWAYS UNLOCKED");
+        htg_debug_log("DEBUG: Dashboard - Bronze level: ALWAYS UNLOCKED");
     } else {
         $unlocked_levels[$level] = isLevelUnlockedForUser($_SESSION['user_id'], $level);
-        error_log("DEBUG: Dashboard - Level $level unlock status: " . ($unlocked_levels[$level] ? 'UNLOCKED' : 'LOCKED'));
+        htg_debug_log("DEBUG: Dashboard - Level $level unlock status: " . ($unlocked_levels[$level] ? 'UNLOCKED' : 'LOCKED'));
     }
 }
 
 // DEBUG: Log user balance from database
-error_log("DEBUG: Dashboard - User balance from database: " . $user['balance']);
-error_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? 'null'));
+htg_debug_log("DEBUG: Dashboard - User balance from database: " . $user['balance']);
+htg_debug_log("DEBUG: Dashboard - User level from database: " . ($user['level'] ?? 'null'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -934,6 +934,13 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             <div style="text-align: center; margin-bottom: 20px;">
                 <i class="fas fa-trophy" style="font-size: 48px; color: #f59e0b;"></i>
     <script>
+        const HTG_CLIENT_DEBUG = false;
+        function htgDebug() {
+            if (HTG_CLIENT_DEBUG && window.console) {
+                console.log.apply(console, arguments);
+            }
+        }
+
         // Support link from global function
         window.SUPPORT_LINK = "<?php echo htmlspecialchars(getSupportLink(), ENT_QUOTES); ?>";
         
@@ -942,7 +949,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
         }
         
         function openTaskModal(level) {
-            console.log("ACTIVE OPEN TASK MODAL FUNCTION CALLED WITH LEVEL:", level);
+            htgDebug("ACTIVE OPEN TASK MODAL FUNCTION CALLED WITH LEVEL:", level);
             
             const modal = document.getElementById('taskModal');
             const title = document.getElementById('taskModalTitle');
@@ -1108,7 +1115,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                     
                     // Store all_tasks data for progress calculation
                     window.currentAllTasks = data.all_tasks || [];
-                    console.log("STORED ALL_TASKS:", window.currentAllTasks);
+                    htgDebug("STORED ALL_TASKS:", window.currentAllTasks);
                     
                     // Display current task using renderTask for consistency
                     renderTask(data.task);
@@ -1184,8 +1191,8 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
         }
         
         function completeTask(taskId, response, level) {
-            console.log("ACTIVE COMPLETE TASK FUNCTION RUNNING");
-            console.log("SUBMIT RESPONSE", {taskId, response, level});
+            htgDebug("ACTIVE COMPLETE TASK FUNCTION RUNNING");
+            htgDebug("SUBMIT RESPONSE", {taskId, response, level});
             
             // Disable buttons to prevent double clicking
             disableTaskButtons();
@@ -1203,8 +1210,8 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             })
             .then(response => response.json())
             .then(data => {
-                console.log("SUBMIT RESPONSE", data);
-                console.log("NEXT TASK", data.next_task);
+                htgDebug("SUBMIT RESPONSE", data);
+                htgDebug("NEXT TASK", data.next_task);
                 
                 if (data.error) {
                     console.error('Task error:', data.error);
@@ -1224,14 +1231,14 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 updateLiveActivity(data);
                 
                 // AUTO NEXT CHECK
-                console.log("AUTO NEXT CHECK:");
-                console.log("success:", data.success);
-                console.log("next_task:", data.next_task);
-                console.log("combo_required:", data.combo_required);
-                console.log("level_completed:", data.level_completed);
+                htgDebug("AUTO NEXT CHECK:");
+                htgDebug("success:", data.success);
+                htgDebug("next_task:", data.next_task);
+                htgDebug("combo_required:", data.combo_required);
+                htgDebug("level_completed:", data.level_completed);
                 
                 if (data.success && data.combo_required && data.combo) {
-                    console.log("COMBO REQUIRED - Showing combo modal");
+                    htgDebug("COMBO REQUIRED - Showing combo modal");
                     if (data.dashboard_stats) {
                         updateDashboardElements(data.dashboard_stats);
                     }
@@ -1240,7 +1247,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 }
                 
                 if (data.success && data.next_task) {
-                    console.log("RENDERING NEXT TASK NOW");
+                    htgDebug("RENDERING NEXT TASK NOW");
                     if (data.all_tasks) {
                         window.currentAllTasks = data.all_tasks;
                     } else if (window.currentAllTasks) {
@@ -1254,7 +1261,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 }
                 
                 if (data.success && data.level_completed) {
-                    console.log("LEVEL COMPLETE");
+                    htgDebug("LEVEL COMPLETE");
                     showLevelCompletionInModal();
                     return;
                 }
@@ -1411,7 +1418,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
         }
         
         function updateLiveActivity(data) {
-            console.log("UPDATING LIVE ACTIVITY:", data);
+            htgDebug("UPDATING LIVE ACTIVITY:", data);
             
             // Update current level if provided
             if (data.current_level) {
@@ -1494,7 +1501,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 }
             }
             
-            console.log("LIVE ACTIVITY UPDATED");
+            htgDebug("LIVE ACTIVITY UPDATED");
         }
         
         function showLevelCompletion(data) {
@@ -1620,12 +1627,12 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 });
             }
             
-            console.log('Dashboard elements updated with stats:', stats);
+            htgDebug('Dashboard elements updated with stats:', stats);
         }
         
         function renderTask(task) {
-            console.log("ACTIVE RENDER TASK FUNCTION CALLED WITH:", task);
-            console.log("TASK RECEIVED", task);
+            htgDebug("ACTIVE RENDER TASK FUNCTION CALLED WITH:", task);
+            htgDebug("TASK RECEIVED", task);
             
             // Check if task data is valid
             if (!task || !task.id) {
@@ -1648,7 +1655,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             const foundTaskIndex = allTasks.findIndex(t => parseInt(t.id, 10) === parseInt(task.id, 10));
             const currentTaskNumber = foundTaskIndex >= 0 ? foundTaskIndex + 1 : (parseInt(task.task_number, 10) || completedTasks + 1);
             
-            console.log("CALCULATED VALUES:", {
+            htgDebug("CALCULATED VALUES:", {
                 currentTaskNumber,
                 completedTasks,
                 totalTasks,
@@ -1730,7 +1737,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             `;
             
             // Re-enable buttons after new task loads
-            console.log('New task rendered, re-enabling buttons');
+            htgDebug('New task rendered, re-enabling buttons');
             enableTaskButtons();
         }
         

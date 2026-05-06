@@ -184,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
         case 'unlock_level':
             $level = normalizeLevelName($_POST['level'] ?? '');
             
-            error_log("DEBUG: Admin unlock attempt - user_id: " . $user['id'] . ", level: $level");
+            htg_debug_log("DEBUG: Admin unlock attempt - user_id: " . $user['id'] . ", level: $level");
             
             if (empty($level)) {
                 $error = 'Please select a level to unlock';
@@ -198,9 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                     } else {
                         // Add unlocked level to user_levels table using the proper function
                         require_once '../config.php';
-                        error_log("DEBUG: Admin calling unlockLevelForUser for user_id: " . $user['id'] . ", level: $level");
+                        htg_debug_log("DEBUG: Admin calling unlockLevelForUser for user_id: " . $user['id'] . ", level: $level");
                         $unlockResult = unlockLevelForUser($user['id'], $level);
-                        error_log("DEBUG: Admin unlock result: " . ($unlockResult ? 'SUCCESS' : 'FAILED'));
+                        htg_debug_log("DEBUG: Admin unlock result: " . ($unlockResult ? 'SUCCESS' : 'FAILED'));
                         
                         if (!$unlockResult) {
                             $error = 'Failed to unlock level - please try again';
@@ -208,18 +208,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                             // Update user's current level if this is higher than their current
                             $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
                             $stmt->execute([$level, $user['id']]);
-                            error_log("DEBUG: Updated user level in users table to: $level");
+                            htg_debug_log("DEBUG: Updated user level in users table to: $level");
                             
                             // Update user session data for real-time effect
                             updateUserSessionData($user['id']);
                             refreshUserDashboardCache($user['id']);
                             
                             $success = $level . ' level unlocked successfully!';
-                            error_log("DEBUG: Admin unlock completed successfully");
+                            htg_debug_log("DEBUG: Admin unlock completed successfully");
                         }
                     }
                 } catch(PDOException $e) {
-                    error_log("DEBUG: Admin unlock exception: " . $e->getMessage());
+                    htg_debug_log("DEBUG: Admin unlock exception: " . $e->getMessage());
                     $error = 'Failed to unlock level: ' . $e->getMessage();
                 }
             }

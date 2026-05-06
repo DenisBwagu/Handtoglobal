@@ -25,12 +25,35 @@ if (defined('HANDTOGLOBAL_CONFIG_LOADED')) {
 }
 define('HANDTOGLOBAL_CONFIG_LOADED', true);
 
+if (!function_exists('htg_env')) {
+    function htg_env($key, $default = '') {
+        $value = getenv($key);
+        return ($value === false || $value === '') ? $default : $value;
+    }
+}
+
+if (!defined('APP_ENV')) define('APP_ENV', htg_env('APP_ENV', 'production'));
+if (!defined('HTG_DEBUG')) define('HTG_DEBUG', APP_ENV !== 'production' && htg_env('HTG_DEBUG', '0') === '1');
+
+error_reporting(E_ALL);
+ini_set('display_errors', HTG_DEBUG ? '1' : '0');
+ini_set('display_startup_errors', HTG_DEBUG ? '1' : '0');
+ini_set('log_errors', '1');
+
+if (!function_exists('htg_debug_log')) {
+    function htg_debug_log($message) {
+        if (defined('HTG_DEBUG') && HTG_DEBUG) {
+            error_log($message);
+        }
+    }
+}
+
 // Database constants
-if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
-if (!defined('DB_PORT')) define('DB_PORT', '3307');
-if (!defined('DB_NAME')) define('DB_NAME', 'handtoglobal');
-if (!defined('DB_USER')) define('DB_USER', 'root');
-if (!defined('DB_PASS')) define('DB_PASS', '');
+if (!defined('DB_HOST')) define('DB_HOST', htg_env('DB_HOST', 'localhost'));
+if (!defined('DB_PORT')) define('DB_PORT', htg_env('DB_PORT', '3306'));
+if (!defined('DB_NAME')) define('DB_NAME', htg_env('DB_NAME', 'handtoglobal'));
+if (!defined('DB_USER')) define('DB_USER', htg_env('DB_USER', 'root'));
+if (!defined('DB_PASS')) define('DB_PASS', htg_env('DB_PASS', ''));
 
 // App constants
 if (!defined('TELEGRAM_SUPPORT')) define('TELEGRAM_SUPPORT', 'https://t.me/chica256');
@@ -106,8 +129,7 @@ if (!function_exists('getAppLevelNames')) {
     }
 }
 
-if (!function_exists('getConnection')) 
-    if (!function_exists('getConnection')) {
+if (!function_exists('getConnection')) {
     function getConnection() {
         static $conn = null;
 
@@ -117,15 +139,17 @@ if (!function_exists('getConnection'))
 
         try {
             $conn = new PDO(
-                "mysql:host=127.0.0.1;port=3306;dbname=handtoglobal;charset=utf8mb4",
-                "root",
-                ""
+                "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+                DB_USER,
+                DB_PASS
             );
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             return $conn;
         } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
+            error_log("Database connection failed: " . $e->getMessage());
+            http_response_code(500);
+            exit('Service temporarily unavailable.');
         }
     }
 }
@@ -919,7 +943,7 @@ if (!function_exists('unlockLevelForUser')) {
             $level = normalizeLevelName($level);
             
             // DEBUG: Log the unlock attempt
-            error_log("DEBUG: Attempting to unlock level $level for user_id: $userId");
+            htg_debug_log("DEBUG: Attempting to unlock level $level for user_id: $userId");
             
             // Ensure table exists
             createUserLevelsTable();
@@ -938,9 +962,9 @@ if (!function_exists('unlockLevelForUser')) {
             $userLevelsResult = $stmt->execute([$userId, $level]);
             
             if ($userLevelsResult) {
-                error_log("DEBUG: Successfully unlocked level $level in user_levels table for user_id: $userId");
+                htg_debug_log("DEBUG: Successfully unlocked level $level in user_levels table for user_id: $userId");
             } else {
-                error_log("DEBUG: Failed to unlock level $level in user_levels table for user_id: $userId");
+                htg_debug_log("DEBUG: Failed to unlock level $level in user_levels table for user_id: $userId");
                 $result = false;
             }
             
@@ -957,9 +981,9 @@ if (!function_exists('unlockLevelForUser')) {
                 $usersResult = $stmt->execute([$userId]);
                 
                 if ($usersResult) {
-                    error_log("DEBUG: Successfully unlocked level $level in users table ($levelField) for user_id: $userId");
+                    htg_debug_log("DEBUG: Successfully unlocked level $level in users table ($levelField) for user_id: $userId");
                 } else {
-                    error_log("DEBUG: Failed to unlock level $level in users table ($levelField) for user_id: $userId");
+                    htg_debug_log("DEBUG: Failed to unlock level $level in users table ($levelField) for user_id: $userId");
                     // Don't fail the whole operation if users table update fails
                 }
             }
@@ -968,14 +992,14 @@ if (!function_exists('unlockLevelForUser')) {
             if ($result && $userLevelsResult) {
                 $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
                 $stmt->execute([$level, $userId]);
-                error_log("DEBUG: Updated user's current level to $level for user_id: $userId");
+                htg_debug_log("DEBUG: Updated user's current level to $level for user_id: $userId");
             }
             
-            error_log("DEBUG: Final unlock result for level $level, user_id: $userId: " . ($result ? 'SUCCESS' : 'FAILED'));
+            htg_debug_log("DEBUG: Final unlock result for level $level, user_id: $userId: " . ($result ? 'SUCCESS' : 'FAILED'));
             return $result;
             
         } catch (PDOException $e) {
-            error_log("DEBUG: Error unlocking level: " . $e->getMessage());
+            htg_debug_log("DEBUG: Error unlocking level: " . $e->getMessage());
             return false;
         }
     }
@@ -1040,14 +1064,14 @@ if (!function_exists('isLevelUnlockedForUser')) {
             
             // Bronze is always unlocked for all users - check first
             if ($level === 'Bronze') {
-                error_log("DEBUG: Bronze level - always unlocked for user_id: $userId");
+                htg_debug_log("DEBUG: Bronze level - always unlocked for user_id: $userId");
                 return true;
             }
             
             $conn = getConnection();
             
             // DEBUG: Log the check
-            error_log("DEBUG: Checking unlock status for user_id: $userId, level: $level");
+            htg_debug_log("DEBUG: Checking unlock status for user_id: $userId, level: $level");
             
             $isUnlocked = false;
             
@@ -1062,7 +1086,7 @@ if (!function_exists('isLevelUnlockedForUser')) {
             
             if ($userLevelResult !== false && (int)$userLevelResult['is_unlocked'] === 1) {
                 $isUnlocked = true;
-                error_log("DEBUG: Found unlocked in user_levels table for $level");
+                htg_debug_log("DEBUG: Found unlocked in user_levels table for $level");
             }
             
             // Also check users table for backward compatibility
@@ -1083,15 +1107,15 @@ if (!function_exists('isLevelUnlockedForUser')) {
                 
                 if ($user && isset($user['unlocked']) && (int)$user['unlocked'] === 1) {
                     $isUnlocked = true;
-                    error_log("DEBUG: Found unlocked in users table - $levelField: 1");
+                    htg_debug_log("DEBUG: Found unlocked in users table - $levelField: 1");
                 }
             }
             
-            error_log("DEBUG: Final unlock status for $level: " . ($isUnlocked ? 'UNLOCKED' : 'LOCKED'));
+            htg_debug_log("DEBUG: Final unlock status for $level: " . ($isUnlocked ? 'UNLOCKED' : 'LOCKED'));
             return $isUnlocked;
             
         } catch (PDOException $e) {
-            error_log("DEBUG: Error checking level unlock status: " . $e->getMessage());
+            htg_debug_log("DEBUG: Error checking level unlock status: " . $e->getMessage());
             // Default to Bronze unlocked on error, others locked
             return $level === 'Bronze';
         }
