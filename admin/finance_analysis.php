@@ -162,7 +162,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceAnalysis - HandToGlobal Admin</title>
+    <title>FinanceAnalysis - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css?v=<?php echo time(); ?>">
     <style>
         :root {
@@ -301,10 +301,10 @@ try {
         
         /* Main Content */
         .main-content {
-            margin-left: 260px;
+            margin-left: 250px;
             padding: 30px;
-            flex: 1;
-            max-width: 1200px;
+            width: calc(100% - 250px);
+            max-width: none;
         }
         
         /* Topbar */
@@ -396,15 +396,18 @@ try {
         
         /* Finance V2 Styles */
         .finance-v2-page {
-            margin-left: 260px;
-            padding: 24px;
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+            max-width: none;
             min-height: calc(100vh - 70px);
             background: #f5f7fb;
         }
         
         .finance-v2-container {
-            max-width: 1100px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: none;
+            margin: 0;
         }
         
         .finance-v2-title {
@@ -417,8 +420,9 @@ try {
         
         .finance-v2-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            width: 100%;
             margin-bottom: 24px;
         }
         
@@ -480,6 +484,8 @@ try {
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 24px;
+            width: 100%;
+            max-width: none;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
@@ -570,6 +576,8 @@ try {
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 24px;
+            width: 100%;
+            max-width: none;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
@@ -626,6 +634,8 @@ try {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 20px;
+            width: 100%;
+            max-width: none;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
@@ -715,14 +725,15 @@ try {
         }
     </style>
 </head>
-<body><?php require_once __DIR__ . '/../includes/topbar.php'; ?>
+<body>
+    <?php require_once __DIR__ . '/../includes/topbar.php'; ?>
     
     <!-- Admin Layout -->
     <div class="admin-layout">
         <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
         
         <!-- Finance V2 Page -->
-        <div class="finance-v2-page">
+        <div class="main-content finance-v2-page">
             <div class="finance-v2-container">
                 <?php if ($msg): ?>
                     <div class="alert alert-success">

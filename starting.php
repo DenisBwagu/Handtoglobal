@@ -94,13 +94,7 @@ $levelCompleted = $levelProgress >= 40;
     <div class="layout-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <a href="dashboard.php" class="logo">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    <span class="logo-text">GlobalHand</span>
-                </a>
-            </div>
-            <nav class="sidebar-nav">
+<nav class="sidebar-nav">
                 <a href="dashboard.php" class="nav-item">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>

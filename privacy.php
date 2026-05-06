@@ -10,7 +10,7 @@ $content = trim(get_setting('privacy_policy_content', ''));
 if ($content === '') {
     $content = '
         <h2>Privacy Policy</h2>
-        <p>HandToGlobal respects your privacy and is committed to protecting the personal information you share with us.</p>
+        <p>' . htmlspecialchars($siteName) . ' respects your privacy and is committed to protecting the personal information you share with us.</p>
         <h3>Information We Collect</h3>
         <p>We may collect your name, email address, account details, task activity, withdrawal information, device/session data, and support messages when you use our platform.</p>
         <h3>How We Use Information</h3>

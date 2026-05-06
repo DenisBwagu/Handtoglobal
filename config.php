@@ -224,7 +224,7 @@ if (!function_exists('setSetting')) {
 if (!function_exists('getSiteSettings')) {
     function getSiteSettings() {
         return [
-            'site_name' => getSetting('SiteName', 'Hand to Global'),
+            'site_name' => getSetting('site_name', getSetting('SiteName', 'Hand to Global')),
             'support_email' => getSetting('SupportEmail', 'support@handtoglobal.com'),
             'telegram_link' => getSetting('TelegramLink', ''),
         ];

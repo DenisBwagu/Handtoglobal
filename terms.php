@@ -10,7 +10,7 @@ $content = trim(get_setting('terms_content', ''));
 if ($content === '') {
     $content = '
         <h2>Terms of Service</h2>
-        <p>These Terms of Service govern your use of HandToGlobal. By creating an account or using the platform, you agree to these terms.</p>
+        <p>These Terms of Service govern your use of ' . htmlspecialchars($siteName) . '. By creating an account or using the platform, you agree to these terms.</p>
         <h3>Account Use</h3>
         <p>You must provide accurate information, keep your login details secure, and use the platform only for lawful purposes. Account access may be limited or suspended for fraud, abuse, duplicate activity, or policy violations.</p>
         <h3>Tasks and Earnings</h3>
@@ -18,7 +18,7 @@ if ($content === '') {
         <h3>Withdrawals</h3>
         <p>Withdrawal requests are subject to minimum limits, account status, available balance, and administrator approval. Rejected withdrawals may include a reason shown in your account history.</p>
         <h3>Platform Changes</h3>
-        <p>HandToGlobal may update tasks, rewards, settings, support links, languages, policies, and availability to keep the service secure and functional.</p>
+        <p>' . htmlspecialchars($siteName) . ' may update tasks, rewards, settings, support links, languages, policies, and availability to keep the service secure and functional.</p>
         <h3>User Responsibilities</h3>
         <p>You agree not to misuse the service, submit false information, attempt unauthorized access, or interfere with platform operations.</p>
         <h3>Contact</h3>

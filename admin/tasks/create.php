@@ -1,5 +1,6 @@
 <?php
 require_once '../../config.php';
+require_once '../../includes/settings_helpers.php';
 
 // Check if admin is logged in
 if (!isAdminLoggedIn()) {
@@ -82,7 +83,7 @@ if (isset($_POST['create_task'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Task - HandToGlobal Admin</title>
+    <title>Create Task - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -488,12 +489,7 @@ if (isset($_POST['create_task'])) {
     <div class="admin-layout">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-hand-holding-usd"></i>
-                <h2>Hand to Global</h2>
-            </div>
-            
-            <!-- MANAGEMENT Section -->
+<!-- MANAGEMENT Section -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MANAGEMENT</div>
                 <ul class="sidebar-menu">

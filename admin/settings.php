@@ -64,22 +64,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($imageFields as $field) {
 
         if (!empty($_FILES[$field]['name']) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
-
             $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
-            $allowed = $field === 'site_favicon'
-                ? ['ico', 'png', 'jpg', 'jpeg', 'webp']
-                : ['jpg','jpeg','png','webp','gif','ico'];
+            if ($field === 'site_logo') {
+                $allowed = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+            } elseif ($field === 'site_favicon') {
+                $allowed = ['ico', 'png', 'jpg', 'jpeg', 'webp'];
+            } else {
+                $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            }
 
-            if (in_array($ext, $allowed)) {
+            if (in_array($ext, $allowed, true)) {
 
                 $filename = $field . '_' . time() . '.' . $ext;
                 $target = $uploadDir . $filename;
 
                 if (move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
                     update_setting($field, $uploadUrl . $filename);
-                    if ($field === 'favicon') {
-                        update_setting('site_favicon', $uploadUrl . $filename);
-                    }
                 }
             }
         }
@@ -123,7 +123,7 @@ $current_settings = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - HandToGlobal Admin</title>
+    <title>Settings - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/global-theme.css">
     <script src="../assets/js/theme.js" defer></script>
@@ -515,24 +515,15 @@ $current_settings = [
                             <input type="url" name="telegram_link" class="form-control" value="<?php echo htmlspecialchars($current_settings['telegram_link'] ?? ''); ?>">
                         </div>
                         
-                        <div class="file-upload-group">
-                            <label class="form-label">SiteLogo</label>
+                        <div class="form-group">
+                            <label class="form-label">Site Logo</label>
                             <?php if (!empty($current_settings['site_logo'])): ?>
-                                <div class="file-preview">
-                                    <img src="../<?php echo htmlspecialchars($current_settings['site_logo']); ?>" alt="Current Logo">
+                                <div class="current-logo-preview">
+                                    <img src="<?php echo htmlspecialchars(htg_asset_url($current_settings['site_logo'])); ?>" alt="Current Site Logo" style="max-height:60px;">
                                 </div>
                             <?php endif; ?>
-      
-<div class="file-upload-group">
-    <label class="form-label">Homepage Main Photo</label>
-    <?php if (!empty($current_settings['homepage_hero_image'])): ?>
-        <div class="file-preview">
-            <img src="../<?php echo htmlspecialchars($current_settings['homepage_hero_image']); ?>?v=<?php echo time(); ?>" alt="Homepage Main Photo">
-        </div>
-    <?php endif; ?>
-    <input type="file" name="homepage_hero_image" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp">
-</div>
-                            <input type="file" name="site_logo" class="file-input" accept="image/jpg,image/jpeg,image/png,image/webp,image/svg">
+
+                            <input type="file" name="site_logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml">
                         </div>
                     </div>
                     
@@ -629,9 +620,9 @@ $current_settings = [
                         
                         <div class="file-upload-group">
                             <label class="form-label">Favicon</label>
-                            <?php if (!empty($current_settings['site_favicon'])): ?>
+                            <?php if (!empty($current_settings['favicon'])): ?>
                                 <div class="file-preview">
-                                    <img src="../<?php echo htmlspecialchars($current_settings['site_favicon']); ?>?v=<?php echo time(); ?>" alt="Current Favicon">
+                                    <img src="../<?php echo htmlspecialchars($current_settings['favicon']); ?>?v=<?php echo time(); ?>" alt="Current Favicon">
                                 </div>
                             <?php endif; ?>
                             <input type="file" name="site_favicon" class="file-input" accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/jpeg,image/webp,.ico,.png,.jpg,.jpeg,.webp">

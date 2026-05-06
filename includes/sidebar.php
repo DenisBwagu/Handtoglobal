@@ -14,57 +14,11 @@ function isUserMenuActive($page, $currentPage) {
     return $page === $currentPage;
 }
 
-// Get user data
-$userId = $_SESSION['user_id'] ?? null;
-$userBalance = 0;
-$userLevel = 'Bronze';
-
-if ($userId) {
-    try {
-        $conn = getConnection();
-        $stmt = $conn->prepare("SELECT balance, level FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch();
-        if ($user) {
-            $userBalance = $user['balance'] ?? 0;
-            $userLevel = $user['level'] ?? 'Bronze';
-        }
-    } catch (Exception $e) {
-        // Fallback values
-        $userBalance = 0;
-        $userLevel = 'Bronze';
-    }
-}
-
-// Get site logo and name
-$siteLogo = get_setting('site_logo');
-$siteName = get_setting('site_name', 'HandToGlobal');
 $supportLink = getSupportLink();
-$levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
 ?>
 
 <!-- User Sidebar -->
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <?php if ($siteLogo): ?>
-            <img src="<?php echo $siteLogo; ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="height: 24px; margin-right: 12px;">
-        <?php else: ?>
-            <i class="fas fa-hand-holding-usd" style="font-size: 24px; margin-right: 12px; color: var(--primary);"></i>
-        <?php endif; ?>
-        <h2><?php echo htmlspecialchars($siteName); ?></h2>
-    </div>
-    
-    <!-- User Balance Card -->
-    <?php if (!isset($hideBalanceCard)) : ?>
-        <div class="user-balance-card">
-            <div class="balance-label"><?php echo __t('current_balance', 'Current Balance'); ?></div>
-            <div class="balance-amount">$<?php echo number_format($userBalance, 2); ?></div>
-            <div class="user-level">
-                <span class="level-badge level-<?php echo htmlspecialchars($levelClass); ?>"><?php echo htmlspecialchars($userLevel); ?></span>
-            </div>
-        </div>
-    <?php endif; ?>
-    
     <!-- MAIN Section -->
     <div class="sidebar-section">
         <div class="sidebar-section-title"><?php echo __t('main', 'MAIN'); ?></div>
@@ -136,79 +90,6 @@ $levelClass = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $userLevel));
     overflow-y: auto;
     z-index: 999;
     transition: all 0.3s ease;
-}
-
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid var(--sidebar-border);
-    margin-bottom: 20px;
-}
-
-.sidebar-header h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.user-balance-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 16px;
-    margin: 0 20px 20px 20px;
-    text-align: center;
-}
-
-.balance-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.balance-amount {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 12px;
-}
-
-.user-level {
-    margin-top: 8px;
-}
-
-.level-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.level-bronze {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning);
-}
-
-.level-silver {
-    background: rgba(107, 114, 128, 0.1);
-    color: #6b7280;
-}
-
-.level-gold {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-}
-
-.level-platinum {
-    background: rgba(124, 58, 237, 0.1);
-    color: var(--primary);
 }
 
 .sidebar-section {

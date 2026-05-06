@@ -72,6 +72,20 @@ if (!function_exists('update_setting')) {
     }
 }
             
+if (!function_exists('htg_asset_url')) {
+    function htg_asset_url($path) {
+        $path = trim((string)$path);
+        if ($path === '') {
+            return '';
+        }
+
+        if (preg_match('/^(https?:)?\/\//i', $path) || $path[0] === '/') {
+            return $path;
+        }
+
+        return '/handtoglobal/' . ltrim($path, '/');
+    }
+}
 if (!function_exists('setting_url')) {
     /**
      * Get a setting value as a URL
@@ -87,12 +101,11 @@ if (!function_exists('setting_url')) {
 
 if (!function_exists('get_site_logo')) {
     /**
-     * Get the site logo URL
+     * Get the site logo browser URL.
      * @return string The site logo URL
      */
     function get_site_logo() {
-        $logo = get_setting('site_logo', 'assets/images/logo.png');
-        return $logo;
+        return htg_asset_url(get_setting('site_logo', 'assets/images/logo.png'));
     }
 }
 
@@ -108,7 +121,21 @@ if (!function_exists('get_site_name')) {
 
 if (!function_exists('get_favicon')) {
     function get_favicon() {
-        return get_setting('site_favicon', 'assets/images/favicon.ico');
+        $favicon = get_setting('site_favicon', get_setting('favicon', 'assets/images/favicon.ico'));
+        if ($favicon === '') {
+            $favicon = 'assets/images/favicon.ico';
+        }
+
+        $url = htg_asset_url($favicon);
+        if (preg_match('/^(https?:)?\/\//i', $favicon)) {
+            return $url;
+        }
+
+        $path = strtok($favicon, '?');
+        $absolutePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($path, '/'));
+        $version = is_file($absolutePath) ? filemtime($absolutePath) : time();
+        $separator = strpos($url, '?') === false ? '?' : '&';
+        return $url . $separator . 'v=' . $version;
     }
 }
 if (!function_exists('get_telegram_link')) {

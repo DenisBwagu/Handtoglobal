@@ -90,7 +90,7 @@ if ($total_tasks == 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasks - HandToGlobal Admin</title>
+    <title>Tasks - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="includes/admin_styles.css">
 </head>
@@ -214,10 +214,10 @@ if ($total_tasks == 0) {
                             <div class="pagination-controls">
                                 <?php if ($page > 1): ?>
                                     <a href="?page=<?php echo $page - 1; ?>&level=<?php echo urlencode($level_filter); ?>" class="pagination-btn">
-                                        « Previous
+                                        Â« Previous
                                     </a>
                                 <?php else: ?>
-                                    <button class="pagination-btn" disabled>« Previous</button>
+                                    <button class="pagination-btn" disabled>Â« Previous</button>
                                 <?php endif; ?>
                                 
                                 <?php
@@ -234,10 +234,10 @@ if ($total_tasks == 0) {
                                 
                                 <?php if ($page < $total_pages): ?>
                                     <a href="?page=<?php echo $page + 1; ?>&level=<?php echo urlencode($level_filter); ?>" class="pagination-btn">
-                                        Next »
+                                        Next Â»
                                     </a>
                                 <?php else: ?>
-                                    <button class="pagination-btn" disabled>Next »</button>
+                                    <button class="pagination-btn" disabled>Next Â»</button>
                                 <?php endif; ?>
                             </div>
                         </div>

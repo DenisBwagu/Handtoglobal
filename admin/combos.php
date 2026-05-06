@@ -135,7 +135,7 @@ $siteName = get_setting('site_name', 'HandToGlobal');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combos - HandToGlobal Admin</title>
+    <title>Combos - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="includes/admin_styles.css">
     <style>

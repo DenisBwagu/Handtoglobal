@@ -4,7 +4,8 @@
  * Shared topbar for all admin pages - matches combos.php exactly
  */
 
-require_once '../includes/settings_helpers.php';
+require_once __DIR__ . '/../../includes/settings_helpers.php';
+require_once __DIR__ . '/../../includes/language_helpers.php';
 
 // Get current page for title
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
@@ -27,6 +28,8 @@ $pageTitles = [
 ];
 
 $topbarTitle = $pageTitles[$currentPage] ?? ucfirst($currentPage);
+$siteName = get_site_name();
+$siteLogoUrl = get_site_logo();
 ?>
 
 <!-- Topbar Header -->
@@ -35,6 +38,14 @@ $topbarTitle = $pageTitles[$currentPage] ?? ucfirst($currentPage);
         <div class="menu-icon">
             <i class="fas fa-bars"></i>
         </div>
+        <a href="/handtoglobal/admin/dashboard.php" class="htg-brand" style="display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-weight:700;">
+            <?php if ($siteLogoUrl): ?>
+                <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="width:26px;height:26px;object-fit:contain;">
+            <?php else: ?>
+                <i class="fas fa-hand-holding-usd"></i>
+            <?php endif; ?>
+            <span><?php echo htmlspecialchars($siteName); ?></span>
+        </a>
         <div class="topbar-title"><?php echo htmlspecialchars($topbarTitle); ?></div>
     </div>
     <div class="topbar-right">
@@ -43,7 +54,7 @@ $topbarTitle = $pageTitles[$currentPage] ?? ucfirst($currentPage);
             <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/' . $currentPage . '.php'); ?>">
             <input type="hidden" name="context" value="admin">
             <select name="language" onchange="this.form.submit()">
-                <?php foreach (['english' => 'English', 'chinese' => 'Chinese'] as $code => $label): ?>
+                <?php foreach (available_languages() as $code => $label): ?>
                     <option value="<?php echo htmlspecialchars($code); ?>" <?php echo ($_SESSION['admin_language'] ?? $_SESSION['language'] ?? 'english') === $code ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
                 <?php endforeach; ?>
             </select>

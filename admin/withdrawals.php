@@ -184,7 +184,7 @@ if ($total_withdrawals == 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdrawals - HandToGlobal Admin</title>
+    <title>Withdrawals - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/global-theme.css">
     <script src="../assets/js/theme.js" defer></script>
@@ -925,7 +925,7 @@ if ($total_withdrawals == 0) {
                                             </button>
                                         </div>
                                     <?php else: ?>
-                                        <span style="color: var(--muted);">—</span>
+                                        <span style="color: var(--muted);">â€”</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>

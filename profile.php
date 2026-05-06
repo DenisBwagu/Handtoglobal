@@ -81,7 +81,7 @@ $stmt = $conn->prepare("SELECT COUNT(*) AS pending FROM withdrawals WHERE user_i
 $stmt->execute([$userId]);
 $pendingWithdrawals = (int)($stmt->fetch()['pending'] ?? 0);
 
-$siteName = get_setting('site_name', 'HandToGlobal');
+$siteName = get_site_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">

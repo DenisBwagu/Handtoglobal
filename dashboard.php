@@ -198,20 +198,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             border-right: 1px solid #e5e7eb;
             box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
-        
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .sidebar-logo {
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-            text-decoration: none;
-        }
-        
-        .sidebar-menu {
+.sidebar-menu {
             padding: 20px 0;
         }
         
@@ -736,49 +723,8 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
 </head>
 <body>
     <?php require_once __DIR__ . '/includes/topbar.php'; ?>
+    <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
     <div class="dashboard-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <a href="dashboard.php" class="sidebar-logo">
-                    <?php $site_logo = get_setting('site_logo'); ?>
-                    <?php if ($site_logo): ?>
-                        <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 32px; margin-right: 8px;">
-                    <?php else: ?>
-                        <i class="fas fa-handshake" style="margin-right: 8px;"></i>
-                    <?php endif; ?>
-                    <?php echo get_setting('site_name', 'HandToGlobal'); ?>
-                </a>
-            </div>
-            
-            <nav class="sidebar-menu">
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title"><?php echo __t('main', 'MAIN'); ?></div>
-                    <a href="dashboard.php" class="sidebar-menu-item active">
-                        <i class="fas fa-tachometer-alt"></i> <?php echo __t('dashboard', 'Dashboard'); ?>
-                    </a>
-                    <a href="task_history.php" class="sidebar-menu-item">
-                        <i class="fas fa-history"></i> <?php echo __t('task_history', 'Task History'); ?>
-                    </a>
-                </div>
-                
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title"><?php echo __t('account', 'ACCOUNT'); ?></div>
-                    <a href="withdrawals.php" class="sidebar-menu-item">
-                        <i class="fas fa-money-bill-wave"></i> <?php echo __t('withdrawals', 'Withdrawals'); ?>
-                    </a>
-                    <a href="profile.php" class="sidebar-menu-item">
-                        <i class="fas fa-user"></i> <?php echo __t('profile', 'Profile'); ?>
-                    </a>
-                    <a href="<?php echo htmlspecialchars($supportLink); ?>" class="sidebar-menu-item" target="_blank" rel="noopener">
-                        <i class="fas fa-headset"></i> <?php echo __t('support', 'Support'); ?>
-                    </a>
-                    <a href="logout.php" class="sidebar-menu-item">
-                        <i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?>
-                    </a>
-                </div>
-            </nav>
-        </aside>
         
         <!-- Main Content -->
         <main class="main-content">
@@ -787,7 +733,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 <!-- Welcome Card -->
                 <div class="card welcome-card">
                     <div class="welcome-info">
-                        <h2><?php echo __t('welcome_back', 'Welcome back'); ?>, <?php echo htmlspecialchars($user['fullname']); ?></h2>
+                        <h2><?php echo __t('welcome_back', 'Welcome back'); ?>, <?php echo htmlspecialchars($user['fullname'] ?? 'User'); ?></h2>
                         <p id="welcomeLevelText"><?php echo htmlspecialchars($stats['current_level']); ?> - <?php echo $stats['completed_tasks']; ?> <?php echo __t('tasks_completed', 'tasks completed'); ?></p>
                     </div>
                     <div class="welcome-balance balance" id="balanceText">

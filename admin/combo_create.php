@@ -103,7 +103,7 @@ if (!empty($selected_level)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Combo - HandToGlobal Admin</title>
+    <title>Create Combo - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -455,17 +455,7 @@ if (!empty($selected_level)) {
     <div class="admin-layout">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="sidebar-header">
-                <?php $site_logo = get_setting('site_logo'); ?>
-                <?php if ($site_logo): ?>
-                    <img src="../<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal'); ?>" style="height: 24px; margin-right: 12px;">
-                <?php else: ?>
-                    <i class="fas fa-hand-holding-usd"></i>
-                <?php endif; ?>
-                <h2><?php echo get_setting('site_name', 'HandToGlobal'); ?></h2>
-            </div>
-            
-            <!-- MANAGEMENT Section -->
+<!-- MANAGEMENT Section -->
             <div class="sidebar-section">
                 <div class="sidebar-section-title">MANAGEMENT</div>
                 <ul class="sidebar-menu">

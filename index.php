@@ -8,6 +8,10 @@ require_once 'config.php';
 require_once 'includes/settings_helpers.php';
 require_once 'includes/language_helpers.php';
 
+$siteName = get_site_name();
+$siteLogoUrl = get_site_logo();
+$faviconUrl = get_favicon();
+
 // Get testimonials from database (force refresh for instant updates)
 $testimonials = [];
 try {
@@ -24,7 +28,7 @@ if (empty($testimonials)) {
     $testimonials = [
         [
             'name' => 'Sarah Johnson',
-            'content' => 'HandToGlobal has completely changed my life. I can now work from anywhere and earn a reliable income.',
+            'content' => $siteName . ' has completely changed my life. I can now work from anywhere and earn a reliable income.',
             'type' => 'client',
             'display_order' => 1
         ],
@@ -62,15 +66,7 @@ $support_link = get_telegram_link();
     <meta property="og:title" content="<?php echo htmlspecialchars(get_meta_title()); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars(get_meta_description()); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
-    <?php
-$favicon = function_exists('get_setting')
-    ? get_setting('site_favicon', get_favicon())
-    : get_favicon();
-?>
-<?php
-$favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
-?>
-<link rel="icon" href="<?php echo htmlspecialchars($favicon); ?>?v=<?php echo time(); ?>" type="image/x-icon">
+    <link rel="icon" href="<?php echo htmlspecialchars($faviconUrl); ?>" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -636,13 +632,12 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
     <header class="header">
         <div class="header-content">
             <a href="index.php" class="logo">
-                <?php $site_logo = get_setting('site_logo', '', true); ?>
-                <?php if ($site_logo): ?>
-                    <img src="<?php echo $site_logo; ?>" alt="<?php echo get_setting('site_name', 'HandToGlobal', true); ?>">
+                <?php if ($siteLogoUrl): ?>
+                    <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
                 <?php else: ?>
                     <i class="fas fa-hand-holding-usd"></i>
                 <?php endif; ?>
-                <?php echo get_setting('site_name', 'HandToGlobal'); ?>
+                <?php echo htmlspecialchars($siteName); ?>
             </a>
             
             <!-- Right Side Navigation -->
@@ -746,7 +741,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
     <!-- Features Section -->
     <section class="features">
         <div class="features-content">
-            <h2>Why Choose HandToGlobal?</h2>
+            <h2>Why Choose <?php echo htmlspecialchars($siteName); ?>?</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
@@ -823,7 +818,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
     <section class="cta">
         <div class="cta-content">
             <h2>Ready to Start Earning?</h2>
-            <p>Join thousands of people who are already making money with HandToGlobal. Your journey to financial freedom starts here.</p>
+            <p>Join thousands of people who are already making money with <?php echo htmlspecialchars($siteName); ?>. Your journey to financial freedom starts here.</p>
             <?php if (!$is_logged_in): ?>
                 <a href="register.php" class="btn btn-success" style="font-size: 1.1rem; padding: 16px 32px;">
                     <i class="fas fa-rocket"></i>
@@ -843,7 +838,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
                 <a href="privacy.php">Privacy Policy</a>
                 <a href="terms.php">Terms of Service</a>
             </div>
-            <p>&copy; <?php echo date('Y'); ?> <?php echo get_setting('site_name', 'HandToGlobal'); ?>. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </div>
     </footer>
 

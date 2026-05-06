@@ -5,13 +5,13 @@ require_once 'includes/language_helpers.php';
 
 requireLogin();
 
-// Hide balance card from <?php echo __t('request_withdrawal', 'Request Withdrawal'); ?> page
-$hideBalanceCard = true;
-
 $conn = getConnection();
-$userId = (int)$_SESSION['user_id'];
 $message = '';
 $error = '';
+$availableBalance = 0.00;
+$minWithdrawal = 0.00;
+
+$userId = (int)($_SESSION['user_id'] ?? 0);
 
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
@@ -26,7 +26,7 @@ if (!$user) {
 $minWithdrawal = (float)get_setting('min_withdrawal_amount', '10.00');
 $minWithdrawalLevel = (int)get_setting('min_withdrawal_level', '2');
 $effectiveMinWithdrawalLevel = ($minWithdrawalLevel >= 1 && $minWithdrawalLevel <= 4) ? $minWithdrawalLevel : 1;
-$availableBalance = (float)$user['balance'];
+$availableBalance = (float)($user['balance'] ?? 0);
 $levelRanks = [
     'Bronze' => 1,
     'Sliver' => 2,
@@ -144,8 +144,8 @@ $siteName = get_site_name();
                 </div>
             </div>
 
-            <?php if ($message): ?><div class="notice success"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?></div><?php endif; ?>
-            <?php if ($error): ?><div class="notice error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
+            <?php if (!empty($message)): ?><div class="notice success"><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+            <?php if (!empty($error)): ?><div class="notice error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
             <section class="panel">
                 <h2><?php echo __t('request_withdrawal', 'Request Withdrawal'); ?></h2>

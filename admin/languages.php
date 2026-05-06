@@ -256,7 +256,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Languages Management - HandToGlobal Admin</title>
+    <title>Languages Management - <?php echo htmlspecialchars(get_site_name()); ?> Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -711,7 +711,7 @@ try {
                                 <label for="native_name">Native Name *</label>
                                 <input type="text" id="native_name" name="native_name" class="form-control" 
                                        value="<?php echo $edit_language ? htmlspecialchars($edit_language['native_name']) : ''; ?>" 
-                                       placeholder="e.g., English, Español, Français" required>
+                                       placeholder="e.g., English, EspaÃ±ol, FranÃ§ais" required>
                             </div>
                             <div class="form-group">
                                 <label for="flag_icon">Flag Icon URL</label>

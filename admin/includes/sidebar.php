@@ -15,23 +15,11 @@ function isMenuActive($page, $currentPage) {
     return $page === $currentPage;
 }
 
-// Get site logo and name
-$siteLogo = get_site_logo();
-$siteName = get_site_name();
 ?>
 
 <!-- Admin Sidebar -->
 <div class="sidebar">
-    <div class="sidebar-header">
-        <?php if ($siteLogo): ?>
-            <img src="../<?php echo $siteLogo; ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="height: 24px; margin-right: 12px;">
-        <?php else: ?>
-            <i class="fas fa-hand-holding-usd"></i>
-        <?php endif; ?>
-        <h2><?php echo htmlspecialchars($siteName); ?></h2>
-    </div>
-    
-    <!-- MANAGEMENT Section -->
+<!-- MANAGEMENT Section -->
     <div class="sidebar-section">
         <div class="sidebar-section-title"><?php echo __t('management', 'MANAGEMENT'); ?></div>
         <ul class="sidebar-menu">
@@ -87,20 +75,6 @@ $siteName = get_site_name();
     background: #343a40;
     color: white;
     overflow-y: auto;
-}
-
-.sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid #495057;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.sidebar-header h2 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
 }
 
 .sidebar-section {

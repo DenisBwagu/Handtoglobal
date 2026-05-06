@@ -86,7 +86,7 @@ $summaryStmt = $conn->prepare("
 $summaryStmt->execute([$userId]);
 $summary = $summaryStmt->fetch();
 
-$siteName = get_setting('site_name', 'HandToGlobal');
+$siteName = get_site_name();
 function historyQuery(array $overrides = []) {
     $query = array_merge($_GET, $overrides);
     foreach ($query as $key => $value) {
@@ -207,7 +207,7 @@ function historyQuery(array $overrides = []) {
                                         </td>
                                         <td><span class="badge level-badge"><?php echo htmlspecialchars(normalizeLevelName($task['level'])); ?></span></td>
                                         <td><span class="reward">+$<?php echo number_format((float)$task['reward'], 2); ?></span></td>
-                                        <td><span class="badge completed">✓ Completed</span></td>
+                                        <td><span class="badge completed">âœ“ Completed</span></td>
                                         <td class="date-cell">
                                             <?php echo htmlspecialchars(date('M j, Y', strtotime($task['completed_at']))); ?>
                                             <small><?php echo htmlspecialchars(date('g:i A', strtotime($task['completed_at']))); ?></small>
