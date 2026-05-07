@@ -31,7 +31,11 @@ sudo apt install -y php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-xml php8.2-cu
 
 ```bash
 sudo mkdir -p /var/www/handtoglobal
-sudo rsync -a --delete ./ /var/www/handtoglobal/
+sudo mkdir -p /var/backups/handtoglobal
+if [ -d /var/www/handtoglobal ] && [ -n "$(find /var/www/handtoglobal -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+  sudo tar -czf /var/backups/handtoglobal/handtoglobal_$(date +%Y%m%d_%H%M%S).tar.gz -C /var/www handtoglobal
+fi
+sudo rsync -a --delete --exclude uploads/ --exclude tmp_sessions/ ./ /var/www/handtoglobal/
 sudo chown -R deploy:www-data /var/www/handtoglobal
 sudo find /var/www/handtoglobal -type d -exec chmod 755 {} \;
 sudo find /var/www/handtoglobal -type f -exec chmod 644 {} \;

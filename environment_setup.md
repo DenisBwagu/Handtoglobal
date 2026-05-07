@@ -77,6 +77,8 @@ sudo find /var/www/handtoglobal -type f -exec chmod 644 {} \;
 
 Run the writable-path commands again after resetting permissions.
 
+Deployment sync must not delete user-uploaded files. Use `deploy_ubuntu_22_04.sh`, which creates a timestamped backup under `/var/backups/handtoglobal` and excludes `uploads/` and `tmp_sessions/` from `rsync --delete`.
+
 ## SSL
 
 Point DNS `A` records for `example.com` and `www.example.com` to the VPS IP, then run:

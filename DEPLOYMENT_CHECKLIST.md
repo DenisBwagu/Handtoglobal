@@ -35,6 +35,8 @@
 - Only `uploads/` and `tmp_sessions/` are writable by `www-data`.
 - `uploads/tasks/` exists and is writable.
 - `uploads/settings/` exists and is writable.
+- Existing app files are backed up before rsync overwrite.
+- `uploads/` and `tmp_sessions/` are excluded from rsync deletion.
 
 ## Nginx
 

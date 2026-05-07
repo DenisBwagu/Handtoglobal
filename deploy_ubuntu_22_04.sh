@@ -8,6 +8,7 @@ set -euo pipefail
 APP_NAME="${APP_NAME:-handtoglobal}"
 DOMAIN="${DOMAIN:-example.com}"
 APP_ROOT="${APP_ROOT:-/var/www/${APP_NAME}}"
+BACKUP_ROOT="${BACKUP_ROOT:-/var/backups/${APP_NAME}}"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
 WEB_GROUP="${WEB_GROUP:-www-data}"
 DB_NAME="${DB_NAME:-handtoglobal}"
@@ -69,10 +70,19 @@ apt-get install -y \
 id "$DEPLOY_USER" >/dev/null 2>&1 || adduser --disabled-password --gecos "" "$DEPLOY_USER"
 usermod -aG "$WEB_GROUP" "$DEPLOY_USER"
 
+if [ -d "$APP_ROOT" ] && [ -n "$(find "$APP_ROOT" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+    mkdir -p "$BACKUP_ROOT"
+    BACKUP_FILE="${BACKUP_ROOT}/${APP_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    tar -czf "$BACKUP_FILE" -C "$(dirname "$APP_ROOT")" "$(basename "$APP_ROOT")"
+    echo "Existing app root backed up to: $BACKUP_FILE"
+fi
+
 rsync -a --delete \
     --exclude ".git/" \
     --exclude ".env" \
     --exclude "config_BAD.php" \
+    --exclude "uploads/" \
+    --exclude "tmp_sessions/" \
     --exclude "backup_before_manual_layout/" \
     --exclude "backup_before_speed_fix/" \
     --exclude "setup_backup/" \
