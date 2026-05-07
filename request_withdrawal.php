@@ -22,10 +22,15 @@ if (!$user) {
     redirect('login.php');
 }
 
-// Get settings
+// Get settings, then apply any per-user limits saved by admin.
 $minWithdrawal = (float)get_setting('min_withdrawal_amount', '10.00');
 $minWithdrawalLevel = (int)get_setting('min_withdrawal_level', '2');
-$effectiveMinWithdrawalLevel = ($minWithdrawalLevel >= 1 && $minWithdrawalLevel <= 4) ? $minWithdrawalLevel : 1;
+$userLimits = getUserLimitsForUser($userId, $conn);
+if (!empty($userLimits['_exists'])) {
+    $minWithdrawal = (float)($userLimits['min_withdrawal_amount'] ?? $minWithdrawal);
+    $minWithdrawalLevelValue = $userLimits['min_withdrawal_level'] ?? $minWithdrawalLevel;
+    $minWithdrawalLevel = is_numeric($minWithdrawalLevelValue) ? (int)$minWithdrawalLevelValue : $minWithdrawalLevelValue;
+}
 $availableBalance = (float)($user['balance'] ?? 0);
 $levelRanks = [
     'Bronze' => 1,
@@ -36,6 +41,10 @@ $levelRanks = [
     'VIP' => 4,
     'Platinum' => 4,
 ];
+$effectiveMinWithdrawalLevel = is_numeric($minWithdrawalLevel)
+    ? (int)$minWithdrawalLevel
+    : ($levelRanks[normalizeLevelName($minWithdrawalLevel)] ?? 1);
+$effectiveMinWithdrawalLevel = ($effectiveMinWithdrawalLevel >= 1 && $effectiveMinWithdrawalLevel <= 4) ? $effectiveMinWithdrawalLevel : 1;
 $userLevelRank = $levelRanks[normalizeLevelName($user['level'] ?? 'Bronze')] ?? 1;
 
 // Handle form submission

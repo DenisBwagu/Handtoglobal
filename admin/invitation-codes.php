@@ -47,6 +47,9 @@ try {
     if (!in_array('used_count', $columns)) {
         $conn->exec("ALTER TABLE invitation_codes ADD COLUMN used_count INT DEFAULT 0 AFTER max_uses");
     }
+    if (!in_array('uses_remaining', $columns)) {
+        $conn->exec("ALTER TABLE invitation_codes ADD COLUMN uses_remaining INT DEFAULT 1 AFTER used_count");
+    }
     if (!in_array('is_active', $columns)) {
         $conn->exec("ALTER TABLE invitation_codes ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER used_count");
     }
@@ -93,10 +96,10 @@ if (isset($_POST['action'])) {
                         $code = generateUniqueCode($code_prefix);
                         
                         $stmt = $conn->prepare("
-                            INSERT INTO invitation_codes (code, employee_id, starting_balance, max_uses, is_active) 
-                            VALUES (?, ?, ?, ?, 1)
+                            INSERT INTO invitation_codes (code, employee_id, starting_balance, max_uses, used_count, uses_remaining, is_active) 
+                            VALUES (?, ?, ?, ?, 0, ?, 1)
                         ");
-                        $stmt->execute([$code, $employee_id, $starting_balance, $max_uses_per_code]);
+                        $stmt->execute([$code, $employee_id, $starting_balance, $max_uses_per_code, $max_uses_per_code]);
                         $generated_codes[] = $code;
                     }
                     
@@ -117,10 +120,10 @@ if (isset($_POST['action'])) {
             try {
                 $stmt = $conn->prepare("
                     UPDATE invitation_codes 
-                    SET employee_id = ?, max_uses = ?, starting_balance = ?, is_active = ?, updated_at = NOW()
+                    SET employee_id = ?, max_uses = ?, starting_balance = ?, is_active = ?, uses_remaining = GREATEST(? - COALESCE(used_count, 0), 0), updated_at = NOW()
                     WHERE id = ?
                 ");
-                $stmt->execute([$employee_id, $max_uses, $starting_balance, $is_active, $code_id]);
+                $stmt->execute([$employee_id, $max_uses, $starting_balance, $is_active, $max_uses, $code_id]);
                 $msg = "Invitation code updated successfully!";
             } catch(PDOException $e) {
                 $error = "Failed to update code: " . $e->getMessage();
@@ -1001,4 +1004,3 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
     </div>
 </body>
 </html>
-

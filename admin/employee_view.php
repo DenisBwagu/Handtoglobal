@@ -76,56 +76,85 @@ if (!$employee) {
     die("Employee not found");
 }
 
-// Get employee invitation codes (check if created_by column exists)
+// Get employee invitation codes from live database data.
 $invitationCodes = [];
 try {
-    // Check if created_by column exists
-    $check_column = $conn->query("SHOW COLUMNS FROM invitation_codes LIKE 'created_by'");
-    if ($check_column->rowCount() > 0) {
-        $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE created_by = ? ORDER BY created_at DESC");
-        $stmt->execute([$employeeId]);
-        $invitationCodes = $stmt->fetchAll();
+    $columns = htgTableColumns($conn, 'invitation_codes');
+    $conditions = [];
+    $params = [];
+
+    if (in_array('employee_id', $columns, true)) {
+        $conditions[] = 'employee_id = ?';
+        $params[] = $employeeId;
+    }
+    if (in_array('created_by', $columns, true)) {
+        $conditions[] = 'created_by = ?';
+        $params[] = $employeeId;
+    }
+
+    if ($conditions) {
+        $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE (" . implode(' OR ', $conditions) . ") ORDER BY created_at DESC");
+        $stmt->execute($params);
+        $invitationCodes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch(PDOException $e) {
     // Query failed, continue with empty array
 }
 
-// Get recruited users (users who used invitation codes created by this employee)
+// Get recruited users connected to this employee or their invitation codes.
 $recruitedUsers = [];
 try {
-    // Check if invite_code_used column exists in users table
-    $check_column = $conn->query("SHOW COLUMNS FROM users LIKE 'invite_code_used'");
-    if ($check_column->rowCount() > 0) {
-        // Check if created_by column exists in invitation_codes
-        $check_column = $conn->query("SHOW COLUMNS FROM invitation_codes LIKE 'created_by'");
-        if ($check_column->rowCount() > 0) {
-            $stmt = $conn->prepare("SELECT u.* FROM users u JOIN invitation_codes ic ON CONVERT(u.invite_code_used USING utf8) = CONVERT(ic.code USING utf8) WHERE ic.created_by = ?");
-            $stmt->execute([$employeeId]);
-            $recruitedUsers = $stmt->fetchAll();
-        }
+    $userColumns = htgTableColumns($conn, 'users');
+    $conditions = [];
+    $params = [];
+
+    if (in_array('referred_by', $userColumns, true)) {
+        $conditions[] = 'u.referred_by = ?';
+        $params[] = $employeeId;
+    }
+    if (in_array('employee_id', $userColumns, true)) {
+        $conditions[] = 'u.employee_id = ?';
+        $params[] = $employeeId;
+    }
+
+    $employeeCodes = array_values(array_filter(array_map(function ($code) {
+        return $code['code'] ?? null;
+    }, $invitationCodes)));
+
+    if ($employeeCodes && in_array('invite_code_used', $userColumns, true)) {
+        $conditions[] = 'u.invite_code_used IN (' . implode(',', array_fill(0, count($employeeCodes), '?')) . ')';
+        $params = array_merge($params, $employeeCodes);
+    }
+    if ($employeeCodes && in_array('invitation_code_used', $userColumns, true)) {
+        $conditions[] = 'u.invitation_code_used IN (' . implode(',', array_fill(0, count($employeeCodes), '?')) . ')';
+        $params = array_merge($params, $employeeCodes);
+    }
+
+    if ($conditions) {
+        $stmt = $conn->prepare("SELECT DISTINCT u.* FROM users u WHERE " . implode(' OR ', $conditions) . " ORDER BY u.created_at DESC");
+        $stmt->execute($params);
+        $recruitedUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch(PDOException $e) {
     // Query failed, continue with empty array
 }
 
-// Get contacts for this employee (check if employee_id column exists)
+// Get contacts assigned to this employee only; never show sample/static contacts.
 $contacts = [];
 try {
-    // Check if employee_id column exists in contacts table
-    $check_column = $conn->query("SHOW COLUMNS FROM contacts LIKE 'employee_id'");
-    if ($check_column->rowCount() > 0) {
+    $contactColumns = htgTableColumns($conn, 'contacts');
+    if (in_array('employee_id', $contactColumns, true)) {
         $stmt = $conn->prepare("SELECT * FROM contacts WHERE employee_id = ? ORDER BY created_at DESC");
         $stmt->execute([$employeeId]);
-        $contacts = $stmt->fetchAll();
-    } else {
-        // If no employee_id column, get all contacts as sample data
-        $stmt = $conn->prepare("SELECT * FROM contacts ORDER BY created_at DESC LIMIT 5");
-        $stmt->execute();
-        $contacts = $stmt->fetchAll();
+        $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch(PDOException $e) {
     // Query failed, continue with empty array
 }
+
+$usedInvitationCodes = array_values(array_filter($invitationCodes, function ($code) {
+    return (int)($code['used_count'] ?? ($code['total_used'] ?? 0)) > 0;
+}));
 ?>
 
 <!DOCTYPE html>
@@ -343,10 +372,10 @@ try {
         <!-- Invitation Codes Card -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">InvitationCodes</h3>
+                <h3 class="card-title">Used InvitationCodes</h3>
             </div>
             <div class="card-body">
-                <?php if (!empty($invitationCodes)): ?>
+                <?php if (!empty($usedInvitationCodes)): ?>
                     <table class="table">
                         <thead>
                             <tr>
@@ -357,13 +386,13 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($invitationCodes as $code): ?>
+                            <?php foreach ($usedInvitationCodes as $code): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($code['code']); ?></td>
-                                    <td><?php echo $code['max_uses'] ?? '100'; ?></td>
-                                    <td><?php echo $code['used_count'] ?? '0'; ?></td>
+                                    <td><a href="invitation-codes.php?employee_filter=<?php echo (int)$employeeId; ?>"><?php echo htmlspecialchars($code['code']); ?></a></td>
+                                    <td><?php echo htmlspecialchars($code['usage_limit'] ?? $code['max_users'] ?? $code['max_uses'] ?? '100'); ?></td>
+                                    <td><?php echo htmlspecialchars($code['used_count'] ?? $code['total_used'] ?? '0'); ?></td>
                                     <td>
-                                        <span class="badge badge-active">Active</span>
+                                        <span class="badge badge-active"><?php echo !empty($code['is_active']) || !empty($code['active']) ? 'Active' : 'Inactive'; ?></span>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -389,14 +418,16 @@ try {
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Code</th>
                                 <th>Joined</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($recruitedUsers as $user): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($user['fullname'] ?? $user['name'] ?? 'Unknown'); ?></td>
+                                    <td><a href="user_view.php?id=<?php echo (int)$user['id']; ?>"><?php echo htmlspecialchars($user['fullname'] ?? $user['name'] ?? 'Unknown'); ?></a></td>
                                     <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['invite_code_used'] ?? $user['invitation_code_used'] ?? '-'); ?></td>
                                     <td><?php echo date('M j, Y', strtotime($user['created_at'])); ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -422,6 +453,8 @@ try {
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
                                 <th>Message</th>
                                 <th>Date</th>
                             </tr>
@@ -429,9 +462,11 @@ try {
                         <tbody>
                             <?php foreach ($contacts as $contact): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($contact['name']); ?></td>
+                                    <td><a href="contact_view.php?id=<?php echo (int)$contact['id']; ?>"><?php echo htmlspecialchars($contact['name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($contact['email']); ?></td>
-                                    <td><?php echo htmlspecialchars(substr($contact['message'], 0, 50)) . '...'; ?></td>
+                                    <td><?php echo htmlspecialchars($contact['phone'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($contact['status'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars(substr($contact['message'] ?? $contact['notes'] ?? '', 0, 50)) . '...'; ?></td>
                                     <td><?php echo date('M j, Y', strtotime($contact['created_at'])); ?></td>
                                 </tr>
                             <?php endforeach; ?>

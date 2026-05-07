@@ -1319,6 +1319,76 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         }
     }
 
+    function htgTableColumns(PDO $conn, $table) {
+        $stmt = $conn->query("SHOW COLUMNS FROM `$table`");
+        return $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+    }
+
+    function ensureUserLimitsSchema(PDO $conn = null) {
+        $conn = $conn ?: getConnection();
+
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS user_limits (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                max_levels_per_day INT DEFAULT 3,
+                min_withdrawal_amount DECIMAL(10,2) DEFAULT 10.00,
+                min_withdrawal_level VARCHAR(50) DEFAULT 'Bronze',
+                min_balance DECIMAL(10,2) DEFAULT 0.00,
+                min_balance_floor DECIMAL(10,2) DEFAULT 0.00,
+                custom_message TEXT NULL,
+                daily_task_limit INT DEFAULT 40,
+                withdrawal_limit DECIMAL(10,2) DEFAULT 1000.00,
+                min_withdrawal DECIMAL(10,2) DEFAULT 10.00,
+                max_withdrawal DECIMAL(10,2) DEFAULT 1000.00,
+                can_withdraw TINYINT(1) DEFAULT 1,
+                can_submit_tasks TINYINT(1) DEFAULT 1,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_user_limits (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        ensureColumnExists($conn, 'user_limits', 'max_levels_per_day', 'INT DEFAULT 3');
+        ensureColumnExists($conn, 'user_limits', 'min_withdrawal_amount', 'DECIMAL(10,2) DEFAULT 10.00');
+        ensureColumnExists($conn, 'user_limits', 'min_withdrawal_level', "VARCHAR(50) DEFAULT 'Bronze'");
+        ensureColumnExists($conn, 'user_limits', 'min_balance', 'DECIMAL(10,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'user_limits', 'min_balance_floor', 'DECIMAL(10,2) DEFAULT 0.00');
+        ensureColumnExists($conn, 'user_limits', 'custom_message', 'TEXT NULL');
+        ensureColumnExists($conn, 'user_limits', 'daily_task_limit', 'INT DEFAULT 40');
+        ensureColumnExists($conn, 'user_limits', 'withdrawal_limit', 'DECIMAL(10,2) DEFAULT 1000.00');
+        ensureColumnExists($conn, 'user_limits', 'min_withdrawal', 'DECIMAL(10,2) DEFAULT 10.00');
+        ensureColumnExists($conn, 'user_limits', 'max_withdrawal', 'DECIMAL(10,2) DEFAULT 1000.00');
+        ensureColumnExists($conn, 'user_limits', 'can_withdraw', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'user_limits', 'can_submit_tasks', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'user_limits', 'is_active', 'TINYINT(1) DEFAULT 1');
+        ensureColumnExists($conn, 'user_limits', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        ensureColumnExists($conn, 'user_limits', 'updated_at', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+    }
+
+    function getUserLimitsForUser($userId, PDO $conn = null) {
+        $conn = $conn ?: getConnection();
+        ensureUserLimitsSchema($conn);
+
+        $stmt = $conn->prepare("SELECT * FROM user_limits WHERE user_id = ? LIMIT 1");
+        $stmt->execute([(int)$userId]);
+        $limits = $stmt->fetch(PDO::FETCH_ASSOC);
+        $exists = (bool)$limits;
+        $limits = $limits ?: [];
+
+        $limits['_exists'] = $exists;
+        $limits['max_levels_per_day'] = (int)($limits['max_levels_per_day'] ?? 3);
+        $limits['min_withdrawal_amount'] = (float)($limits['min_withdrawal_amount'] ?? ($limits['min_withdrawal'] ?? 10.00));
+        $limits['min_withdrawal_level'] = $limits['min_withdrawal_level'] ?? 'Bronze';
+        $limits['min_balance'] = (float)($limits['min_balance'] ?? ($limits['min_balance_floor'] ?? 0.00));
+        $limits['custom_message'] = $limits['custom_message'] ?? '';
+        $limits['can_withdraw'] = (int)($limits['can_withdraw'] ?? 1);
+        $limits['can_submit_tasks'] = (int)($limits['can_submit_tasks'] ?? 1);
+
+        return $limits;
+    }
+
     function ensureAuthSchema() {
         static $done = false;
 
@@ -1584,6 +1654,8 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
                     UNIQUE KEY unique_user_combo (user_id, combo_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             ");
+
+            ensureUserLimitsSchema($conn);
 
             ensureColumnExists($conn, 'settings', 'setting_type', "VARCHAR(50) DEFAULT 'text'");
             ensureColumnExists($conn, 'levels', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');

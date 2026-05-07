@@ -72,11 +72,15 @@ try {
     $stmt->execute([$_SESSION['user_id'], $today]);
     $stats['today_completed'] = $stmt->fetch()['count'];
     
-    // Daily task limit from settings
-    $stats['daily_task_limit'] = (int)get_setting('daily_task_limit', '40');
-    
     // Tasks per level (default 40)
     $stats['tasks_per_level'] = (int)get_setting('tasks_per_level', '40');
+
+    // Daily task limit from settings, overridden by saved per-user limits when present.
+    $stats['daily_task_limit'] = (int)get_setting('daily_task_limit', '40');
+    $userLimits = getUserLimitsForUser($_SESSION['user_id'], $conn);
+    if (!empty($userLimits['_exists']) && !empty($userLimits['max_levels_per_day'])) {
+        $stats['daily_task_limit'] = max(1, (int)$userLimits['max_levels_per_day'] * max(1, $stats['tasks_per_level']));
+    }
     
     // Get support link from global function
     $support_link = getSupportLink();

@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Please fill in all required fields';
+    } elseif ($invitation_code === '') {
+        $error = 'Invitation code is required';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match';
     } elseif (strlen($password) < 6) {
@@ -40,27 +42,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->fetch()) {
                 $error = 'Email already exists';
             } else {
-                $invitation = null;
-                $starting_balance = 0.00;
-                $referredBy = null;
+                $conn->beginTransaction();
 
-                if ($invitation_code !== '') {
-                    $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1");
-                    $stmt->execute([$invitation_code]);
-                    $invitation = $stmt->fetch();
+                $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1 FOR UPDATE");
+                $stmt->execute([$invitation_code]);
+                $invitation = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    if (!$invitation) {
-                        $error = 'Invalid invitation code';
-                    } elseif ((int)($invitation['used_count'] ?? 0) >= (int)($invitation['max_uses'] ?? 1)) {
-                        $error = 'Invitation code has already been used';
-                    } else {
-                        $starting_balance = 20.00;
-                        $referredBy = $invitation['employee_id'] ?? null;
+                if (!$invitation) {
+                    $error = 'Invalid invitation code';
+                    $conn->rollBack();
+                } else {
+                $invitationColumns = htgTableColumns($conn, 'invitation_codes');
+                $usedCount = (int)($invitation['used_count'] ?? ($invitation['total_used'] ?? 0));
+                $usageLimit = null;
+                foreach (['usage_limit', 'max_users', 'max_uses'] as $limitColumn) {
+                    if (array_key_exists($limitColumn, $invitation) && (int)$invitation[$limitColumn] > 0) {
+                        $usageLimit = (int)$invitation[$limitColumn];
+                        break;
                     }
                 }
+                $usageLimit = $usageLimit ?: 1;
 
-                if (!$error) {
-                $conn->beginTransaction();
+                if ($usedCount >= $usageLimit) {
+                    $error = 'Invitation code has reached its usage limit';
+                    $conn->rollBack();
+                } else {
+                $starting_balance = isset($invitation['starting_balance']) && (float)$invitation['starting_balance'] > 0
+                    ? (float)$invitation['starting_balance']
+                    : 20.00;
+                $referredBy = $invitation['employee_id'] ?? null;
 
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("
@@ -68,12 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         (fullname, email, password, balance, level, rating, accuracy, total_tasks,
                          bronze_unlocked, silver_unlocked, gold_unlocked, platinum_unlocked,
                          invite_code_used, invitation_code, invitation_code_used, referred_by,
-                         is_blocked, is_active, status, role, created_at)
+                         employee_id, is_blocked, is_active, status, role, created_at)
                     VALUES
                         (?, ?, ?, ?, 'Bronze', 0, 0, 0,
                          1, 0, 0, 0,
                          ?, ?, ?, ?,
-                         0, 1, 'active', 'user', NOW())
+                         ?, 0, 1, 'active', 'user', NOW())
                 ");
                 $stmt->execute([
                     $fullname,
@@ -83,13 +93,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $invitation_code ?: null,
                     $invitation_code ?: null,
                     $invitation_code ?: null,
+                    $referredBy,
                     $referredBy
                 ]);
                 $user_id = $conn->lastInsertId();
 
-                if ($invitation) {
-                    $stmt = $conn->prepare("UPDATE invitation_codes SET used_count = COALESCE(used_count, 0) + 1, uses_remaining = GREATEST(COALESCE(uses_remaining, 1) - 1, 0) WHERE id = ?");
-                    $stmt->execute([$invitation['id']]);
+                $newUsedCount = $usedCount + 1;
+                $remainingUses = max($usageLimit - $newUsedCount, 0);
+                $updates = [];
+                $updateParams = [];
+                if (in_array('used_count', $invitationColumns, true)) {
+                    $updates[] = 'used_count = ?';
+                    $updateParams[] = $newUsedCount;
+                }
+                if (in_array('total_used', $invitationColumns, true)) {
+                    $updates[] = 'total_used = ?';
+                    $updateParams[] = $newUsedCount;
+                }
+                if (in_array('uses_remaining', $invitationColumns, true)) {
+                    $updates[] = 'uses_remaining = ?';
+                    $updateParams[] = $remainingUses;
+                }
+                if ($remainingUses <= 0) {
+                    if (in_array('is_active', $invitationColumns, true)) {
+                        $updates[] = 'is_active = 0';
+                    }
+                    if (in_array('active', $invitationColumns, true)) {
+                        $updates[] = 'active = 0';
+                    }
+                }
+                if ($updates) {
+                    $updateParams[] = $invitation['id'];
+                    $stmt = $conn->prepare("UPDATE invitation_codes SET " . implode(', ', $updates) . " WHERE id = ?");
+                    $stmt->execute($updateParams);
                 }
 
                 if ($starting_balance > 0) {
@@ -109,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_fullname'] = $fullname;
                 $_SESSION['role'] = 'user';
                 redirect('dashboard.php');
+                }
                 }
             }
         } catch(Throwable $e) {
@@ -309,8 +346,8 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             </div>
             
             <div class="form-group">
-                <label for="invitation_code"><?php echo __t('invitation_code_optional', 'Invitation Code (Optional)'); ?></label>
-                <input type="text" id="invitation_code" name="invitation_code" placeholder="<?php echo htmlspecialchars(__t('enter_invitation_code', 'Enter invitation code')); ?>">
+                <label for="invitation_code"><?php echo __t('invitation_code', 'Invitation Code'); ?></label>
+                <input type="text" id="invitation_code" name="invitation_code" placeholder="<?php echo htmlspecialchars(__t('enter_invitation_code', 'Enter invitation code')); ?>" required>
             </div>
             
             <button type="submit" class="btn"><?php echo __t('create_account', 'Create Account'); ?></button>

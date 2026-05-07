@@ -90,9 +90,10 @@ if (!$user) {
 // Get user limits data
 $userLimits = [];
 try {
+    ensureUserLimitsSchema($conn);
     $stmt = $conn->prepare("SELECT * FROM user_limits WHERE user_id = ?");
     $stmt->execute([$user['id']]);
-    $userLimits = $stmt->fetch();
+    $userLimits = getUserLimitsForUser($user['id'], $conn);
 } catch(PDOException $e) {
     // Failed to get user limits, use empty array
 }
@@ -227,13 +228,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             
         case 'user_limits':
             // Validate and update user limits
-            $maxLevelsPerDay = !empty($_POST['max_levels_per_day']) ? (int)$_POST['max_levels_per_day'] : 3;
-            $minWithdrawalAmount = !empty($_POST['min_withdrawal_amount']) ? (float)$_POST['min_withdrawal_amount'] : 10.00;
-            $minWithdrawalLevel = !empty($_POST['min_withdrawal_level']) ? $_POST['min_withdrawal_level'] : 'Bronze';
-            $minBalanceFloor = !empty($_POST['min_balance_floor']) ? (float)$_POST['min_balance_floor'] : 0.00;
-            $customMessage = !empty($_POST['custom_message']) ? $_POST['custom_message'] : '';
+            $maxLevelsPerDay = max(1, (int)($_POST['max_levels_per_day'] ?? 3));
+            $minWithdrawalAmount = max(0, (float)($_POST['min_withdrawal_amount'] ?? 10.00));
+            $minWithdrawalLevel = normalizeLevelName($_POST['min_withdrawal_level'] ?? 'Bronze');
+            $minBalanceFloor = max(0, (float)($_POST['min_balance_floor'] ?? 0.00));
+            $customMessage = trim($_POST['custom_message'] ?? '');
+            $tasksPerLevel = (int)get_setting('tasks_per_level', '40');
+            $dailyTaskLimit = max(1, $maxLevelsPerDay * max(1, $tasksPerLevel));
             
             try {
+                ensureUserLimitsSchema($conn);
+
                 // Check if user_limits record exists for this user
                 $stmt = $conn->prepare("SELECT id FROM user_limits WHERE user_id = ?");
                 $stmt->execute([$user['id']]);
@@ -247,18 +252,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         min_withdrawal_amount = ?, 
                         min_withdrawal_level = ?, 
                         min_balance = ?, 
-                        custom_message = ? 
+                        min_balance_floor = ?,
+                        custom_message = ?,
+                        daily_task_limit = ?,
+                        min_withdrawal = ?
                         WHERE user_id = ?
                     ");
-                    $stmt->execute([$maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $customMessage, $user['id']]);
+                    $stmt->execute([$maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $minBalanceFloor, $customMessage, $dailyTaskLimit, $minWithdrawalAmount, $user['id']]);
                 } else {
                     // Insert new record
                     $stmt = $conn->prepare("
                         INSERT INTO user_limits 
-                        (user_id, max_levels_per_day, min_withdrawal_amount, min_withdrawal_level, min_balance, custom_message) 
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        (user_id, max_levels_per_day, min_withdrawal_amount, min_withdrawal_level, min_balance, min_balance_floor, custom_message, daily_task_limit, min_withdrawal) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
-                    $stmt->execute([$user['id'], $maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $customMessage]);
+                    $stmt->execute([$user['id'], $maxLevelsPerDay, $minWithdrawalAmount, $minWithdrawalLevel, $minBalanceFloor, $minBalanceFloor, $customMessage, $dailyTaskLimit, $minWithdrawalAmount]);
                 }
                 
                 // Update user session data for real-time effect
