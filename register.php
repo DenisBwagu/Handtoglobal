@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     $invitation_code = sanitize($_POST['invitation_code'] ?? '');
+    $defaultLevel = 'Bronze';
     
     if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Please fill in all required fields';
@@ -80,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          invite_code_used, invitation_code, invitation_code_used, referred_by,
                          employee_id, is_blocked, is_active, status, role, created_at)
                     VALUES
-                        (?, ?, ?, ?, 'Bronze', 0, 0, 0,
+                        (?, ?, ?, ?, ?, 0, 0, 0,
                          1, 0, 0, 0,
                          ?, ?, ?, ?,
                          ?, 0, 1, 'active', 'user', NOW())
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $email,
                     $hashed_password,
                     $starting_balance,
+                    $defaultLevel,
                     $invitation_code ?: null,
                     $invitation_code ?: null,
                     $invitation_code ?: null,

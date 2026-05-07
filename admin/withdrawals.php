@@ -901,7 +901,7 @@ if ($total_withdrawals == 0) {
                                     <div class="amount">$<?php echo number_format($withdrawal['amount'], 2); ?></div>
                                 </td>
                                 <td>
-                                    <div><?php echo htmlspecialchars($withdrawal['asset'] ?? 'USDT'); ?></div>
+                                    <div><?php echo htmlspecialchars($withdrawal['coin_asset'] ?? $withdrawal['asset'] ?? 'USDT'); ?></div>
                                     <div class="network-badge"><?php echo htmlspecialchars($withdrawal['network'] ?? 'TRC20'); ?></div>
                                 </td>
                                 <td>
@@ -1068,7 +1068,7 @@ if ($total_withdrawals == 0) {
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Asset</span>
-                                <span class="detail-value">${data.withdrawal.asset || 'USDT'}</span>
+                                <span class="detail-value">${data.withdrawal.coin_asset || data.withdrawal.asset || 'USDT'}</span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Network</span>

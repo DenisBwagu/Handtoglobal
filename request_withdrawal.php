@@ -72,12 +72,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($userLevelRank < $effectiveMinWithdrawalLevel) {
         $error = __t('must_reach_level', 'You must reach at least level') . ' ' . $effectiveMinWithdrawalLevel . ' ' . __t('to_request_withdrawals', 'to request withdrawals.') . '';
     } else {
+        if (function_exists('ensureColumnExists')) {
+            ensureColumnExists($conn, 'withdrawals', 'asset', "VARCHAR(50) DEFAULT 'USDT'");
+            ensureColumnExists($conn, 'withdrawals', 'coin_asset', "VARCHAR(50) DEFAULT 'USDT'");
+            ensureColumnExists($conn, 'withdrawals', 'network', "VARCHAR(100) DEFAULT 'TRC20'");
+        }
+
         // Insert into withdrawals table
         $stmt = $conn->prepare("
-            INSERT INTO withdrawals (user_id, amount, coin_asset, network, wallet_address, memo_tag, recipient_name, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
+            INSERT INTO withdrawals (user_id, amount, asset, coin_asset, network, wallet_address, memo_tag, recipient_name, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
         ");
-        $result = $stmt->execute([$userId, $amount, $coinAsset, $network, $walletAddress, $memoTag ?: null, $recipientName ?: null]);
+        $result = $stmt->execute([$userId, $amount, $coinAsset, $coinAsset, $network, $walletAddress, $memoTag ?: null, $recipientName ?: null]);
         
         if ($result) {
             // Redirect to withdrawals page to show the new request

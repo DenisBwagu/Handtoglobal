@@ -1369,11 +1369,16 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
 
     function getUserLimitsForUser($userId, PDO $conn = null) {
         $conn = $conn ?: getConnection();
-        ensureUserLimitsSchema($conn);
+        try {
+            ensureUserLimitsSchema($conn);
 
-        $stmt = $conn->prepare("SELECT * FROM user_limits WHERE user_id = ? LIMIT 1");
-        $stmt->execute([(int)$userId]);
-        $limits = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt = $conn->prepare("SELECT * FROM user_limits WHERE user_id = ? LIMIT 1");
+            $stmt->execute([(int)$userId]);
+            $limits = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            error_log("User limits unavailable; using defaults: " . $e->getMessage());
+            $limits = [];
+        }
         $exists = (bool)$limits;
         $limits = $limits ?: [];
 
@@ -1476,6 +1481,7 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         $conn->exec("ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NOT NULL");
         ensureColumnExists($conn, 'users', 'balance', 'DECIMAL(10,2) DEFAULT 0.00');
         ensureColumnExists($conn, 'users', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
+        $conn->exec("ALTER TABLE users MODIFY COLUMN level VARCHAR(50) DEFAULT 'Bronze'");
         ensureColumnExists($conn, 'users', 'rating', 'DECIMAL(5,2) DEFAULT 0.00');
         ensureColumnExists($conn, 'users', 'accuracy', 'DECIMAL(5,2) DEFAULT 0.00');
         ensureColumnExists($conn, 'users', 'total_tasks', 'INT DEFAULT 0');
@@ -1714,8 +1720,8 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
                     status ENUM('Pending','Approved','Rejected','Completed') DEFAULT 'Pending',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    asset VARCHAR(20) DEFAULT 'USDT',
-                    network VARCHAR(20) DEFAULT 'TRC20',
+                    asset VARCHAR(50) DEFAULT 'USDT',
+                    network VARCHAR(100) DEFAULT 'TRC20',
                     memo_tag VARCHAR(255) NULL,
                     approved_by INT NULL,
                     approved_at DATETIME NULL,
@@ -1734,10 +1740,14 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
 
             $addColumn('admin_note', 'TEXT NULL');
             $addColumn('note', 'TEXT NULL');
-            $addColumn('coin_asset', "VARCHAR(20) DEFAULT 'USDT'");
+            $addColumn('coin_asset', "VARCHAR(50) DEFAULT 'USDT'");
             $addColumn('recipient_name', 'VARCHAR(255) NULL');
             $addColumn('processed_at', 'DATETIME NULL');
             $addColumn('processed_by', 'INT NULL');
+
+            $conn->exec("ALTER TABLE withdrawals MODIFY COLUMN asset VARCHAR(50) DEFAULT 'USDT'");
+            $conn->exec("ALTER TABLE withdrawals MODIFY COLUMN coin_asset VARCHAR(50) DEFAULT 'USDT'");
+            $conn->exec("ALTER TABLE withdrawals MODIFY COLUMN network VARCHAR(100) DEFAULT 'TRC20'");
 
             $conn->exec("
                 CREATE TABLE IF NOT EXISTS finance_activities (
