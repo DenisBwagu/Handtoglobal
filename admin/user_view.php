@@ -111,14 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             exit;
             
         case 'reset_password':
-            // Generate a random password
-            $newPassword = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+            $newPassword = '12345678';
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             
             try {
                 $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
                 $stmt->execute([$hashedPassword, $user['id']]);
-                $success = "Password reset successfully! New password: <strong>$newPassword</strong>";
+                $success = "Password reset successfully. New password: $newPassword";
             } catch(PDOException $e) {
                 $error = 'Failed to reset password: ' . $e->getMessage();
             }
@@ -1095,7 +1094,7 @@ if ($check_column->rowCount() > 0) {
                 <h3>Reset Password</h3>
                 <span class="close" onclick="closeModal('passwordModal')">&times;</span>
             </div>
-            <p style="color: #dc3545;">This will generate a new temporary password for the user.</p>
+            <p style="color: #dc3545;">This will reset the user's password to 12345678.</p>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="reset_password">

@@ -53,25 +53,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Invalid invitation code';
                     $conn->rollBack();
                 } else {
-                $invitationColumns = htgTableColumns($conn, 'invitation_codes');
-                $usedCount = (int)($invitation['used_count'] ?? ($invitation['total_used'] ?? 0));
-                $usageLimit = null;
-                foreach (['usage_limit', 'max_users', 'max_uses'] as $limitColumn) {
-                    if (array_key_exists($limitColumn, $invitation) && (int)$invitation[$limitColumn] > 0) {
-                        $usageLimit = (int)$invitation[$limitColumn];
-                        break;
+                    $invitationColumns = htgTableColumns($conn, 'invitation_codes');
+                    $usedCount = max(
+                        (int)($invitation['used_count'] ?? 0),
+                        (int)($invitation['total_used'] ?? 0)
+                    );
+                    $usageLimit = null;
+                    foreach (['max_uses', 'usage_limit', 'max_users'] as $limitColumn) {
+                        if (array_key_exists($limitColumn, $invitation) && (int)$invitation[$limitColumn] > 0) {
+                            $usageLimit = (int)$invitation[$limitColumn];
+                            break;
+                        }
                     }
-                }
-                $usageLimit = $usageLimit ?: 1;
+                    $usageLimit = $usageLimit ?: 1;
 
-                if ($usedCount >= $usageLimit) {
-                    $error = 'Invitation code has reached its usage limit';
-                    $conn->rollBack();
-                } else {
-                $starting_balance = isset($invitation['starting_balance']) && (float)$invitation['starting_balance'] > 0
-                    ? (float)$invitation['starting_balance']
-                    : 20.00;
-                $referredBy = $invitation['employee_id'] ?? null;
+                    if ($usedCount >= $usageLimit) {
+                        $error = 'Invitation code has reached its usage limit';
+                        $conn->rollBack();
+                    } else {
+                        $starting_balance = isset($invitation['starting_balance']) && (float)$invitation['starting_balance'] > 0
+                            ? (float)$invitation['starting_balance']
+                            : 20.00;
+                        $referredBy = $invitation['employee_id'] ?? null;
 
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("
@@ -111,6 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (in_array('total_used', $invitationColumns, true)) {
                     $updates[] = 'total_used = ?';
                     $updateParams[] = $newUsedCount;
+                }
+                if (in_array('usage_limit', $invitationColumns, true) && empty($invitation['usage_limit'])) {
+                    $updates[] = 'usage_limit = ?';
+                    $updateParams[] = $usageLimit;
                 }
                 if (in_array('uses_remaining', $invitationColumns, true)) {
                     $updates[] = 'uses_remaining = ?';

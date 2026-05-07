@@ -181,6 +181,22 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             background: #0b5ed7;
             box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
         }
+
+        .btn-secondary {
+            display: block;
+            box-sizing: border-box;
+            text-align: center;
+            text-decoration: none;
+            background: #f8fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #edf2f7;
+            box-shadow: none;
+            text-decoration: none;
+        }
         
         .alert {
             padding: 12px 16px;
@@ -243,6 +259,8 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
             
             <button type="submit" class="btn"><?php echo __t('login', 'Login'); ?></button>
         </form>
+
+        <a class="btn btn-secondary" href="<?php echo htmlspecialchars($supportLink ?: '#'); ?>"><?php echo __t('reset_password', 'Reset Password'); ?></a>
         
         <div class="register-link">
             <?php echo __t('dont_have_account', "Don't have an account?"); ?> <a href="register.php"><?php echo __t('create_account', 'Create account'); ?></a>
