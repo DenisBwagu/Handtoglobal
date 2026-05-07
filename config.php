@@ -4,7 +4,6 @@ if (session_status() == PHP_SESSION_NONE) {
     $sessionCandidates = [
         sys_get_temp_dir(),
         __DIR__ . DIRECTORY_SEPARATOR . 'tmp_sessions',
-        'C:\\xampp\\tmp',
     ];
     foreach ($sessionCandidates as $fallbackSessionPath) {
         if (!is_dir($fallbackSessionPath)) {
@@ -45,6 +44,26 @@ if (!function_exists('htg_debug_log')) {
         if (defined('HTG_DEBUG') && HTG_DEBUG) {
             error_log($message);
         }
+    }
+}
+
+if (!function_exists('htg_app_base_url')) {
+    function htg_app_base_url() {
+        $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        $root = rtrim(str_replace('\\', '/', dirname(__FILE__)), '/');
+        $docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+
+        if ($docRoot !== '' && strpos($root, $docRoot) === 0) {
+            $base = substr($root, strlen($docRoot));
+            return rtrim('/' . trim($base, '/'), '/') . '/';
+        }
+
+        $parts = explode('/', trim($scriptName, '/'));
+        if (isset($parts[0]) && $parts[0] !== '' && $parts[0] !== 'admin') {
+            return '/' . $parts[0] . '/';
+        }
+
+        return '/';
     }
 }
 
@@ -1577,9 +1596,13 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             ensureColumnExists($conn, 'tasks', 'instructions', 'TEXT NULL');
             ensureColumnExists($conn, 'tasks', 'image', 'VARCHAR(255) NULL');
             ensureColumnExists($conn, 'tasks', 'level', "VARCHAR(50) DEFAULT 'Bronze'");
+            ensureColumnExists($conn, 'tasks', 'type', "VARCHAR(100) DEFAULT 'Name_items'");
+            ensureColumnExists($conn, 'tasks', 'external_link', 'VARCHAR(500) NULL');
+            ensureColumnExists($conn, 'tasks', 'correct_answer', 'VARCHAR(255) NULL');
             ensureColumnExists($conn, 'tasks', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');
             ensureColumnExists($conn, 'tasks', 'active', 'TINYINT(1) DEFAULT 1');
             ensureColumnExists($conn, 'tasks', 'is_active', 'TINYINT(1) DEFAULT 1');
+            ensureColumnExists($conn, 'tasks', 'updated_at', 'TIMESTAMP NULL DEFAULT NULL');
             ensureColumnExists($conn, 'completed_tasks', 'level', 'VARCHAR(50) NULL');
             ensureColumnExists($conn, 'completed_tasks', 'answer', 'TEXT NULL');
             ensureColumnExists($conn, 'completed_tasks', 'reward', 'DECIMAL(10,2) DEFAULT 0.00');
@@ -1592,6 +1615,9 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             ensureColumnExists($conn, 'combos', 'multiplier', 'DECIMAL(10,2) DEFAULT 1.00');
             ensureColumnExists($conn, 'combos', 'start_task', 'INT DEFAULT 1');
             ensureColumnExists($conn, 'combos', 'end_task', 'INT DEFAULT 1');
+            ensureColumnExists($conn, 'combos', 'start_task_id', 'INT NULL');
+            ensureColumnExists($conn, 'combos', 'end_task_id', 'INT NULL');
+            ensureColumnExists($conn, 'combos', 'deposit_amount', 'DECIMAL(10,2) DEFAULT 0.00');
             ensureColumnExists($conn, 'combos', 'status', "VARCHAR(30) DEFAULT 'Active'");
             ensureColumnExists($conn, 'combos', 'is_active', 'TINYINT(1) DEFAULT 1');
 
@@ -1632,10 +1658,30 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             };
 
             $addColumn('admin_note', 'TEXT NULL');
+            $addColumn('note', 'TEXT NULL');
             $addColumn('coin_asset', "VARCHAR(20) DEFAULT 'USDT'");
             $addColumn('recipient_name', 'VARCHAR(255) NULL');
             $addColumn('processed_at', 'DATETIME NULL');
             $addColumn('processed_by', 'INT NULL');
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS finance_activities (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    admin_id INT NULL,
+                    type VARCHAR(50) NOT NULL,
+                    category VARCHAR(100) NOT NULL,
+                    amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    reason TEXT NULL,
+                    balance_after DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    source_table VARCHAR(100) NULL,
+                    source_id INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_finance_user (user_id),
+                    INDEX idx_finance_type (type),
+                    INDEX idx_finance_created (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
 
             $conn->exec("
                 CREATE TABLE IF NOT EXISTS languages (
@@ -1696,6 +1742,41 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
             ensureColumnExists($conn, 'employees', 'phone', 'VARCHAR(20) NULL');
             ensureColumnExists($conn, 'employees', 'role', "VARCHAR(50) DEFAULT 'Employee'");
             ensureColumnExists($conn, 'employees', 'status', "ENUM('Active','Inactive') DEFAULT 'Active'");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS contacts (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    phone VARCHAR(50) NULL,
+                    email VARCHAR(150) NULL,
+                    employee_id INT NULL,
+                    status VARCHAR(50) DEFAULT 'new',
+                    registered TINYINT(1) DEFAULT 0,
+                    notes TEXT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_contacts_employee (employee_id),
+                    INDEX idx_contacts_status (status)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS testimonials (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    role VARCHAR(100) NULL,
+                    content TEXT NOT NULL,
+                    image VARCHAR(255) NULL,
+                    type VARCHAR(50) DEFAULT 'homepage',
+                    rating INT DEFAULT 5,
+                    display_order INT DEFAULT 0,
+                    is_active TINYINT(1) DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_testimonials_active (is_active),
+                    INDEX idx_testimonials_type (type)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
         } catch (Throwable $e) {
             error_log('Runtime schema check failed: ' . $e->getMessage());
         }

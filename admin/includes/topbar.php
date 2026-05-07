@@ -38,7 +38,7 @@ $siteLogoUrl = get_site_logo();
         <div class="menu-icon">
             <i class="fas fa-bars"></i>
         </div>
-        <a href="/handtoglobal/admin/dashboard.php" class="htg-brand" style="display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-weight:700;">
+        <a href="dashboard.php" class="htg-brand" style="display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-weight:700;">
             <?php if ($siteLogoUrl): ?>
                 <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="width:26px;height:26px;object-fit:contain;">
             <?php else: ?>
@@ -62,7 +62,7 @@ $siteLogoUrl = get_site_logo();
         <div class="theme-toggle" id="themeToggle">
             <i class="fas fa-moon"></i>
         </div>
-        <a href="/handtoglobal/admin/logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
+        <a href="logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
         <div class="profile-info">

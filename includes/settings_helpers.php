@@ -83,7 +83,8 @@ if (!function_exists('htg_asset_url')) {
             return $path;
         }
 
-        return '/handtoglobal/' . ltrim($path, '/');
+        $baseUrl = function_exists('htg_app_base_url') ? htg_app_base_url() : '/';
+        return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
     }
 }
 if (!function_exists('setting_url')) {

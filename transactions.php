@@ -167,7 +167,13 @@ function badge($txt){
             <?php echo __t('level', 'Level'); ?>: <strong><?php echo htmlspecialchars($user['level']); ?></strong>
           </div>
           <div class="muted" style="margin-top:10px">
-            <?php echo __t('referral_link', 'Referral link'); ?>: <code><?php echo "http://localhost/handtoglobal/register.php?ref=".$user['id']; ?></code>
+            <?php
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? '';
+            $baseUrl = function_exists('htg_app_base_url') ? htg_app_base_url() : '/';
+            $referralUrl = ($host !== '' ? $scheme . '://' . $host : '') . rtrim($baseUrl, '/') . '/register.php?ref=' . urlencode((string)$user['id']);
+            ?>
+            <?php echo __t('referral_link', 'Referral link'); ?>: <code><?php echo htmlspecialchars($referralUrl); ?></code>
           </div>
         </div>
         <a class="btn" href="dashboard.php"><?php echo __t('back_to_dashboard', 'Back to Dashboard'); ?></a>

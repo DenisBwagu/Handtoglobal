@@ -1,39 +1,50 @@
-# HandToGlobal .gitignore
-
-# Environment and Configuration
+# Local environment and secrets
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 config.local.php
 config.production.php
+local.php
+local_config.php
+dev_config.php
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-database/
+# Database dumps and backups
+*.sql.gz
+*.sql.zip
+*.dump
+*.bak
+*.backup
+*.old
+*.orig
 db_backup/
-logs/
+database/
+backups/
 
-# Allow specific database schema files
+# Keep required schema files versioned
 !db.sql
 !db_handtoglobal.sql
+!database_required_tables.sql
 
-# Server and Deployment
-/.htaccess
-/web.config
-/apache.conf
-nginx.conf
-
-# Temporary Files
+# Logs, caches, sessions, temporary output
+*.log
+logs/
+cache/
+sessions/
+tmp/
+tmp_sessions/
 *.tmp
 *.temp
 *.cache
-*.log
-error.log
-access.log
 
-# IDE and Editor Files
+# Dependencies and build output
+vendor/
+node_modules/
+composer.lock
+build/
+dist/
+compiled/
+
+# Editors and OS files
 .vscode/
 .idea/
 *.swp
@@ -42,98 +53,24 @@ access.log
 .DS_Store
 Thumbs.db
 
-# Node.js (if used for build tools)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Uploaded runtime files: keep folders, ignore new private/user uploads by default.
+uploads/*
+!uploads/.gitkeep
+!uploads/settings/
+!uploads/settings/.gitkeep
+!uploads/tasks/
+!uploads/tasks/.gitkeep
 
-# Composer (PHP dependencies)
-/vendor/
-composer.lock
+# Do not ignore committed public image assets.
+!images/
+!assets/images/
 
-# Build and Distribution
-/build/
-/dist/
-/compiled/
+# Server config is required for Apache fallback and deployment reference.
+!.htaccess
 
-# User Uploads and Media
-uploads/
-media/
-files/
-images/user/
-temp/
-
-# Cache and Sessions
-/cache/
-/sessions/
-/tmp/
-
-# Testing
-/tests/
-/coverage/
-phpunit.xml
-
-# Documentation Build
-/docs/build/
-/_build/
-
-# Backup Files
-*.bak
-*.backup
-*~
-
-# OS Generated Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# XAMPP Specific
-/xampp/
-/phpmyadmin/
-/adminer.php
-
-# Project Specific
-admin/_temp/
-admin/_cache/
-admin/_logs/
-admin/_backup/
-
-# Security Sensitive Files
+# Sensitive keys/certificates
 *.key
 *.pem
-*.crt
 *.p12
 secrets/
 private/
-
-# Development Files
-dev/
-development/
-staging/
-
-# Logs and Monitoring
-*.log
-logs/
-monitoring/
-
-# Performance and Profiling
-*.prof
-*.xhprof
-profiling/
-
-# Local Configuration
-local.php
-local_config.php
-dev_config.php
-
-# Database Migrations (if using migration system)
-/migrations/*.sql.backup
-
-# User Generated Content
-/user_content/
-/generated/

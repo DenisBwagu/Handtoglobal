@@ -10,8 +10,10 @@ require_once __DIR__ . '/language_helpers.php';
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 // Helper function to check if menu item is active
-function isUserMenuActive($page, $currentPage) {
-    return $page === $currentPage;
+if (!function_exists('isUserMenuActive')) {
+    function isUserMenuActive($page, $currentPage) {
+        return $page === $currentPage;
+    }
 }
 
 $supportLink = getSupportLink();

@@ -490,7 +490,7 @@ try {
                     <a href="invitation_codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
                     <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
                     <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </div>
             </div>
         </div>

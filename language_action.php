@@ -5,7 +5,8 @@ require_once __DIR__ . '/includes/language_helpers.php';
 
 $language = normalize_language_code($_POST['language'] ?? 'english');
 $context = ($_POST['context'] ?? 'user') === 'admin' ? 'admin' : 'user';
-$redirectTo = $_POST['redirect'] ?? ($context === 'admin' ? '/handtoglobal/admin/dashboard.php' : '/handtoglobal/dashboard.php');
+$baseUrl = function_exists('htg_app_base_url') ? htg_app_base_url() : '/';
+$redirectTo = $_POST['redirect'] ?? ($context === 'admin' ? $baseUrl . 'admin/dashboard.php' : $baseUrl . 'dashboard.php');
 
 $_SESSION['language'] = $language;
 setcookie('htg_language', $language, time() + 31536000, '/');
@@ -22,11 +23,11 @@ try {
 }
 
 if (!is_string($redirectTo) || $redirectTo === '' || preg_match('/^https?:\/\//i', $redirectTo)) {
-    $redirectTo = $context === 'admin' ? '/handtoglobal/admin/dashboard.php' : '/handtoglobal/dashboard.php';
+    $redirectTo = $context === 'admin' ? $baseUrl . 'admin/dashboard.php' : $baseUrl . 'dashboard.php';
 }
 
 if ($redirectTo[0] !== '/') {
-    $redirectTo = '/handtoglobal/' . ltrim($redirectTo, '/');
+    $redirectTo = rtrim($baseUrl, '/') . '/' . ltrim($redirectTo, '/');
 }
 
 header('Location: ' . $redirectTo);

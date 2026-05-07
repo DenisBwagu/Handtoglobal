@@ -4,15 +4,17 @@
  * Shared sidebar for all admin pages
  */
 
-require_once '../includes/settings_helpers.php';
-require_once '../includes/language_helpers.php';
+require_once __DIR__ . '/../../includes/settings_helpers.php';
+require_once __DIR__ . '/../../includes/language_helpers.php';
 
 // Get current page for active state
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 // Helper function to check if menu item is active
-function isMenuActive($page, $currentPage) {
-    return $page === $currentPage;
+if (!function_exists('isMenuActive')) {
+    function isMenuActive($page, $currentPage) {
+        return $page === $currentPage;
+    }
 }
 
 ?>
@@ -63,7 +65,7 @@ function isMenuActive($page, $currentPage) {
         <div class="sidebar-section-title"><?php echo __t('system', 'SYSTEM'); ?></div>
         <ul class="sidebar-menu">
             <li><a href="settings.php" class="<?php echo isMenuActive('settings', $currentPage) ? 'active' : ''; ?>"><i class="fas fa-cog"></i> <?php echo __t('settings', 'Settings'); ?></a></li>
-            <li><a href="/handtoglobal/admin/logout.php"><i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?></a></li>
+            <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?></a></li>
         </ul>
     </div>
 </div>

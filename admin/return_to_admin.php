@@ -19,4 +19,4 @@ $_SESSION['admin'] = $adminId;
 $_SESSION['role'] = 'admin';
 
 // Redirect back to admin dashboard
-redirect('/handtoglobal/admin/dashboard.php');
+redirect('dashboard.php');

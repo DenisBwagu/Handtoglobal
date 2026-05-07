@@ -5,7 +5,7 @@ require_once __DIR__ . '/language_helpers.php';
 
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 $isAdminArea = strpos($requestPath, '/admin/') !== false;
-$baseUrl = '/handtoglobal/';
+$baseUrl = function_exists('htg_app_base_url') ? htg_app_base_url() : '/';
 $assetPrefix = $baseUrl;
 
 $pageTitles = [
