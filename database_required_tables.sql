@@ -288,8 +288,4 @@ CREATE TABLE IF NOT EXISTS testimonials (
     INDEX idx_testimonials_type (type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO admins (name, email, password)
-SELECT 'Admin', 'admin@handtoglobal.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
-WHERE NOT EXISTS (SELECT 1 FROM admins WHERE email = 'admin@handtoglobal.com');
-
 SET FOREIGN_KEY_CHECKS = 1;

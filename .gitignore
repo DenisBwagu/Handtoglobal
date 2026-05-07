@@ -4,11 +4,16 @@
 !.env.example
 config.local.php
 config.production.php
+config_BAD.php
 local.php
 local_config.php
 dev_config.php
 
 # Database dumps and backups
+*.sql
+!db.sql
+!db_handtoglobal.sql
+!database_required_tables.sql
 *.sql.gz
 *.sql.zip
 *.dump
@@ -20,13 +25,9 @@ db_backup/
 database/
 backups/
 
-# Keep required schema files versioned
-!db.sql
-!db_handtoglobal.sql
-!database_required_tables.sql
-
 # Logs, caches, sessions, temporary output
 *.log
+*.log.*
 logs/
 cache/
 sessions/
@@ -35,6 +36,17 @@ tmp_sessions/
 *.tmp
 *.temp
 *.cache
+
+# Local diagnostic/test/debug scripts
+test_*.php
+debug_*.php
+check_*.php
+fix_*.php
+repair_*.php
+setup_test_*.php
+syntax_checker*.php
+auth_test.php
+db_test.php
 
 # Dependencies and build output
 vendor/

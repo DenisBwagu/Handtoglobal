@@ -1358,8 +1358,11 @@ if (!function_exists('ensureHandToGlobalRuntimeSchema')) {
         $stmt->execute(['admin@handtoglobal.com']);
         $admin = $stmt->fetch();
         if (!$admin) {
-            $stmt = $conn->prepare("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)");
-            $stmt->execute(['Admin', 'admin@handtoglobal.com', password_hash('admin123', PASSWORD_DEFAULT)]);
+            $allowDefaultAdmin = APP_ENV !== 'production' || htg_env('HTG_CREATE_DEFAULT_ADMIN', '0') === '1';
+            if ($allowDefaultAdmin) {
+                $stmt = $conn->prepare("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)");
+                $stmt->execute(['Admin', 'admin@handtoglobal.com', password_hash('admin123', PASSWORD_DEFAULT)]);
+            }
         } else {
             $stmt = $conn->prepare("UPDATE admins SET name = COALESCE(NULLIF(name, ''), 'Admin') WHERE email = ?");
             $stmt->execute(['admin@handtoglobal.com']);
