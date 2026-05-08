@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/settings_helpers.php';
-require_once __DIR__ . '/includes/language_helpers.php';
 
 // Get Telegram link from settings
 $supportLink = get_telegram_link();
@@ -41,16 +40,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
             $stmt->execute([$email]);
             if ($stmt->fetch()) {
-                $error = 'Email already exists';
+                $error = 'User already exists.';
             } else {
                 $conn->beginTransaction();
 
-                $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? AND COALESCE(is_active, active, 1) = 1 LIMIT 1 FOR UPDATE");
+                $stmt = $conn->prepare("SELECT * FROM invitation_codes WHERE code = ? LIMIT 1 FOR UPDATE");
                 $stmt->execute([$invitation_code]);
                 $invitation = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$invitation) {
-                    $error = 'Invalid invitation code';
+                    $error = 'Invalid invitation code.';
                     $conn->rollBack();
                 } else {
                     $invitationColumns = htgTableColumns($conn, 'invitation_codes');
@@ -67,8 +66,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $usageLimit = $usageLimit ?: 1;
 
-                    if ($usedCount >= $usageLimit) {
-                        $error = 'Invitation code has reached its usage limit';
+                    $isActive = true;
+                    if (array_key_exists('is_active', $invitation) && (int)$invitation['is_active'] !== 1) {
+                        $isActive = false;
+                    }
+                    if (array_key_exists('active', $invitation) && (int)$invitation['active'] !== 1) {
+                        $isActive = false;
+                    }
+                    $usesRemaining = array_key_exists('uses_remaining', $invitation) ? (int)$invitation['uses_remaining'] : null;
+
+                    if ($usedCount >= $usageLimit || $usesRemaining === 0) {
+                        $error = 'Invitation code has reached its usage limit.';
+                        $conn->rollBack();
+                    } elseif (!$isActive) {
+                        $error = 'Invitation code is inactive.';
                         $conn->rollBack();
                     } else {
                         $starting_balance = isset($invitation['starting_balance']) && (float)$invitation['starting_balance'] > 0
@@ -161,8 +172,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($conn) && $conn instanceof PDO && $conn->inTransaction()) {
                 $conn->rollBack();
             }
+            if ($e instanceof PDOException && $e->getCode() === '23000') {
+                $error = 'User already exists.';
+            } else {
             error_log('Registration failed: ' . $e->getMessage());
             $error = 'Registration failed. Please check your details and try again.';
+            }
         }
     }
 }
@@ -311,7 +326,7 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
 </head>
 <body>
     <div class="register-container">
-        <h1 class="login-title"><?php echo __t('create_account', 'Create Account'); ?></h1>
+        <h1 class="login-title">Create Account</h1>
         <div class="logo">
             <?php if ($siteLogo): ?>
                 <img src="<?php echo htmlspecialchars($siteLogo); ?>" alt="<?php echo htmlspecialchars($siteName); ?>" style="height: 48px; margin-bottom: 10px;">
@@ -335,35 +350,35 @@ $favicon = get_setting('site_favicon', 'assets/images/favicon.ico');
         
         <form method="POST">
             <div class="form-group">
-                <label for="fullname"><?php echo __t('full_name', 'Full Name'); ?></label>
-                <input type="text" id="fullname" name="fullname" placeholder="<?php echo htmlspecialchars(__t('enter_full_name', 'Enter your full name')); ?>" required>
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
             </div>
             
             <div class="form-group">
-                <label for="email"><?php echo __t('email_address', 'Email Address'); ?></label>
-                <input type="email" id="email" name="email" placeholder="<?php echo htmlspecialchars(__t('enter_your_email', 'Enter your email')); ?>" required>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
             </div>
             
             <div class="form-group">
-                <label for="password"><?php echo __t('password', 'Password'); ?></label>
-                <input type="password" id="password" name="password" placeholder="<?php echo htmlspecialchars(__t('create_password', 'Create a password')); ?>" required>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
             </div>
             
             <div class="form-group">
-                <label for="confirm_password"><?php echo __t('confirm_password', 'Confirm Password'); ?></label>
-                <input type="password" id="confirm_password" name="confirm_password" placeholder="<?php echo htmlspecialchars(__t('confirm_your_password', 'Confirm your password')); ?>" required>
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
             </div>
             
             <div class="form-group">
-                <label for="invitation_code"><?php echo __t('invitation_code', 'Invitation Code'); ?></label>
-                <input type="text" id="invitation_code" name="invitation_code" placeholder="<?php echo htmlspecialchars(__t('enter_invitation_code', 'Enter invitation code')); ?>" required>
+                <label for="invitation_code">Invitation Code</label>
+                <input type="text" id="invitation_code" name="invitation_code" placeholder="Enter invitation code" required>
             </div>
             
-            <button type="submit" class="btn"><?php echo __t('create_account', 'Create Account'); ?></button>
+            <button type="submit" class="btn">Create Account</button>
         </form>
         
         <div class="login-link">
-            <?php echo __t('already_have_account', 'Already have an account?'); ?> <a href="login.php"><?php echo __t('login', 'Login'); ?></a>
+            Already have an account? <a href="login.php">Login</a>
         </div>
     </div>
 </body>

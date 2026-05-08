@@ -1,31 +1,33 @@
 <?php
-session_start();
 require_once __DIR__ . '/config.php';
-if (empty($_SESSION['admin'])) exit();
+if (!isAdminLoggedIn()) exit();
+$conn = getConnection();
 
 $id = (int)$_GET['id'];
 
 $stmt = $conn->prepare("SELECT * FROM users WHERE id=?");
-$stmt->bind_param("i",$id);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+$stmt->execute([$id]);
+$user = $stmt->fetch();
+
+if (!$user) {
+    exit('User not found');
+}
 
 if($_SERVER['REQUEST_METHOD']=="POST"){
 
     $newBalance = (float)$_POST['balance'];
-    $newLevel = $_POST['level'];
+    $newLevel = normalizeLevelName($_POST['level']);
     $bonus = (float)$_POST['bonus'];
 
     // Update balance manually
-    $stmt = $conn->prepare("UPDATE users SET balance=?, level=? WHERE id=?");
-    $stmt->bind_param("dsi",$newBalance,$newLevel,$id);
-    $stmt->execute();
+    $stmt = $conn->prepare("UPDATE users SET balance=? WHERE id=?");
+    $stmt->execute([$newBalance, $id]);
+    setCurrentUserActiveLevel($id, $newLevel);
 
     // Add bonus separately if given
     if($bonus > 0){
         $stmt = $conn->prepare("UPDATE users SET balance=balance+? WHERE id=?");
-        $stmt->bind_param("di",$bonus,$id);
-        $stmt->execute();
+        $stmt->execute([$bonus, $id]);
     }
 
     header("Location: admin_users.php");
@@ -55,10 +57,9 @@ button{background:#007bff;color:#fff;padding:10px;border:none;width:100%}
 
 <label>Level</label>
 <select name="level">
-<option value="Bronze">Bronze</option>
-<option value="Silver">Silver</option>
-<option value="Gold">Gold</option>
-<option value="Platinum">Platinum</option>
+<?php foreach (getAppLevelNames() as $level): ?>
+<option value="<?php echo htmlspecialchars($level); ?>" <?php echo normalizeLevelName($user['level'] ?? '') === $level ? 'selected' : ''; ?>><?php echo htmlspecialchars($level); ?></option>
+<?php endforeach; ?>
 </select>
 
 <label>Give Bonus (Optional)</label>

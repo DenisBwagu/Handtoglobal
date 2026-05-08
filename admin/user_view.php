@@ -111,15 +111,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             exit;
             
         case 'reset_password':
-            $newPassword = '12345678';
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $newPassword = $_POST['new_password'] ?? '';
             
-            try {
-                $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-                $stmt->execute([$hashedPassword, $user['id']]);
-                $success = "Password reset successfully. New password: $newPassword";
-            } catch(PDOException $e) {
-                $error = 'Failed to reset password: ' . $e->getMessage();
+            if ($newPassword === '') {
+                $error = 'Please enter a new password.';
+            } else {
+                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                
+                try {
+                    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+                    $stmt->execute([$hashedPassword, $user['id']]);
+                    $success = 'Password changed successfully.';
+                } catch(PDOException $e) {
+                    $error = 'Failed to reset password: ' . $e->getMessage();
+                }
             }
             break;
             
@@ -205,11 +210,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         if (!$unlockResult) {
                             $error = 'Failed to unlock level - please try again';
                         } else {
-                            // Update user's current level if this is higher than their current
-                            $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
-                            $stmt->execute([$level, $user['id']]);
-                            htg_debug_log("DEBUG: Updated user level in users table to: $level");
-                            
                             // Update user session data for real-time effect
                             updateUserSessionData($user['id']);
                             refreshUserDashboardCache($user['id']);
@@ -408,14 +408,8 @@ if ($user) {
     }
 }
 
-// Helper function to get user level based on balance
-function getUserLevel($balance) {
-    if ($balance >= 500) return 'VIP 1';
-    if ($balance >= 250) return 'Gold';
-    if ($balance >= 150) return 'Silver';
-    if ($balance >= 100) return 'Bronze';
-    return 'Bronze';
-}
+$currentUserLevel = getCurrentUserActiveLevel($user['id'], $user);
+$user['level'] = $currentUserLevel;
 
 // Helper function to get level reward
 function getLevelReward($balance) {
@@ -917,7 +911,7 @@ if ($check_column->rowCount() > 0) {
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Level</span>
-                        <span class="stat-value"><?php echo getUserLevel($user['balance']); ?></span>
+                        <span class="stat-value"><?php echo htmlspecialchars($currentUserLevel); ?></span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Status</span>
@@ -974,7 +968,7 @@ if ($check_column->rowCount() > 0) {
             <div class="activity-cards">
                 <div class="activity-card">
                     <div class="activity-card-title">LEVEL</div>
-                    <div class="activity-card-value"><?php echo getUserLevel($user['balance']); ?></div>
+                    <div class="activity-card-value"><?php echo htmlspecialchars($currentUserLevel); ?></div>
                     <div class="activity-card-subtitle">#1 - <?php echo getLevelReward($user['balance']); ?>/task</div>
                 </div>
                 
@@ -1094,10 +1088,14 @@ if ($check_column->rowCount() > 0) {
                 <h3>Reset Password</h3>
                 <span class="close" onclick="closeModal('passwordModal')">&times;</span>
             </div>
-            <p style="color: #dc3545;">This will reset the user's password to 12345678.</p>
+            <p style="color: #dc3545;">Enter the new password for this user.</p>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="reset_password">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="text" name="new_password" class="form-control" required autocomplete="new-password">
+                </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-key"></i> Confirm

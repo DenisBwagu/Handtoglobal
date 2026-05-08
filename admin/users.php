@@ -12,21 +12,6 @@ if (!isAdminLoggedIn()) {
 
 $msg = "";
 $error = "";
-if (isset($_GET['deleted'])) {
-    $msg = "User deleted successfully!";
-}
-
-// Handle user operations
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    try {
-        $stmt = $conn->prepare("DELETE FROM users WHERE id=?");
-        $stmt->execute([$id]);
-        redirect('users.php?deleted=1');
-    } catch(PDOException $e) {
-        $error = "Failed to delete user: " . $e->getMessage();
-    }
-}
 
 // Handle search and pagination
 $search = $_GET['search'] ?? '';
@@ -56,13 +41,8 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $users = $stmt->fetchAll();
 
-// Helper function to get user level based on balance
-function getUserLevel($balance) {
-    if ($balance >= 500) return 'Platinum';
-    if ($balance >= 250) return 'Gold';
-    if ($balance >= 150) return 'Silver';
-    if ($balance >= 100) return 'Bronze';
-    return 'Bronze';
+function getUserDisplayLevel($user) {
+    return getCurrentUserActiveLevel($user['id'], $user);
 }
 ?>
 
@@ -88,6 +68,11 @@ function getUserLevel($balance) {
             <?php if ($msg): ?>
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($error): ?>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
                 </div>
             <?php endif; ?>
             
@@ -126,7 +111,7 @@ function getUserLevel($balance) {
                                     <td><?php echo htmlspecialchars($user['fullname']); ?></td>
                                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                                     <td class="invitation-code"><?php echo $user['invite_code_used'] ? htmlspecialchars($user['invite_code_used']) : '-'; ?></td>
-                                    <td class="level"><?php echo getUserLevel($user['balance']); ?></td>
+                                    <td class="level"><?php echo htmlspecialchars(getUserDisplayLevel($user)); ?></td>
                                     <td class="balance">$<?php echo number_format($user['balance'], 2); ?></td>
                                     <td>
                                         <?php 
@@ -144,7 +129,6 @@ function getUserLevel($balance) {
                                     <td>
                                         <div class="actions">
                                             <a href="user_view.php?id=<?php echo $user['id']; ?>" class="action-link">View</a>
-                                            <a href="users.php?delete=<?php echo $user['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
                                         </div>
                                     </td>
                                 </tr>

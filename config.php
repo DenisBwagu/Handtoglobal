@@ -218,6 +218,61 @@ function getUserById($id) {
     return $stmt->fetch();
 }
 
+function getCurrentUserActiveLevel($userId, $user = null) {
+    $conn = getConnection();
+    if (!$user) {
+        $stmt = $conn->prepare("SELECT level FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+    }
+
+    $levels = getAppLevelNames();
+    $storedLevel = normalizeLevelName($user['level'] ?? '');
+
+    if ($storedLevel !== '' && in_array($storedLevel, $levels, true)) {
+        return $storedLevel;
+    }
+
+    return $levels[0] ?? 'Bronze';
+}
+
+function setCurrentUserActiveLevel($userId, $level) {
+    $conn = getConnection();
+    $level = normalizeLevelName($level);
+    $levels = getAppLevelNames();
+
+    if (!in_array($level, $levels, true)) {
+        return false;
+    }
+
+    createUserLevelsTable();
+
+    $conn->beginTransaction();
+    try {
+        $stmt = $conn->prepare("
+            INSERT INTO user_levels (user_id, level, is_unlocked, unlocked_at, updated_at)
+            VALUES (?, ?, 1, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+                is_unlocked = 1,
+                unlocked_at = COALESCE(unlocked_at, NOW()),
+                updated_at = NOW()
+        ");
+        $stmt->execute([$userId, $level]);
+
+        $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
+        $stmt->execute([$level, $userId]);
+
+        $conn->commit();
+        return true;
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        error_log("Failed to set current user level: " . $e->getMessage());
+        return false;
+    }
+}
+
 function getAdminById($id) {
     $conn = getConnection();
     $stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");

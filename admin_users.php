@@ -1,9 +1,9 @@
 <?php
-session_start();
 require_once __DIR__ . '/config.php';
-if (empty($_SESSION['admin'])) { header("Location: login.php"); exit(); }
+if (!isAdminLoggedIn()) { header("Location: login.php"); exit(); }
 
-$users = $conn->query("SELECT * FROM users ORDER BY id DESC");
+$conn = getConnection();
+$users = $conn->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -31,13 +31,13 @@ a.btn{background:#007bff;color:#fff;padding:6px 10px;text-decoration:none;border
 <th>Action</th>
 </tr>
 
-<?php while($u = $users->fetch_assoc()){ ?>
+<?php foreach ($users as $u) { ?>
 <tr>
 <td><?php echo $u['id']; ?></td>
 <td><?php echo $u['fullname']; ?></td>
 <td><?php echo $u['email']; ?></td>
 <td><?php echo $u['balance']; ?> USDT</td>
-<td><?php echo $u['level']; ?></td>
+<td><?php echo htmlspecialchars(getCurrentUserActiveLevel($u['id'], $u)); ?></td>
 <td>
 <a class="btn" href="admin_edit_user.php?id=<?php echo $u['id']; ?>">Edit</a>
 </td>
