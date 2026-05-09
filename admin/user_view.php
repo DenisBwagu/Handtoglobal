@@ -111,20 +111,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
             exit;
             
         case 'reset_password':
-            $newPassword = $_POST['new_password'] ?? '';
+            $newPassword = trim($_POST['new_password'] ?? '');
+
+    if (empty($newPassword)) {
+        $error = 'Please enter a new password';
+        break;
+    }
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             
-            if ($newPassword === '') {
-                $error = 'Please enter a new password.';
-            } else {
-                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                
-                try {
-                    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-                    $stmt->execute([$hashedPassword, $user['id']]);
-                    $success = 'Password changed successfully.';
-                } catch(PDOException $e) {
-                    $error = 'Failed to reset password: ' . $e->getMessage();
-                }
+            try {
+                $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+                $stmt->execute([$hashedPassword, $user['id']]);
+                $success = "Password reset successfully!";
+            } catch(PDOException $e) {
+                $error = 'Failed to reset password: ' . $e->getMessage();
             }
             break;
             
@@ -210,11 +210,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user) {
                         if (!$unlockResult) {
                             $error = 'Failed to unlock level - please try again';
                         } else {
+                            // Update user's current level if this is higher than their current
+                            $stmt = $conn->prepare("UPDATE users SET level = ? WHERE id = ?");
+                            $stmt->execute([$level, $user['id']]);
+                            htg_debug_log("DEBUG: Updated user level in users table to: $level");
+                            
                             // Update user session data for real-time effect
                             updateUserSessionData($user['id']);
                             refreshUserDashboardCache($user['id']);
                             
                             $success = $level . ' level unlocked successfully!';
+                            $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+                            $stmt->execute([$user['id']]);
+                            $user = $stmt->fetch();
                             htg_debug_log("DEBUG: Admin unlock completed successfully");
                         }
                     }
@@ -408,8 +416,14 @@ if ($user) {
     }
 }
 
-$currentUserLevel = getCurrentUserActiveLevel($user['id'], $user);
-$user['level'] = $currentUserLevel;
+// Helper function to get user level based on balance
+function getUserLevel($balance) {
+    if ($balance >= 500) return 'VIP 1';
+    if ($balance >= 250) return 'Gold';
+    if ($balance >= 150) return 'Silver';
+    if ($balance >= 100) return 'Bronze';
+    return 'Bronze';
+}
 
 // Helper function to get level reward
 function getLevelReward($balance) {
@@ -906,15 +920,15 @@ if ($check_column->rowCount() > 0) {
                 
                 <div class="user-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Balance</span>
+                        <span class="stat-label"><?php echo __t('balance', 'Balance'); ?></span>
                         <span class="stat-value balance">$<?php echo number_format($user['balance'], 2); ?></span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Level</span>
-                        <span class="stat-value"><?php echo htmlspecialchars($currentUserLevel); ?></span>
+                        <span class="stat-label"><?php echo __t('level', 'Level'); ?></span>
+                        <span class="stat-value"><?php echo htmlspecialchars($user['level'] ?? 'Bronze'); ?></span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Status</span>
+                        <span class="stat-label"><?php echo __t('status', 'Status'); ?></span>
                         <span class="stat-value">
                             <span class="badge <?php echo $isActive ? 'badge-active' : 'badge-blocked'; ?>">
                                 <?php echo $isActive ? 'Active' : 'Blocked'; ?>
@@ -922,35 +936,35 @@ if ($check_column->rowCount() > 0) {
                         </span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Score</span>
+                        <span class="stat-label"><?php echo __t('score', 'Score'); ?></span>
                         <span class="stat-value"><?php echo number_format($userScore, 2); ?></span>
                     </div>
                 </div>
                 
                 <div class="action-buttons">
                     <button class="btn btn-green" onclick="showLoginAsModal()">
-                        <i class="fas fa-sign-in-alt"></i> LoginAs
+                        <i class="fas fa-sign-in-alt"></i> <?php echo __t('login_as', 'Login As'); ?>
                     </button>
                     <button class="btn" onclick="showPasswordModal()">
-                        <i class="fas fa-key"></i> ResetPassword
+                        <i class="fas fa-key"></i> <?php echo __t('reset_password', 'Reset Password'); ?>
                     </button>
                     <button class="btn" onclick="showUnlockModal()">
-                        <i class="fas fa-unlock"></i> UnlockLevel
+                        <i class="fas fa-unlock"></i> <?php echo __t('unlock_level', 'Unlock Level'); ?>
                     </button>
                     <button class="btn" onclick="showBalanceModal()">
-                        <i class="fas fa-dollar-sign"></i> AdjustBalance
+                        <i class="fas fa-dollar-sign"></i> <?php echo __t('adjust_balance', 'Adjust Balance'); ?>
                     </button>
                     <button class="btn" onclick="showLimitsModal()">
-                        <i class="fas fa-sliders-h"></i> UserLimits
+                        <i class="fas fa-sliders-h"></i> <?php echo __t('user_limits', 'User Limits'); ?>
                     </button>
                     <button class="btn btn-red" onclick="showToggleStatusModal()">
-                        <i class="fas fa-ban"></i> <?php echo $isActive ? 'Deactivate' : 'Activate'; ?>
+                        <i class="fas fa-ban"></i> <?php echo $isActive ? __t('deactivate', 'Deactivate') : __t('activate', 'Activate'); ?>
                     </button>
                     <button class="btn btn-orange-outline" onclick="showFlushLevelsModal()">
-                        <i class="fas fa-trash"></i> FlushLevels
+                        <i class="fas fa-trash"></i> <?php echo __t('flush_levels', 'Flush Levels'); ?>
                     </button>
                     <button class="btn btn-red" onclick="showFlushAccountModal()">
-                        <i class="fas fa-user-times"></i> FlushAccount
+                        <i class="fas fa-user-times"></i> <?php echo __t('flush_account', 'Flush Account'); ?>
                     </button>
                 </div>
             </div>
@@ -962,24 +976,24 @@ if ($check_column->rowCount() > 0) {
                     <span class="live-indicator"></span>
                     LiveActivity
                 </div>
-                <div class="live-status">UpdatingLive</div>
+                <div class="live-status"><?php echo __t('updating_live', 'Updating Live'); ?></div>
             </div>
             
             <div class="activity-cards">
                 <div class="activity-card">
-                    <div class="activity-card-title">LEVEL</div>
-                    <div class="activity-card-value"><?php echo htmlspecialchars($currentUserLevel); ?></div>
+                    <div class="activity-card-title"><?php echo __t('level', 'LEVEL'); ?></div>
+                    <div class="activity-card-value"><?php echo htmlspecialchars($user['level'] ?? 'Bronze'); ?></div>
                     <div class="activity-card-subtitle">#1 - <?php echo getLevelReward($user['balance']); ?>/task</div>
                 </div>
                 
                 <div class="activity-card">
-                    <div class="activity-card-title">WORKINGON</div>
-                    <div class="activity-card-value">LevelComplete</div>
-                    <div class="activity-card-subtitle green">LevelComplete</div>
+                    <div class="activity-card-title"><?php echo __t('working_on', 'WORKING ON'); ?></div>
+                    <div class="activity-card-value"><?php echo __t('level_complete', 'Level Complete'); ?></div>
+                    <div class="activity-card-subtitle green"><?php echo __t('level_complete', 'Level Complete'); ?></div>
                 </div>
                 
                 <div class="activity-card">
-                    <div class="activity-card-title">PROGRESS</div>
+                    <div class="activity-card-title"><?php echo __t('progress', 'PROGRESS'); ?></div>
                     <div class="activity-card-value"><?php echo $taskCount; ?> / 40</div>
                     <div class="activity-card-subtitle">
                         <?php $progress = min(100, ($taskCount / 40) * 100); ?>
@@ -1007,18 +1021,18 @@ if ($check_column->rowCount() > 0) {
         
         <div class="card">
             <div class="card-header">
-                <h3 style="font-size: 18px; font-weight: 600;">TaskCompletions</h3>
+                <h3 style="font-size: 18px; font-weight: 600;"><?php echo __t('task_completions', 'Task Completions'); ?></h3>
             </div>
             <div class="card-body">
                 <?php if ($taskCount > 0): ?>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Task</th>
-                                <th>Level</th>
-                                <th>Reward</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th><?php echo __t('task', 'Task'); ?></th>
+                                <th><?php echo __t('level', 'Level'); ?></th>
+                                <th><?php echo __t('reward', 'Reward'); ?></th>
+                                <th><?php echo __t('status', 'Status'); ?></th>
+                                <th><?php echo __t('date', 'Date'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1036,7 +1050,7 @@ if ($check_column->rowCount() > 0) {
                                     <td><?php echo htmlspecialchars($task['task_level'] ?? 'Bronze'); ?></td>
                                     <td>$<?php echo number_format($task['reward'], 2); ?></td>
                                     <td>
-                                        <span class="badge badge-completed">Completed</span>
+                                        <span class="badge badge-completed"><?php echo __t('completed', 'Completed'); ?></span>
                                     </td>
                                     <td><?php echo date('m/d/Y', strtotime($task['completed_at'])); ?></td>
                                 </tr>
@@ -1044,7 +1058,7 @@ if ($check_column->rowCount() > 0) {
                                 endforeach;
                             } catch(PDOException $e) {
                                 // Query failed, show error message
-                                echo '<tr><td colspan="5" style="text-align: center; color: #6c757d;">Unable to load task completions</td></tr>';
+                                echo '<tr><td colspan="5" style="text-align: center; color: #6c757d;">' . __t('unable_load_task_completions', 'Unable to load task completions') . '</td></tr>';
                             }
                             ?>
                         </tbody>
@@ -1062,10 +1076,10 @@ if ($check_column->rowCount() > 0) {
     <div id="loginAsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Login as User</h3>
+                <h3><?php echo __t('login_as_user', 'Login as User'); ?></h3>
                 <span class="close" onclick="closeModal('loginAsModal')">&times;</span>
             </div>
-            <p>Are you sure you want to login as <strong><?php echo htmlspecialchars($user['fullname']); ?></strong>?</p>
+            <p><?php echo __t('sure_login_as', 'Are you sure you want to login as'); ?> <strong><?php echo htmlspecialchars($user['fullname']); ?></strong>?</p>
             <p style="color: #dc3545; font-size: 12px;">You will be logged out of admin and logged in as this user.</p>
             <form method="POST">
                 <input type="hidden" name="action" value="login_as">
@@ -1085,17 +1099,14 @@ if ($check_column->rowCount() > 0) {
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Reset Password</h3>
+                <h3><?php echo __t('reset_password', 'Reset Password'); ?></h3>
                 <span class="close" onclick="closeModal('passwordModal')">&times;</span>
             </div>
-            <p style="color: #dc3545;">Enter the new password for this user.</p>
+            <p style="color: #dc3545;">Enter the new password you want to set for this user.</p>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="reset_password">
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="text" name="new_password" class="form-control" required autocomplete="new-password">
-                </div>
+                <input type="text" name="new_password" class="form-control" placeholder="Enter new password" required autocomplete="new-password" style="margin-top:15px;">
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-key"></i> Confirm
@@ -1112,15 +1123,15 @@ if ($check_column->rowCount() > 0) {
     <div id="unlockModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Unlock Level</h3>
+                <h3><?php echo __t('unlock_level', 'Unlock Level'); ?></h3>
                 <span class="close" onclick="closeModal('unlockModal')">&times;</span>
             </div>
             <form method="POST">
                 <input type="hidden" name="action" value="unlock_level">
                 <div class="form-group">
-                    <label>Select Level to Unlock</label>
+                    <label><?php echo __t('select_level_unlock', 'Select Level to Unlock'); ?></label>
                     <select name="level" class="form-control" required>
-                        <option value="">Select Level</option>
+                        <option value=""><?php echo __t('select_level', 'Select Level'); ?></option>
                         <?php
                         try {
                             $levels = getAppLevelNames();
@@ -1153,7 +1164,7 @@ if ($check_column->rowCount() > 0) {
     <div id="balanceModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Adjust Balance</h3>
+                <h3><?php echo __t('adjust_balance', 'Adjust Balance'); ?></h3>
                 <span class="close" onclick="closeModal('balanceModal')">&times;</span>
             </div>
             <form method="POST">
@@ -1166,7 +1177,7 @@ if ($check_column->rowCount() > 0) {
                     <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>Operation</label>
+                    <label><?php echo __t('operation', 'Operation'); ?></label>
                     <div class="radio-group">
                         <label>
                             <input type="radio" name="operation" value="add" checked>
@@ -1179,15 +1190,15 @@ if ($check_column->rowCount() > 0) {
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Reason</label>
+                    <label><?php echo __t('reason', 'Reason'); ?></label>
                     <select name="reason" class="form-control" required>
-                        <option value="">Select Reason</option>
-                        <option value="Manual Adjustment">Manual Adjustment</option>
-                        <option value="Bonus">Bonus</option>
-                        <option value="Penalty">Penalty</option>
-                        <option value="Correction">Correction</option>
-                        <option value="Refund">Refund</option>
-                        <option value="Reward">Reward</option>
+                        <option value=""><?php echo __t('select_reason', 'Select Reason'); ?></option>
+                        <option value="Manual Adjustment"><?php echo __t('manual_adjustment', 'Manual Adjustment'); ?></option>
+                        <option value="Bonus"><?php echo __t('bonus', 'Bonus'); ?></option>
+                        <option value="Penalty"><?php echo __t('penalty', 'Penalty'); ?></option>
+                        <option value="Correction"><?php echo __t('correction', 'Correction'); ?></option>
+                        <option value="Refund"><?php echo __t('refund', 'Refund'); ?></option>
+                        <option value="Reward"><?php echo __t('reward', 'Reward'); ?></option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -1206,13 +1217,13 @@ if ($check_column->rowCount() > 0) {
     <div id="limitsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>User Limits</h3>
+                <h3><?php echo __t('user_limits', 'User Limits'); ?></h3>
                 <span class="close" onclick="closeModal('limitsModal')">&times;</span>
             </div>
             <form method="POST">
                 <input type="hidden" name="action" value="user_limits">
                 <div class="form-group">
-                    <label>Max Levels Per Day</label>
+                    <label><?php echo __t('max_levels_per_day', 'Max Levels Per Day'); ?></label>
                     <input type="number" name="max_levels_per_day" class="form-control" min="1" value="<?php echo htmlspecialchars($userLimits['max_levels_per_day'] ?? 3); ?>">
                 </div>
                 <div class="form-group">
@@ -1220,7 +1231,7 @@ if ($check_column->rowCount() > 0) {
                     <input type="number" name="min_withdrawal_amount" class="form-control" step="0.01" min="0" value="<?php echo htmlspecialchars($userLimits['min_withdrawal_amount'] ?? 10.00); ?>">
                 </div>
                 <div class="form-group">
-                    <label>Min Withdrawal Level</label>
+                    <label><?php echo __t('min_withdrawal_level', 'Min Withdrawal Level'); ?></label>
                     <select name="min_withdrawal_level" class="form-control">
                         <option value="Bronze" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
                         <option value="Silver" <?php echo ($userLimits['min_withdrawal_level'] ?? 'Bronze') === 'Silver' ? 'selected' : ''; ?>>Silver</option>
@@ -1233,7 +1244,7 @@ if ($check_column->rowCount() > 0) {
                     <input type="number" name="min_balance_floor" class="form-control" step="0.01" min="0" value="<?php echo htmlspecialchars($userLimits['min_balance'] ?? 0.00); ?>">
                 </div>
                 <div class="form-group">
-                    <label>Custom Message</label>
+                    <label><?php echo __t('custom_message', 'Custom Message'); ?></label>
                     <textarea name="custom_message" class="form-control" rows="3"><?php echo htmlspecialchars($userLimits['custom_message'] ?? ''); ?></textarea>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -1252,16 +1263,16 @@ if ($check_column->rowCount() > 0) {
     <div id="statusModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Toggle User Status</h3>
+                <h3><?php echo __t('toggle_user_status', 'Toggle User Status'); ?></h3>
                 <span class="close" onclick="closeModal('statusModal')">&times;</span>
             </div>
-            <p>Are you sure you want to <?php echo $isActive ? 'deactivate' : 'activate'; ?> this user?</p>
+            <p><?php echo __t('are_you_sure_you_want_to', 'Are you sure you want to'); ?> <?php echo $isActive ? __t('deactivate', 'deactivate') : __t('activate', 'activate'); ?> <?php echo __t('this_user', 'this user?'); ?></p>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
                 <input type="hidden" name="action" value="toggle_status">
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-<?php echo $isActive ? 'danger' : 'success'; ?>">
-                        <i class="fas fa-<?php echo $isActive ? 'ban' : 'check'; ?>"></i> <?php echo $isActive ? 'Deactivate' : 'Activate'; ?> User
+                        <i class="fas fa-<?php echo $isActive ? 'ban' : 'check'; ?>"></i> <?php echo $isActive ? __t('deactivate', 'Deactivate') : __t('activate', 'Activate'); ?> User
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('statusModal')">
                         Cancel
@@ -1275,15 +1286,15 @@ if ($check_column->rowCount() > 0) {
     <div id="flushLevelsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Flush Levels</h3>
+                <h3><?php echo __t('flush_levels', 'Flush Levels'); ?></h3>
                 <span class="close" onclick="closeModal('flushLevelsModal')">&times;</span>
             </div>
             <p style="color: #dc3545;">This will reset the user's level progress only.</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Clear completed tasks for selected levels</li>
+                <li><?php echo __t('clear_completed_tasks_selected_levels', 'Clear completed tasks for selected levels'); ?></li>
                 <li>Reset progress to 0/40 for selected levels</li>
                 <li>Keep balance, deposits, withdrawals</li>
-                <li>Keep login details</li>
+                <li><?php echo __t('keep_login_details', 'Keep login details'); ?></li>
             </ul>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">
@@ -1331,7 +1342,7 @@ if ($check_column->rowCount() > 0) {
                             echo '</div>';
                         }
                     } catch(PDOException $e) {
-                        echo '<p style="color: #dc3545;">Unable to load levels</p>';
+                        echo '<p style="color: #dc3545;">' . __t('unable_load_levels', 'Unable to load levels') . '</p>';
                     }
                     ?>
                 </div>
@@ -1351,17 +1362,17 @@ if ($check_column->rowCount() > 0) {
     <div id="flushAccountModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Flush Account</h3>
+                <h3><?php echo __t('flush_account', 'Flush Account'); ?></h3>
                 <span class="close" onclick="closeModal('flushAccountModal')">&times;</span>
             </div>
             <p style="color: #dc3545;">This will fully reset the user account activity.</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Clear completed tasks</li>
-                <li>Reset level unlocks and progress</li>
+                <li><?php echo __t('clear_completed_tasks', 'Clear completed tasks'); ?></li>
+                <li><?php echo __t('reset_level_unlocks_progress', 'Reset level unlocks and progress'); ?></li>
                 <li>Reset balance to 0</li>
-                <li>Reset accuracy and rating</li>
+                <li><?php echo __t('reset_accuracy_rating', 'Reset accuracy and rating'); ?></li>
                 <li>Keep login details (name, email, password)</li>
-                <li>Keep registration date</li>
+                <li><?php echo __t('keep_registration_date', 'Keep registration date'); ?></li>
             </ul>
             <p><strong><?php echo htmlspecialchars($user['fullname']); ?></strong></p>
             <form method="POST">

@@ -83,7 +83,7 @@ $name = $employee['name'] ?: ($employee['fullname'] ?? '');
             <?php endif; ?>
 
             <div class="page-header">
-                <h1>Edit Employee</h1>
+                <h1><?php echo __t('edit_employee', 'Edit Employee'); ?></h1>
                 <p>Update employee account details.</p>
             </div>
 
@@ -91,31 +91,31 @@ $name = $employee['name'] ?: ($employee['fullname'] ?? '');
                 <div class="card-body">
                     <form method="post">
                         <div class="form-group">
-                            <label>Name</label>
+                            <label><?php echo __t('name', 'Name'); ?></label>
                             <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($name); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label>Email</label>
+                            <label><?php echo __t('email', 'Email'); ?></label>
                             <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($employee['email'] ?? ''); ?>" required>
                         </div>
                         <div class="form-group">
-                            <label>Phone</label>
+                            <label><?php echo __t('phone', 'Phone'); ?></label>
                             <input type="text" name="phone" class="form-control" value="<?php echo htmlspecialchars($employee['phone'] ?? ''); ?>">
                         </div>
                         <div class="form-group">
-                            <label>Role</label>
+                            <label><?php echo __t('role', 'Role'); ?></label>
                             <input type="text" name="role" class="form-control" value="<?php echo htmlspecialchars($employee['role'] ?? 'Employee'); ?>">
                         </div>
                         <div class="form-group">
-                            <label>Status</label>
+                            <label><?php echo __t('status', 'Status'); ?></label>
                             <select name="status" class="form-control">
-                                <option value="Active" <?php echo ($employee['status'] ?? 'Active') === 'Active' ? 'selected' : ''; ?>>Active</option>
-                                <option value="Inactive" <?php echo ($employee['status'] ?? '') === 'Inactive' ? 'selected' : ''; ?>>Inactive</option>
+                                <option value="Active" <?php echo ($employee['status'] ?? 'Active') === 'Active' ? 'selected' : ''; ?>><?php echo __t('active', 'Active'); ?></option>
+                                <option value="Inactive" <?php echo ($employee['status'] ?? '') === 'Inactive' ? 'selected' : ''; ?>><?php echo __t('inactive', 'Inactive'); ?></option>
                             </select>
                         </div>
                         <div class="actions">
                             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
-                            <a href="employee_view.php?id=<?php echo $employeeId; ?>" class="btn btn-secondary">Cancel</a>
+                            <a href="employee_view.php?id=<?php echo $employeeId; ?>" class="btn btn-secondary"><?php echo __t('cancel', 'Cancel'); ?></a>
                         </div>
                     </form>
                 </div>

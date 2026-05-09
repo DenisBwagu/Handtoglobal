@@ -297,16 +297,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Name</label>
+                                <label class="form-label"><?php echo __t('name', 'Name'); ?></label>
                                 <input type="text" name="name" class="form-input" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Order</label>
+                                <label class="form-label"><?php echo __t('order', 'Order'); ?></label>
                                 <input type="number" name="order" class="form-input" value="5" required>
                             </div>
                         </div>
                         
-                        <label class="form-label">Icon</label>
+                        <label class="form-label"><?php echo __t('icon', 'Icon'); ?></label>
                         <div class="icon-grid">
                             <div class="icon-card" onclick="selectIcon('medal-bronze')">
                                 <i class="fas fa-medal"></i>
@@ -361,32 +361,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="hidden" name="icon" id="selected_icon" value="">
                         
                         <div class="form-group">
-                            <label class="form-label">TaskType</label>
+                            <label class="form-label"><?php echo __t('task_type', 'Task Type'); ?></label>
                             <select name="task_type" class="form-select">
-                                <option value="">SelectType</option>
+                                <option value=""><?php echo __t('select_type', 'Select Type'); ?></option>
                                 <option value="Name_items">Name_items</option>
-                                <option value="Name Items">Name Items</option>
-                                <option value="Other">Other</option>
+                                <option value="Name Items"><?php echo __t('name_items', 'Name Items'); ?></option>
+                                <option value="Other"><?php echo __t('other', 'Other'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">RewardPerTask</label>
+                                <label class="form-label"><?php echo __t('reward_per_task', 'Reward Per Task'); ?></label>
                                 <input type="number" step="0.01" name="reward" class="form-input" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">NumberOfTasks</label>
+                                <label class="form-label"><?php echo __t('number_of_tasks', 'Number Of Tasks'); ?></label>
                                 <input type="number" name="tasks_count" class="form-input" required>
                             </div>
                         </div>
                         
                         <div class="form-checkbox">
                             <input type="checkbox" name="requires_deposit" id="requires_deposit">
-                            <label for="requires_deposit">RequiresDeposit</label>
+                            <label for="requires_deposit"><?php echo __t('requires_deposit', 'Requires Deposit'); ?></label>
                         </div>
                         
-                        <button type="submit" class="btn-submit">Create</button>
+                        <button type="submit" class="btn-submit"><?php echo __t('create', 'Create'); ?></button>
                     </form>
                 </div>
             </div>

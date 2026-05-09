@@ -116,16 +116,16 @@ if ($total_tasks == 0) {
             <?php endif; ?>
             
             <div class="page-header">
-                <h1>Tasks Management</h1>
-                <p>Manage all tasks</p>
+                <h1><?php echo __t('tasks_management', 'Tasks Management'); ?></h1>
+                <p><?php echo __t('manage_all_tasks', 'Manage all tasks'); ?></p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">All Tasks</h2>
+                    <h2 class="card-title"><?php echo __t('all_tasks', 'All Tasks'); ?></h2>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <select class="level-filter" onchange="window.location.href='?level=' + this.value" style="padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;">
-                            <option value="AllLevels" <?php echo $level_filter === 'AllLevels' ? 'selected' : ''; ?>>All Levels</option>
+                            <option value="AllLevels" <?php echo $level_filter === 'AllLevels' ? 'selected' : ''; ?>><?php echo __t('all_levels', 'All Levels'); ?></option>
                             <option value="Bronze" <?php echo $level_filter === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
                             <option value="Silver" <?php echo $level_filter === 'Silver' ? 'selected' : ''; ?>>Silver</option>
                             <option value="Gold" <?php echo $level_filter === 'Gold' ? 'selected' : ''; ?>>Gold</option>
@@ -140,13 +140,13 @@ if ($total_tasks == 0) {
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>TITLE</th>
-                                <th>DESCRIPTION</th>
-                                <th>LEVEL</th>
-                                <th>REWARD</th>
-                                <th>IMAGE</th>
-                                <th>ACTIVE</th>
-                                <th>ACTIONS</th>
+                                <th><?php echo __t('title', 'TITLE'); ?></th>
+                                <th><?php echo __t('description', 'DESCRIPTION'); ?></th>
+                                <th><?php echo __t('level', 'LEVEL'); ?></th>
+                                <th><?php echo __t('reward', 'REWARD'); ?></th>
+                                <th><?php echo __t('image', 'IMAGE'); ?></th>
+                                <th><?php echo __t('active', 'ACTIVE'); ?></th>
+                                <th><?php echo __t('actions', 'ACTIONS'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,14 +171,14 @@ if ($total_tasks == 0) {
                                                  alt="Task Image" 
                                                  style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #dee2e6;">
                                         <?php else: ?>
-                                            <span style="color: #6c757d; font-size: 12px;">No image</span>
+                                            <span style="color: #6c757d; font-size: 12px;"><?php echo __t('no_image', 'No image'); ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if ($task['active']): ?>
-                                            <span class="badge badge-active">Active</span>
+                                            <span class="badge badge-active"><?php echo __t('active', 'Active'); ?></span>
                                         <?php else: ?>
-                                            <span class="badge badge-inactive">Inactive</span>
+                                            <span class="badge badge-inactive"><?php echo __t('inactive', 'Inactive'); ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -200,7 +200,7 @@ if ($total_tasks == 0) {
                     <?php if (empty($tasks)): ?>
                         <div class="empty-state" style="text-align: center; padding: 40px; color: #6c757d;">
                             <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px;"></i>
-                            <h3>No tasks found</h3>
+                            <h3><?php echo __t('no_tasks_found', 'No tasks found'); ?></h3>
                             <p>No tasks match the selected criteria.</p>
                         </div>
                     <?php endif; ?>

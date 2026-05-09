@@ -10,24 +10,29 @@ require_once __DIR__ . '/../../includes/language_helpers.php';
 // Get current page for title
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
-// Map page names to titles
-$pageTitles = [
-    'dashboard' => 'Dashboard',
-    'users' => 'Users',
-    'employees' => 'Employees',
-    'levels' => 'Levels',
-    'tasks' => 'Tasks',
-    'combos' => 'Combos',
-    'invitation-codes' => 'Invitation Codes',
-    'finance_analysis' => 'Finance Analysis',
-    'withdrawals' => 'Withdrawals',
-    'contacts' => 'Contacts',
-    'testimonials' => 'Testimonials',
-    'settings' => 'Settings',
-    'languages' => 'Languages'
+// Map page names to translated titles
+$pageTitleKeys = [
+    'dashboard' => ['dashboard', 'Dashboard'],
+    'users' => ['users', 'Users'],
+    'employees' => ['employees', 'Employees'],
+    'levels' => ['levels', 'Levels'],
+    'tasks' => ['tasks', 'Tasks'],
+    'combos' => ['combos', 'Combos'],
+    'invitation-codes' => ['invitation_codes', 'Invitation Codes'],
+    'finance_analysis' => ['finance_analysis', 'Finance Analysis'],
+    'withdrawals' => ['withdrawals', 'Withdrawals'],
+    'contacts' => ['contacts', 'Contacts'],
+    'testimonials' => ['testimonials', 'Testimonials'],
+    'settings' => ['settings', 'Settings'],
+    'languages' => ['languages', 'Languages']
 ];
 
-$topbarTitle = $pageTitles[$currentPage] ?? ucfirst($currentPage);
+if (isset($pageTitleKeys[$currentPage])) {
+    [$titleKey, $titleFallback] = $pageTitleKeys[$currentPage];
+    $topbarTitle = __t($titleKey, $titleFallback);
+} else {
+    $topbarTitle = ucfirst($currentPage);
+}
 $siteName = get_site_name();
 $siteLogoUrl = get_site_logo();
 ?>
@@ -49,7 +54,7 @@ $siteLogoUrl = get_site_logo();
         <div class="topbar-title"><?php echo htmlspecialchars($topbarTitle); ?></div>
     </div>
     <div class="topbar-right">
-        <div class="admin-badge">ADMIN</div>
+        <div class="admin-badge"><?php echo __t('admin_panel', 'ADMIN'); ?></div>
         <form class="language-form" method="post" action="../language_action.php">
             <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/admin/' . $currentPage . '.php'); ?>">
             <input type="hidden" name="context" value="admin">
@@ -63,13 +68,13 @@ $siteLogoUrl = get_site_logo();
             <i class="fas fa-moon"></i>
         </div>
         <a href="logout.php" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;background:#dc2626;color:#fff;text-decoration:none;font-size:13px;font-weight:700;">
-            <i class="fas fa-sign-out-alt"></i> Logout
+            <i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?>
         </a>
         <div class="profile-info">
             <div class="profile-avatar">
                 <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
             </div>
-            <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?></div>
+            <div class="profile-name"><?php echo htmlspecialchars($_SESSION['admin_name'] ?? __t('admin_panel', 'Admin')); ?></div>
             <div>
                 <i class="fas fa-chevron-down"></i>
             </div>

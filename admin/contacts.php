@@ -594,8 +594,8 @@ try {
             
             <!-- Header Section -->
             <div class="header-section">
-                <div class="page-title">Contacts</div>
-                <a href="contact_create.php" class="add-contact-btn">Add Contact</a>
+                <div class="page-title"><?php echo __t('contacts', 'Contacts'); ?></div>
+                <a href="contact_create.php" class="add-contact-btn"><?php echo __t('add_contact', 'Add Contact'); ?></a>
             </div>
             
             <!-- Summary Cards -->
@@ -607,15 +607,15 @@ try {
                             <div class="summary-stats">
                                 <div class="summary-stat">
                                     <div class="summary-stat-value"><?php echo $data['total_contacts']; ?></div>
-                                    <div class="summary-stat-label">Contacts</div>
+                                    <div class="summary-stat-label"><?php echo __t('contacts', 'Contacts'); ?></div>
                                 </div>
                                 <div class="summary-stat">
                                     <div class="summary-stat-value"><?php echo $data['registered_count']; ?></div>
-                                    <div class="summary-stat-label">Registered</div>
+                                    <div class="summary-stat-label"><?php echo __t('registered', 'Registered'); ?></div>
                                 </div>
                                 <div class="summary-stat">
                                     <div class="summary-stat-value"><?php echo $data['registration_percentage']; ?>%</div>
-                                    <div class="summary-stat-label">Percentage</div>
+                                    <div class="summary-stat-label"><?php echo __t('percentage', 'Percentage'); ?></div>
                                 </div>
                             </div>
                         </div>
@@ -623,19 +623,19 @@ try {
                 <?php else: ?>
                     <!-- Show empty summary cards -->
                     <div class="summary-card">
-                        <div class="summary-card-title">No Data</div>
+                        <div class="summary-card-title"><?php echo __t('no_data', 'No Data'); ?></div>
                         <div class="summary-stats">
                             <div class="summary-stat">
                                 <div class="summary-stat-value">0</div>
-                                <div class="summary-stat-label">Contacts</div>
+                                <div class="summary-stat-label"><?php echo __t('contacts', 'Contacts'); ?></div>
                             </div>
                             <div class="summary-stat">
                                 <div class="summary-stat-value">0</div>
-                                <div class="summary-stat-label">Registered</div>
+                                <div class="summary-stat-label"><?php echo __t('registered', 'Registered'); ?></div>
                             </div>
                             <div class="summary-stat">
                                 <div class="summary-stat-value">0%</div>
-                                <div class="summary-stat-label">Percentage</div>
+                                <div class="summary-stat-label"><?php echo __t('percentage', 'Percentage'); ?></div>
                             </div>
                         </div>
                     </div>
@@ -645,7 +645,7 @@ try {
             <!-- Filters Section -->
             <div class="filters-section">
                 <select class="filter-select" onchange="window.location.href='?employee=' + this.value + '&status=<?php echo $status_filter; ?>'">
-                    <option value="AllEmployees" <?php echo $employee_filter === 'AllEmployees' ? 'selected' : ''; ?>>AllEmployees</option>
+                    <option value="AllEmployees" <?php echo $employee_filter === 'AllEmployees' ? 'selected' : ''; ?>><?php echo __t('all_employees', 'All Employees'); ?></option>
                     <?php foreach ($employees as $employee): ?>
                         <option value="<?php echo $employee['id']; ?>" <?php echo $employee_filter == $employee['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($employee['name']); ?>
@@ -654,11 +654,11 @@ try {
                 </select>
                 
                 <select class="filter-select" onchange="window.location.href='?employee=<?php echo $employee_filter; ?>&status=' + this.value">
-                    <option value="AllStatus" <?php echo $status_filter === 'AllStatus' ? 'selected' : ''; ?>>AllStatus</option>
-                    <option value="new" <?php echo $status_filter === 'new' ? 'selected' : ''; ?>>New</option>
-                    <option value="contacted" <?php echo $status_filter === 'contacted' ? 'selected' : ''; ?>>Contacted</option>
-                    <option value="converted" <?php echo $status_filter === 'converted' ? 'selected' : ''; ?>>Converted</option>
-                    <option value="lost" <?php echo $status_filter === 'lost' ? 'selected' : ''; ?>>Lost</option>
+                    <option value="AllStatus" <?php echo $status_filter === 'AllStatus' ? 'selected' : ''; ?>><?php echo __t('all_status', 'All Status'); ?></option>
+                    <option value="new" <?php echo $status_filter === 'new' ? 'selected' : ''; ?>><?php echo __t('new', 'New'); ?></option>
+                    <option value="contacted" <?php echo $status_filter === 'contacted' ? 'selected' : ''; ?>><?php echo __t('contacted', 'Contacted'); ?></option>
+                    <option value="converted" <?php echo $status_filter === 'converted' ? 'selected' : ''; ?>><?php echo __t('converted', 'Converted'); ?></option>
+                    <option value="lost" <?php echo $status_filter === 'lost' ? 'selected' : ''; ?>><?php echo __t('lost', 'Lost'); ?></option>
                 </select>
             </div>
             
@@ -668,14 +668,14 @@ try {
                     <table class="contacts-table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Email</th>
-                                <th>Employee</th>
-                                <th>Status</th>
-                                <th>Registered</th>
-                                <th>Created</th>
-                                <th>Actions</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('phone', 'Phone'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('employee', 'Employee'); ?></th>
+                                <th><?php echo __t('status', 'Status'); ?></th>
+                                <th><?php echo __t('registered', 'Registered'); ?></th>
+                                <th><?php echo __t('created', 'Created'); ?></th>
+                                <th><?php echo __t('actions', 'Actions'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -698,10 +698,10 @@ try {
                                     <td><?php echo date('M j, Y', strtotime($contact['created_at'])); ?></td>
                                     <td>
                                         <div class="actions">
-                                            <a href="contact_view.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-view">View</a>
-                                            <a href="contact_edit.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-edit">Edit</a>
+                                            <a href="contact_view.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-view"><?php echo __t('view', 'View'); ?></a>
+                                            <a href="contact_edit.php?id=<?php echo $contact['id']; ?>" class="action-btn btn-edit"><?php echo __t('edit', 'Edit'); ?></a>
                                             <a href="?action=delete&id=<?php echo $contact['id']; ?>" class="action-btn btn-delete" 
-                                               onclick="return confirm('Are you sure you want to delete this contact?')">Delete</a>
+                                               onclick="return confirm('<?php echo __t('are_you_sure_delete_contact', 'Are you sure you want to delete this contact?'); ?>')"><?php echo __t('delete', 'Delete'); ?></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -711,7 +711,7 @@ try {
                 <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-file-alt"></i>
-                        <h3>No records found</h3>
+                        <h3><?php echo __t('no_records_found', 'No records found'); ?></h3>
                         <p>There are no contacts to display.</p>
                     </div>
                 <?php endif; ?>

@@ -308,16 +308,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Name</label>
+                                <label class="form-label"><?php echo __t('name', 'Name'); ?></label>
                                 <input type="text" name="name" class="form-input" value="<?php echo htmlspecialchars($level['name'] ?? ''); ?>" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Order</label>
+                                <label class="form-label"><?php echo __t('order', 'Order'); ?></label>
                                 <input type="number" name="order" class="form-input" value="<?php echo $level['sort_order'] ?? 1; ?>" required>
                             </div>
                         </div>
                         
-                        <label class="form-label">Icon</label>
+                        <label class="form-label"><?php echo __t('icon', 'Icon'); ?></label>
                         <div class="icon-grid">
                             <button type="button" class="icon-card <?= ($level['icon'] ?? '') === 'medal-bronze' ? 'selected' : '' ?>" onclick="selectIcon('medal-bronze')">
                                 <i class="fas fa-medal"></i>
@@ -372,41 +372,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="hidden" name="icon" id="selectedIcon" value="<?php echo htmlspecialchars($level['icon'] ?? 'medal-bronze'); ?>">
                         
                         <div class="form-group">
-                            <label class="form-label">TaskType</label>
+                            <label class="form-label"><?php echo __t('task_type', 'Task Type'); ?></label>
                             <select name="task_type" class="form-select">
                                 <option value="Name_items" <?php echo ($level['task_type'] ?? 'Name_items') === 'Name_items' ? 'selected' : ''; ?>>Name_items</option>
-                                <option value="Name Items" <?php echo ($level['task_type'] ?? '') === 'Name Items' ? 'selected' : ''; ?>>Name Items</option>
-                                <option value="Other" <?php echo ($level['task_type'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                                <option value="Name Items" <?php echo ($level['task_type'] ?? '') === 'Name Items' ? 'selected' : ''; ?>><?php echo __t('name_items', 'Name Items'); ?></option>
+                                <option value="Other" <?php echo ($level['task_type'] ?? '') === 'Other' ? 'selected' : ''; ?>><?php echo __t('other', 'Other'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Reward</label>
+                                <label class="form-label"><?php echo __t('reward', 'Reward'); ?></label>
                                 <input type="number" step="0.01" name="reward" class="form-input" value="<?php echo $level['task_reward'] ?? 0; ?>" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">TasksCount</label>
+                                <label class="form-label"><?php echo __t('tasks_count', 'Tasks Count'); ?></label>
                                 <input type="number" name="tasks_count" class="form-input" value="<?php echo $level['daily_task_limit'] ?? 40; ?>" required>
                             </div>
                         </div>
                         
                         <div class="form-checkbox">
                             <input type="checkbox" name="requires_deposit" id="requires_deposit" <?php echo ($level['deposit_amount'] ?? 0) > 0 ? 'checked' : ''; ?>>
-                            <label for="requires_deposit">RequiresDeposit</label>
+                            <label for="requires_deposit"><?php echo __t('requires_deposit', 'Requires Deposit'); ?></label>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">DepositAmount</label>
+                            <label class="form-label"><?php echo __t('deposit_amount', 'Deposit Amount'); ?></label>
                             <input type="number" step="0.01" name="deposit_amount" class="form-input" value="<?php echo $level['deposit_amount'] ?? 0; ?>">
                         </div>
                         
                         <div class="form-checkbox">
                             <input type="checkbox" name="is_active" id="is_active" <?php echo !empty($level['is_active']) ? 'checked' : ''; ?>>
-                            <label for="is_active">Active</label>
+                            <label for="is_active"><?php echo __t('active', 'Active'); ?></label>
                         </div>
                         
-                        <button type="submit" class="btn-submit">Update</button>
+                        <button type="submit" class="btn-submit"><?php echo __t('update', 'Update'); ?></button>
                     </form>
                 </div>
             </div>

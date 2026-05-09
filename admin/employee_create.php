@@ -437,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="sidebar">
 <!-- MANAGEMENT Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MANAGEMENT</div>
+                <div class="sidebar-section-title"><?php echo __t('management', 'MANAGEMENT'); ?></div>
                 <ul class="sidebar-menu">
                     <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                     <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
@@ -447,7 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <!-- PLATFORM Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">PLATFORM</div>
+                <div class="sidebar-section-title"><?php echo __t('platform', 'PLATFORM'); ?></div>
                 <ul class="sidebar-menu">
                     <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
                     <li><a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a></li>
@@ -458,7 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <!-- FINANCE Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">FINANCE</div>
+                <div class="sidebar-section-title"><?php echo __t('finance', 'FINANCE'); ?></div>
                 <ul class="sidebar-menu">
                     <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
                     <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
@@ -467,7 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <!-- MONITORING Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MONITORING</div>
+                <div class="sidebar-section-title"><?php echo __t('monitoring', 'MONITORING'); ?></div>
                 <ul class="sidebar-menu">
                     <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
                     <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
@@ -476,7 +476,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <!-- SYSTEM Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">SYSTEM</div>
+                <div class="sidebar-section-title"><?php echo __t('system', 'SYSTEM'); ?></div>
                 <ul class="sidebar-menu">
                     <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
                     <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
@@ -500,13 +500,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <div class="page-header">
-                <h1>Create Employee</h1>
-                <p>Add a new employee to the system</p>
+                <h1><?php echo __t('create_employee', 'Create Employee'); ?></h1>
+                <p><?php echo __t('add_new_employee_system', 'Add a new employee to the system'); ?></p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Employee Information</h3>
+                    <h3 class="card-title"><?php echo __t('employee_information', 'Employee Information'); ?></h3>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="">
@@ -521,25 +521,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" for="role">Role</label>
+                            <label class="form-label" for="role"><?php echo __t('role', 'Role'); ?></label>
                             <select class="form-select" id="role" name="role">
-                                <option value="Employee" <?php echo (($_POST['role'] ?? '') === 'Employee') ? 'selected' : ''; ?>>Employee</option>
-                                <option value="Manager" <?php echo (($_POST['role'] ?? '') === 'Manager') ? 'selected' : ''; ?>>Manager</option>
-                                <option value="Administrator" <?php echo (($_POST['role'] ?? '') === 'Administrator') ? 'selected' : ''; ?>>Administrator</option>
+                                <option value="Employee" <?php echo (($_POST['role'] ?? '') === 'Employee') ? 'selected' : ''; ?>><?php echo __t('employee', 'Employee'); ?></option>
+                                <option value="Manager" <?php echo (($_POST['role'] ?? '') === 'Manager') ? 'selected' : ''; ?>><?php echo __t('manager', 'Manager'); ?></option>
+                                <option value="Administrator" <?php echo (($_POST['role'] ?? '') === 'Administrator') ? 'selected' : ''; ?>><?php echo __t('administrator', 'Administrator'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" for="status">Status</label>
+                            <label class="form-label" for="status"><?php echo __t('status', 'Status'); ?></label>
                             <select class="form-select" id="status" name="status">
-                                <option value="Active" <?php echo (($_POST['status'] ?? '') === 'Active') ? 'selected' : ''; ?>>Active</option>
-                                <option value="Inactive" <?php echo (($_POST['status'] ?? '') === 'Inactive') ? 'selected' : ''; ?>>Inactive</option>
+                                <option value="Active" <?php echo (($_POST['status'] ?? '') === 'Active') ? 'selected' : ''; ?>><?php echo __t('active', 'Active'); ?></option>
+                                <option value="Inactive" <?php echo (($_POST['status'] ?? '') === 'Inactive') ? 'selected' : ''; ?>><?php echo __t('inactive', 'Inactive'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-success">Create Employee</button>
-                            <a href="employees.php" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success"><?php echo __t('create_employee', 'Create Employee'); ?></button>
+                            <a href="employees.php" class="btn btn-secondary"><?php echo __t('cancel', 'Cancel'); ?></a>
                         </div>
                     </form>
                 </div>

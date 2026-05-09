@@ -15,14 +15,16 @@ $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
 // Always read fresh data from database - no session caching
-$currentUserLevel = getCurrentUserActiveLevel($_SESSION['user_id'], $user);
-$user['level'] = $currentUserLevel;
 
 // Get user statistics
 $stats = [];
 try {
+    // Determine current level based on completion
     $levelRecords = getAppLevels();
     $levels = array_column($levelRecords, 'name');
+    
+    // Get user's stored level or calculate it
+    $current_level = $user['level'] ?? 'Bronze';
     
     // Calculate stats for each level using new functions
     $stats['levels'] = [];
@@ -31,7 +33,20 @@ try {
         $stats['levels'][$level] = $levelProgress;
     }
     
-    $current_level = $currentUserLevel;
+    // Always calculate current level based on actual progress
+    $current_level = null;
+    foreach ($levels as $level) {
+        $levelProgress = $stats['levels'][$level];
+        if ($levelProgress['completed'] < $levelProgress['total']) {
+            $current_level = $level;
+            break;
+        }
+    }
+    
+    // If all levels are completed, use the highest level
+    if (!$current_level && !empty($levels)) {
+        $current_level = end($levels);
+    }
     
     $stats['current_level'] = $current_level;
     $stats['available_tasks'] = isset($stats['levels'][$current_level]) ? $stats['levels'][$current_level]['available'] : 0;
@@ -106,7 +121,7 @@ try {
 $tasks = [];
 try {
     $stmt = $conn->prepare("SELECT * FROM tasks WHERE level = ? AND active = 1 ORDER BY id LIMIT 40");
-    $stmt->execute([$stats['current_level'] ?? $user['level']]);
+    $stmt->execute([$user['level']]);
     $tasks = $stmt->fetchAll();
 } catch(PDOException $e) {
     $tasks = [];

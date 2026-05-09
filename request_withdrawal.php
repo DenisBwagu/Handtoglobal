@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = __t('coin_asset_required', 'Coin asset is required.') . '';
     } elseif ($network === '') {
         $error = __t('network_required', 'Network is required.') . '';
+    } elseif ($completedTasksInCurrentLevel < 40) {
+        $error = "Please complete all 40/40 tasks in your current level before requesting withdrawal.";
     } elseif ($userLevelRank < $effectiveMinWithdrawalLevel) {
         $error = __t('must_reach_level', 'You must reach at least level') . ' ' . $effectiveMinWithdrawalLevel . ' ' . __t('to_request_withdrawals', 'to request withdrawals.') . '';
     } else {

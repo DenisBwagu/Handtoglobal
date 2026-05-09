@@ -216,16 +216,16 @@ $siteName = get_setting('site_name', 'HandToGlobal');
             <?php endif; ?>
             
             <div class="page-header">
-                <h1>Combos Management</h1>
-                <p>Create and manage combo offers for users</p>
+                <h1><?php echo __t('combos_management', 'Combos Management'); ?></h1>
+                <p><?php echo __t('manage_combo_offers', 'Create and manage combo offers for users'); ?></p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h1 class="card-title">All Combos</h1>
+                    <h1 class="card-title"><?php echo __t('all_combos', 'All Combos'); ?></h1>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <button class="btn btn-primary" onclick="showCreateModal()">
-                            <i class="fas fa-plus"></i> New Combo
+                            <i class="fas fa-plus"></i> <?php echo __t('new_combo', 'New Combo'); ?>
                         </button>
                         <form method="GET" style="display: flex; gap: 8px;">
                             <div class="search-container">
@@ -240,15 +240,15 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>LEVEL</th>
-                                <th>START TASK</th>
-                                <th>END TASK</th>
-                                <th>AMOUNT</th>
-                                <th>MESSAGE</th>
-                                <th>MULTIPLIER</th>
-                                <th>USER</th>
-                                <th>STATUS</th>
-                                <th>ACTIONS</th>
+                                <th><?php echo __t('level', 'LEVEL'); ?></th>
+                                <th><?php echo __t('start_task', 'START TASK'); ?></th>
+                                <th><?php echo __t('end_task', 'END TASK'); ?></th>
+                                <th><?php echo __t('amount', 'AMOUNT'); ?></th>
+                                <th><?php echo __t('message', 'MESSAGE'); ?></th>
+                                <th><?php echo __t('multiplier', 'MULTIPLIER'); ?></th>
+                                <th><?php echo __t('user', 'USER'); ?></th>
+                                <th><?php echo __t('status', 'STATUS'); ?></th>
+                                <th><?php echo __t('actions', 'ACTIONS'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -298,13 +298,13 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                                         </td>
                                         <td>
                                             <div class="actions">
-                                                <a href="edit_combo.php?id=<?php echo $combo['id']; ?>" class="action-link">Edit</a>
+                                                <a href="edit_combo.php?id=<?php echo $combo['id']; ?>" class="action-link"><?php echo __t('edit', 'Edit'); ?></a>
                                                 <?php if ($combo['status'] === 'active' && $combo['is_active'] == 1): ?>
-                                                    <a href="?action=deactivate&id=<?php echo $combo['id']; ?>" class="action-link warning">Deactivate</a>
+                                                    <a href="?action=deactivate&id=<?php echo $combo['id']; ?>" class="action-link warning"><?php echo __t('deactivate', 'Deactivate'); ?></a>
                                                 <?php else: ?>
-                                                    <a href="?action=activate&id=<?php echo $combo['id']; ?>" class="action-link">Activate</a>
+                                                    <a href="?action=activate&id=<?php echo $combo['id']; ?>" class="action-link"><?php echo __t('activate', 'Activate'); ?></a>
                                                 <?php endif; ?>
-                                                <a href="?action=delete&id=<?php echo $combo['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this combo?')">Delete</a>
+                                                <a href="?action=delete&id=<?php echo $combo['id']; ?>" class="action-link delete" onclick="return confirm('<?php echo __t('are_you_sure_delete_combo', 'Are you sure you want to delete this combo?'); ?>')"><?php echo __t('delete', 'Delete'); ?></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -321,7 +321,7 @@ $siteName = get_setting('site_name', 'HandToGlobal');
     <div class="modal" id="createModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Create New Combo</h3>
+                <h3 class="modal-title"><?php echo __t('create_new_combo', 'Create New Combo'); ?></h3>
                 <button class="modal-close" onclick="hideCreateModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -329,16 +329,16 @@ $siteName = get_setting('site_name', 'HandToGlobal');
             <form method="POST">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="level">Level</label>
+                        <label for="level"><?php echo __t('level', 'Level'); ?></label>
                         <select id="level" name="level" required onchange="loadTasksByLevel()">
-                            <option value="">Select Level</option>
+                            <option value=""><?php echo __t('select_level', 'Select Level'); ?></option>
                             <?php foreach ($levels as $level): ?>
                                 <option value="<?php echo htmlspecialchars($level); ?>"><?php echo htmlspecialchars($level); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="user_select">Select User</label>
+                        <label for="user_select"><?php echo __t('select_user', 'Select User'); ?></label>
                         <div class="user-select-container">
                             <input type="text" id="user_select" name="user_select" placeholder="Search user by name or email..." autocomplete="off">
                             <input type="hidden" id="user_id" name="user_id" value="">
@@ -346,15 +346,15 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="start_task">Start Task</label>
+                        <label for="start_task"><?php echo __t('start_task', 'Start Task'); ?></label>
                         <select id="start_task" name="start_task" required>
-                            <option value="">Select Level First</option>
+                            <option value=""><?php echo __t('select_level_first', 'Select Level First'); ?></option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="end_task">End Task</label>
+                        <label for="end_task"><?php echo __t('end_task', 'End Task'); ?></label>
                         <select id="end_task" name="end_task" required>
-                            <option value="">Select Level First</option>
+                            <option value=""><?php echo __t('select_level_first', 'Select Level First'); ?></option>
                         </select>
                     </div>
                 </div>
@@ -364,25 +364,25 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                         <input type="number" id="amount" name="amount" step="0.01" min="0" value="0" required>
                     </div>
                     <div class="form-group">
-                        <label for="status">Status</label>
+                        <label for="status"><?php echo __t('status', 'Status'); ?></label>
                         <select id="status" name="status" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="active"><?php echo __t('active', 'Active'); ?></option>
+                            <option value="inactive"><?php echo __t('inactive', 'Inactive'); ?></option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="message">Message</label>
+                    <label for="message"><?php echo __t('message', 'Message'); ?></label>
                     <textarea id="message" name="message" required placeholder="Enter combo message for users" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="multiplier">Multiplier</label>
+                    <label for="multiplier"><?php echo __t('multiplier', 'Multiplier'); ?></label>
                     <input type="number" id="multiplier" name="multiplier" step="0.1" min="1" value="1" required>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateModal()"><?php echo __t('cancel', 'Cancel'); ?></button>
                     <button type="submit" name="create_combo" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create Combo
+                        <i class="fas fa-plus"></i> <?php echo __t('create_combo', 'Create Combo'); ?>
                     </button>
                 </div>
             </form>
@@ -408,8 +408,8 @@ $siteName = get_setting('site_name', 'HandToGlobal');
             endSelect.innerHTML = '<option value="">Loading...</option>';
             
             if (!level) {
-                startSelect.innerHTML = '<option value="">Select Level First</option>';
-                endSelect.innerHTML = '<option value="">Select Level First</option>';
+                startSelect.innerHTML = '<option value=""><?php echo __t('select_level_first', 'Select Level First'); ?></option>';
+                endSelect.innerHTML = '<option value=""><?php echo __t('select_level_first', 'Select Level First'); ?></option>';
                 return;
             }
             
@@ -418,13 +418,13 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 .then(data => {
                     if (data.error) {
                         console.error('Error:', data.error);
-                        startSelect.innerHTML = '<option value="">Error loading tasks</option>';
-                        endSelect.innerHTML = '<option value="">Error loading tasks</option>';
+                        startSelect.innerHTML = '<option value=""><?php echo __t('error_loading_tasks', 'Error loading tasks'); ?></option>';
+                        endSelect.innerHTML = '<option value=""><?php echo __t('error_loading_tasks', 'Error loading tasks'); ?></option>';
                         return;
                     }
                     
                     // Populate both dropdowns with task numbering
-                    let options = '<option value="">Select Task</option>';
+                    let options = '<option value=""><?php echo __t('select_task', 'Select Task'); ?></option>';
                     data.forEach(task => {
                         options += `<option value="${task.task_number}">Task ${task.task_number} - ${task.title}</option>`;
                     });
@@ -434,8 +434,8 @@ $siteName = get_setting('site_name', 'HandToGlobal');
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    startSelect.innerHTML = '<option value="">Error loading tasks</option>';
-                    endSelect.innerHTML = '<option value="">Error loading tasks</option>';
+                    startSelect.innerHTML = '<option value=""><?php echo __t('error_loading_tasks', 'Error loading tasks'); ?></option>';
+                    endSelect.innerHTML = '<option value=""><?php echo __t('error_loading_tasks', 'Error loading tasks'); ?></option>';
                 });
         }
         
@@ -475,7 +475,7 @@ $siteName = get_setting('site_name', 'HandToGlobal');
         
         function displayUserSearchResults(users) {
             if (users.length === 0) {
-                userSearchResults.innerHTML = '<div class="user-search-item">No users found</div>';
+                userSearchResults.innerHTML = '<div class="user-search-item"><?php echo __t('no_users_found', 'No users found'); ?></div>';
             } else {
                 let html = '';
                 users.forEach(user => {

@@ -40,22 +40,31 @@ try {
     $stats['withdrawals_count'] = $withdrawals['count'] ?? 0;
     $stats['withdrawals_total'] = $withdrawals['total'] ?? 0;
     
-    // Total bonuses paid (bonus_credit from balance_adjustments)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type='bonus_credit' AND DATE(created_at) BETWEEN ? AND ?");
-    $stmt->execute([$date_from, $date_to]);
-    $bonuses = $stmt->fetch();
-    $stats['bonuses_count'] = $bonuses['count'] ?? 0;
-    $stats['bonuses_total'] = $bonuses['total'] ?? 0;
-    
-    // Total deductions (manual_debit from balance_adjustments)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type='manual_debit' AND DATE(created_at) BETWEEN ? AND ?");
-    $stmt->execute([$date_from, $date_to]);
-    $deductions = $stmt->fetch();
-    $stats['deductions_count'] = $deductions['count'] ?? 0;
-    $stats['deductions_total'] = $deductions['total'] ?? 0;
-    
-    // Total task rewards (task_reward_credit + combo_credit from balance_adjustments)
-    $stmt = $conn->prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM balance_adjustments WHERE type IN ('task_reward_credit', 'combo_credit') AND DATE(created_at) BETWEEN ? AND ?");
+    // Bonuses/deductions: balance_adjustments table is optional
+    $stats['bonuses_count'] = 0;
+    $stats['bonuses_total'] = 0;
+    $stats['deductions_count'] = 0;
+    $stats['deductions_total'] = 0;
+    $stmt = $conn->query("SHOW TABLES LIKE 'balance_adjustments'");
+    $hasBalanceAdjustments = $stmt && $stmt->rowCount() > 0;
+    if ($hasBalanceAdjustments) {
+        $stmt = $conn->prepare("SELECT COUNT(*) as count, COALESCE(SUM(amount),0) as total FROM balance_adjustments WHERE type='bonus_credit' AND DATE(created_at) BETWEEN ? AND ?");
+        $stmt->execute([$date_from, $date_to]);
+        $bonuses = $stmt->fetch();
+        $stats['bonuses_count'] = $bonuses['count'] ?? 0;
+        $stats['bonuses_total'] = $bonuses['total'] ?? 0;
+        $stmt = $conn->prepare("SELECT COUNT(*) as count, COALESCE(SUM(amount),0) as total FROM balance_adjustments WHERE type='manual_debit' AND DATE(created_at) BETWEEN ? AND ?");
+        $stmt->execute([$date_from, $date_to]);
+        $deductions = $stmt->fetch();
+        $stats['deductions_count'] = $deductions['count'] ?? 0;
+        $stats['deductions_total'] = $deductions['total'] ?? 0;
+    }
+    // Real task rewards from completed_tasks
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as count, COALESCE(SUM(reward), 0) as total
+        FROM completed_tasks
+        WHERE DATE(completed_at) BETWEEN ? AND ?
+    ");
     $stmt->execute([$date_from, $date_to]);
     $tasks = $stmt->fetch();
     $stats['tasks_completed'] = $tasks['count'] ?? 0;
@@ -109,30 +118,34 @@ $stats = array_merge([
     'pending_withdrawals_total' => 0
 ], $stats);
 
-// Get balance adjustments (all admin/manual balance changes)
+// Get balance adjustments only if table exists
 $balance_adjustments = [];
 try {
-    $stmt = $conn->prepare("
-        SELECT 
-            fa.*,
-            u.email as user_email,
-            a.email as admin_email,
-            CASE 
-                WHEN fa.type IN ('deposit_credit', 'bonus_credit', 'invitation_credit', 'manual_credit', 'task_reward_credit', 'combo_credit') THEN 'Credit'
-                WHEN fa.type IN ('deposit_debit', 'withdrawal_debit', 'bonus_debit', 'invitation_debit', 'manual_debit', 'task_reward_debit', 'combo_debit') THEN 'Debit'
-                ELSE 'Unknown'
-            END as transaction_type
-        FROM balance_adjustments fa
-        LEFT JOIN users u ON fa.user_id = u.id
-        LEFT JOIN admins a ON fa.admin_id = a.id
-        WHERE DATE(fa.created_at) BETWEEN ? AND ?
-        ORDER BY fa.created_at DESC
-        LIMIT 50
-    ");
-    $stmt->execute([$date_from, $date_to]);
-    $balance_adjustments = $stmt->fetchAll();
+    $stmt = $conn->query("SHOW TABLES LIKE 'balance_adjustments'");
+    $hasBalanceAdjustments = $stmt && $stmt->rowCount() > 0;
+
+    if ($hasBalanceAdjustments) {
+        $stmt = $conn->prepare("
+            SELECT
+                fa.*,
+                u.email as user_email,
+                a.email as admin_email,
+                CASE
+                    WHEN fa.amount > 0 THEN 'credit'
+                    ELSE 'debit'
+                END as adjustment_type
+            FROM balance_adjustments fa
+            LEFT JOIN users u ON fa.user_id = u.id
+            LEFT JOIN admins a ON fa.admin_id = a.id
+            WHERE DATE(fa.created_at) BETWEEN ? AND ?
+            ORDER BY fa.created_at DESC
+            LIMIT 50
+        ");
+        $stmt->execute([$date_from, $date_to]);
+        $balance_adjustments = $stmt->fetchAll();
+    }
 } catch(PDOException $e) {
-    $error = "Failed to fetch balance adjustments: " . $e->getMessage();
+    $balance_adjustments = [];
 }
 
 // Get withdrawal records with complete information
@@ -747,7 +760,7 @@ try {
                     </div>
                 <?php endif; ?>
                 
-                <h1 class="finance-v2-title">FinanceAnalysis</h1>
+                <h1 class="finance-v2-title"><?php echo __t('finance_analysis', 'Finance Analysis'); ?></h1>
                 
                 <!-- Summary Cards -->
                 <div class="finance-v2-grid">
@@ -756,7 +769,7 @@ try {
                             <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">TotalDeposits</div>
+                            <div class="finance-v2-label"><?php echo __t('total_deposits', 'Total Deposits'); ?></div>
                             <div class="finance-v2-amount">$<?php echo number_format($stats['deposits_total'], 2); ?></div>
                         </div>
                     </div>
@@ -766,7 +779,7 @@ try {
                             <i class="fas fa-arrow-up"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">TotalWithdrawals</div>
+                            <div class="finance-v2-label"><?php echo __t('total_withdrawals', 'Total Withdrawals'); ?></div>
                             <div class="finance-v2-amount">$<?php echo number_format($stats['withdrawals_total'], 2); ?></div>
                         </div>
                     </div>
@@ -776,7 +789,7 @@ try {
                             <i class="fas fa-gift"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">TotalBonusesPaid</div>
+                            <div class="finance-v2-label"><?php echo __t('total_bonuses_paid', 'Total Bonuses Paid'); ?></div>
                             <div class="finance-v2-amount">$<?php echo number_format($stats['bonuses_total'], 2); ?></div>
                         </div>
                     </div>
@@ -786,7 +799,7 @@ try {
                             <i class="fas fa-minus-circle"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">TotalDeductions</div>
+                            <div class="finance-v2-label"><?php echo __t('total_deductions', 'Total Deductions'); ?></div>
                             <div class="finance-v2-amount">$<?php echo number_format($stats['deductions_total'], 2); ?></div>
                         </div>
                     </div>
@@ -796,7 +809,7 @@ try {
                             <i class="fas fa-tasks"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">TotalTaskRewards</div>
+                            <div class="finance-v2-label"><?php echo __t('total_task_rewards', 'Total Task Rewards'); ?></div>
                             <div class="finance-v2-amount">$<?php echo number_format($stats['tasks_earnings'], 2); ?></div>
                         </div>
                     </div>
@@ -806,7 +819,7 @@ try {
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div class="finance-v2-content">
-                            <div class="finance-v2-label">PlatformNet</div>
+                            <div class="finance-v2-label"><?php echo __t('platform_net', 'Platform Net'); ?></div>
                             <div class="finance-v2-amount <?php echo $stats['platform_net'] >= 0 ? 'finance-v2-amount-positive' : 'finance-v2-amount-negative'; ?>">
                                 $<?php echo number_format($stats['platform_net'], 2); ?>
                             </div>
@@ -816,11 +829,11 @@ try {
                 
                 <!-- Profit Analysis -->
                 <div class="finance-v2-analysis-card">
-                    <h2 class="finance-v2-analysis-title">ProfitAnalysis</h2>
+                    <h2 class="finance-v2-analysis-title"><?php echo __t('profit_analysis', 'Profit Analysis'); ?></h2>
                     
                     <!-- Money In -->
                     <div class="finance-v2-money-section">
-                        <div class="finance-v2-money-title">MoneyIn</div>
+                        <div class="finance-v2-money-title"><?php echo __t('money_in', 'Money In'); ?></div>
                         <div class="finance-v2-money-bar">
                             <?php
                             $total_money_in = $stats['deposits_total'];
@@ -851,7 +864,7 @@ try {
                     
                     <!-- Money Out -->
                     <div class="finance-v2-money-section">
-                        <div class="finance-v2-money-title">MoneyOut</div>
+                        <div class="finance-v2-money-title"><?php echo __t('money_out', 'Money Out'); ?></div>
                         <div class="finance-v2-money-bar">
                             <?php
                             $total_money_out = $stats['withdrawals_total'] + $stats['tasks_earnings'] + $stats['bonuses_total'];
@@ -884,13 +897,13 @@ try {
                     <!-- Profit Summary -->
                     <div class="finance-v2-profit-summary">
                         <div class="finance-v2-profit-item">
-                            <div class="finance-v2-profit-label">NETPROFITLOSS</div>
+                            <div class="finance-v2-profit-label"><?php echo __t('net_profit_loss', 'Net Profit/Loss'); ?></div>
                             <div class="finance-v2-profit-value <?php echo $stats['platform_net'] >= 0 ? 'positive' : 'negative'; ?>">
                                 $<?php echo number_format($stats['platform_net'], 2); ?>
                             </div>
                         </div>
                         <div class="finance-v2-profit-item">
-                            <div class="finance-v2-profit-label">OUTSTANDINGBALANCES</div>
+                            <div class="finance-v2-profit-label"><?php echo __t('outstanding_balances', 'Outstanding Balances'); ?></div>
                             <div class="finance-v2-profit-value">
                                 $<?php echo number_format($stats['outstanding_balances'], 2); ?>
                             </div>
@@ -900,7 +913,7 @@ try {
                 
                 <!-- Where Money Going -->
                 <div class="finance-v2-expenses-card">
-                    <h2 class="finance-v2-expenses-title">WhereMoneyGoing</h2>
+                    <h2 class="finance-v2-expenses-title"><?php echo __t('where_money_going', 'Where Money Going'); ?></h2>
                     
                     <?php
                     $total_expenses = $stats['tasks_earnings'] + $stats['bonuses_total'] + $stats['withdrawals_total'];
@@ -911,7 +924,7 @@ try {
                     
                     <div class="finance-v2-expense-row">
                         <div class="finance-v2-expense-header">
-                            <span class="finance-v2-expense-label">Task Rewards</span>
+                            <span class="finance-v2-expense-label"><?php echo __t('task_rewards', 'Task Rewards'); ?></span>
                             <span class="finance-v2-expense-amount">$<?php echo number_format($stats['tasks_earnings'], 2); ?></span>
                         </div>
                         <div class="finance-v2-expense-progress">
@@ -922,7 +935,7 @@ try {
                     
                     <div class="finance-v2-expense-row">
                         <div class="finance-v2-expense-header">
-                            <span class="finance-v2-expense-label">Bonuses Paid</span>
+                            <span class="finance-v2-expense-label"><?php echo __t('bonuses_paid', 'Bonuses Paid'); ?></span>
                             <span class="finance-v2-expense-amount">$<?php echo number_format($stats['bonuses_total'], 2); ?></span>
                         </div>
                         <div class="finance-v2-expense-progress">
@@ -933,7 +946,7 @@ try {
                     
                     <div class="finance-v2-expense-row">
                         <div class="finance-v2-expense-header">
-                            <span class="finance-v2-expense-label">Approved Withdrawals</span>
+                            <span class="finance-v2-expense-label"><?php echo __t('approved_withdrawals', 'Approved Withdrawals'); ?></span>
                             <span class="finance-v2-expense-amount">$<?php echo number_format($stats['withdrawals_total'], 2); ?></span>
                         </div>
                         <div class="finance-v2-expense-progress">
@@ -946,8 +959,8 @@ try {
                 <!-- Tabbed Table -->
                 <div class="finance-v2-table-card">
                     <div class="finance-v2-tabs">
-                        <button class="finance-v2-tab active" onclick="switchTab('balance-adjustments')">Balance Adjustments</button>
-                        <button class="finance-v2-tab" onclick="switchTab('withdrawals')">Withdrawals</button>
+                        <button class="finance-v2-tab active" onclick="switchTab('balance-adjustments')"><?php echo __t('balance_adjustments', 'Balance Adjustments'); ?></button>
+                        <button class="finance-v2-tab" onclick="switchTab('withdrawals')"><?php echo __t('withdrawals', 'Withdrawals'); ?></button>
                     </div>
                     
                     <!-- Balance Adjustments Tab -->

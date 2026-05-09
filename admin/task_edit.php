@@ -526,49 +526,49 @@ if (isset($_POST['update_task'])) {
         <div class="sidebar">
 <!-- MANAGEMENT Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MANAGEMENT</div>
+                <div class="sidebar-section-title"><?php echo __t('management', 'MANAGEMENT'); ?></div>
                 <ul class="sidebar-menu">
-                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
-                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> Employees</a></li>
+                    <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <?php echo __t('dashboard', 'Dashboard'); ?></a></li>
+                    <li><a href="users.php"><i class="fas fa-users"></i> <?php echo __t('users', 'Users'); ?></a></li>
+                    <li><a href="employees.php"><i class="fas fa-user-tie"></i> <?php echo __t('employees', 'Employees'); ?></a></li>
                 </ul>
             </div>
             
             <!-- PLATFORM Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">PLATFORM</div>
+                <div class="sidebar-section-title"><?php echo __t('platform', 'PLATFORM'); ?></div>
                 <ul class="sidebar-menu">
-                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> Levels</a></li>
-                    <li><a href="tasks.php" class="active"><i class="fas fa-tasks"></i> Tasks</a></li>
-                    <li><a href="combos.php"><i class="fas fa-link"></i> Combos</a></li>
-                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> InvitationCodes</a></li>
+                    <li><a href="levels.php"><i class="fas fa-layer-group"></i> <?php echo __t('levels', 'Levels'); ?></a></li>
+                    <li><a href="tasks.php" class="active"><i class="fas fa-tasks"></i> <?php echo __t('tasks', 'Tasks'); ?></a></li>
+                    <li><a href="combos.php"><i class="fas fa-link"></i> <?php echo __t('combos', 'Combos'); ?></a></li>
+                    <li><a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> <?php echo __t('invitation_codes', 'Invitation Codes'); ?></a></li>
                 </ul>
             </div>
             
             <!-- FINANCE Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">FINANCE</div>
+                <div class="sidebar-section-title"><?php echo __t('finance', 'FINANCE'); ?></div>
                 <ul class="sidebar-menu">
-                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> FinanceAnalysis</a></li>
-                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> Withdrawals</a></li>
+                    <li><a href="finance_analysis.php"><i class="fas fa-chart-line"></i> <?php echo __t('finance_analysis', 'Finance Analysis'); ?></a></li>
+                    <li><a href="withdrawals.php"><i class="fas fa-arrow-up"></i> <?php echo __t('withdrawals', 'Withdrawals'); ?></a></li>
                 </ul>
             </div>
             
             <!-- MONITORING Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">MONITORING</div>
+                <div class="sidebar-section-title"><?php echo __t('monitoring', 'MONITORING'); ?></div>
                 <ul class="sidebar-menu">
-                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> Contacts</a></li>
-                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> Testimonials</a></li>
+                    <li><a href="contacts.php"><i class="fas fa-address-book"></i> <?php echo __t('contacts', 'Contacts'); ?></a></li>
+                    <li><a href="testimonials.php"><i class="fas fa-comments"></i> <?php echo __t('testimonials', 'Testimonials'); ?></a></li>
                 </ul>
             </div>
             
             <!-- SYSTEM Section -->
             <div class="sidebar-section">
-                <div class="sidebar-section-title">SYSTEM</div>
+                <div class="sidebar-section-title"><?php echo __t('system', 'SYSTEM'); ?></div>
                 <ul class="sidebar-menu">
-                    <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
-                    <li><a href="languages.php"><i class="fas fa-language"></i> Languages</a></li>
+                    <li><a href="settings.php"><i class="fas fa-cog"></i> <?php echo __t('settings', 'Settings'); ?></a></li>
+                    <li><a href="languages.php"><i class="fas fa-language"></i> <?php echo __t('languages', 'Languages'); ?></a></li>
                 </ul>
             </div>
         </div>
@@ -590,7 +590,7 @@ if (isset($_POST['update_task'])) {
             
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="tasks.php">Tasks</a> > Edit
+                <a href="tasks.php"><?php echo __t('tasks', 'Tasks'); ?></a> > <?php echo __t('edit', 'Edit'); ?>
             </div>
             
             <!-- Form Card -->
@@ -599,7 +599,7 @@ if (isset($_POST['update_task'])) {
                 <form method="POST" enctype="multipart/form-data">
                     <!-- Level -->
                     <div class="form-group">
-                        <label class="form-label">Level</label>
+                        <label class="form-label"><?php echo __t('level', 'Level'); ?></label>
                         <select name="level" class="form-control-select" required>
                             <option value="Bronze" <?php echo $task['level'] === 'Bronze' ? 'selected' : ''; ?>>Bronze</option>
                             <option value="Sliver" <?php echo $task['level'] === 'Sliver' ? 'selected' : ''; ?>>Sliver</option>
@@ -610,31 +610,31 @@ if (isset($_POST['update_task'])) {
                     
                     <!-- Title -->
                     <div class="form-group">
-                        <label class="form-label">Title</label>
+                        <label class="form-label"><?php echo __t('title', 'Title'); ?></label>
                         <input type="text" name="title" class="form-control" value="<?php echo htmlspecialchars($task['title']); ?>" required>
                     </div>
                     
                     <!-- Reward -->
                     <div class="form-group">
-                        <label class="form-label">Reward Amount ($)</label>
+                        <label class="form-label"><?php echo __t('reward_amount', 'Reward Amount ($)'); ?></label>
                         <input type="number" name="reward" class="form-control" value="<?php echo htmlspecialchars($task['reward'] ?? '1.80'); ?>" step="0.01" min="0" required>
                     </div>
                     
                     <!-- Description -->
                     <div class="form-group">
-                        <label class="form-label">Description</label>
+                        <label class="form-label"><?php echo __t('description', 'Description'); ?></label>
                         <textarea name="description" class="form-control-textarea" required><?php echo htmlspecialchars($task['description']); ?></textarea>
                     </div>
                     
                     <!-- Instructions -->
                     <div class="form-group">
-                        <label class="form-label">Instructions</label>
+                        <label class="form-label"><?php echo __t('instructions', 'Instructions'); ?></label>
                         <textarea name="instructions" class="form-control-textarea"><?php echo htmlspecialchars($task['instructions'] ?? ''); ?></textarea>
                     </div>
                     
                     <!-- ItemImage -->
                     <div class="form-group">
-                        <label class="form-label">ItemImage</label>
+                        <label class="form-label"><?php echo __t('item_image', 'Item Image'); ?></label>
                         <?php if (!empty($task['image'])): ?>
                             <div class="image-preview">
                                 <img src="../uploads/tasks/<?php echo htmlspecialchars($task['image']); ?>" alt="Task Image">
@@ -647,7 +647,7 @@ if (isset($_POST['update_task'])) {
                     
                     <!-- ExternalLinkShort -->
                     <div class="form-group">
-                        <label class="form-label">ExternalLinkShort</label>
+                        <label class="form-label"><?php echo __t('external_link', 'External Link'); ?></label>
                         <input type="text" name="external_link" class="form-control" value="<?php echo htmlspecialchars($task['external_link'] ?? ''); ?>">
                     </div>
                     
@@ -655,13 +655,13 @@ if (isset($_POST['update_task'])) {
                     <div class="form-group">
                         <div class="checkbox-group">
                             <input type="checkbox" name="active" class="checkbox-input" <?php echo $task['active'] ? 'checked' : ''; ?>>
-                            <label class="form-label" style="margin-bottom: 0;">Active</label>
+                            <label class="form-label" style="margin-bottom: 0;"><?php echo __t('active', 'Active'); ?></label>
                         </div>
                     </div>
                     
                     <!-- Submit Button -->
                     <div class="form-group">
-                        <button type="submit" name="update_task" class="btn btn-primary">Update</button>
+                        <button type="submit" name="update_task" class="btn btn-primary"><?php echo __t('update', 'Update'); ?></button>
                     </div>
                 </form>
             </div>

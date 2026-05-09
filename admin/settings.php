@@ -498,25 +498,25 @@ $current_settings = [
                     
                     <!-- GENERAL Section -->
                     <div class="settings-section">
-                        <div class="section-title">GENERAL</div>
+                        <div class="section-title"><?php echo __t('general', 'GENERAL'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">SiteName</label>
+                            <label class="form-label"><?php echo __t('site_name', 'Site Name'); ?></label>
                             <input type="text" name="site_name" class="form-control" value="<?php echo htmlspecialchars($current_settings['site_name'] ?? ''); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">SupportEmail</label>
+                            <label class="form-label"><?php echo __t('support_email', 'Support Email'); ?></label>
                             <input type="email" name="support_email" class="form-control" value="<?php echo htmlspecialchars($current_settings['support_email'] ?? ''); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">TelegramLink</label>
+                            <label class="form-label"><?php echo __t('telegram_link', 'Telegram Link'); ?></label>
                             <input type="url" name="telegram_link" class="form-control" value="<?php echo htmlspecialchars($current_settings['telegram_link'] ?? ''); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">Site Logo</label>
+                            <label class="form-label"><?php echo __t('site_logo', 'Site Logo'); ?></label>
                             <?php if (!empty($current_settings['site_logo'])): ?>
                                 <div class="current-logo-preview">
                                     <img src="<?php echo htmlspecialchars(htg_asset_url($current_settings['site_logo'])); ?>" alt="Current Site Logo" style="max-height:60px;">
@@ -529,10 +529,10 @@ $current_settings = [
                     
                     <!-- LANGUAGES Section -->
                     <div class="settings-section">
-                        <div class="section-title">LANGUAGES</div>
+                        <div class="section-title"><?php echo __t('languages', 'LANGUAGES'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">AdminLocale</label>
+                            <label class="form-label"><?php echo __t('admin_locale', 'Admin Locale'); ?></label>
                             <select name="admin_locale" class="form-control-select">
                                 <option value="english" <?php echo ($current_settings['admin_locale'] ?? '') === 'english' ? 'selected' : ''; ?>>English</option>
                                 <option value="chinese" <?php echo ($current_settings['admin_locale'] ?? '') === 'chinese' ? 'selected' : ''; ?>>Chinese</option>
@@ -543,7 +543,7 @@ $current_settings = [
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">UserLocale</label>
+                            <label class="form-label"><?php echo __t('user_locale', 'User Locale'); ?></label>
                             <select name="user_locale" class="form-control-select">
                                 <option value="english" <?php echo ($current_settings['user_locale'] ?? '') === 'english' ? 'selected' : ''; ?>>English</option>
                                 <option value="chinese" <?php echo ($current_settings['user_locale'] ?? '') === 'chinese' ? 'selected' : ''; ?>>Chinese</option>
@@ -556,30 +556,30 @@ $current_settings = [
                     
                     <!-- LIMITS Section -->
                     <div class="settings-section">
-                        <div class="section-title">LIMITS</div>
+                        <div class="section-title"><?php echo __t('limits', 'LIMITS'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">MinWithdrawalAmount</label>
+                            <label class="form-label"><?php echo __t('min_withdrawal_amount', 'Min Withdrawal Amount'); ?></label>
                             <input type="number" name="min_withdrawal_amount" class="form-control" value="<?php echo htmlspecialchars($current_settings['min_withdrawal_amount'] ?? '10'); ?>" step="0.01">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">MinWithdrawalLevel</label>
+                            <label class="form-label"><?php echo __t('min_withdrawal_level', 'Min Withdrawal Level'); ?></label>
                             <input type="number" name="min_withdrawal_level" class="form-control" value="<?php echo htmlspecialchars($current_settings['min_withdrawal_level'] ?? '1'); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">MaxLevelsPerDay</label>
+                            <label class="form-label"><?php echo __t('max_levels_per_day', 'Max Levels Per Day'); ?></label>
                             <input type="number" name="max_levels_per_day" class="form-control" value="<?php echo htmlspecialchars($current_settings['max_levels_per_day'] ?? '3'); ?>">
                         </div>
                     </div>
                     
                     <!-- TESTIMONIALS Section -->
                     <div class="settings-section">
-                        <div class="section-title">TESTIMONIALS</div>
+                        <div class="section-title"><?php echo __t('testimonials', 'TESTIMONIALS'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">SettingsTestimonialsDisplay</label>
+                            <label class="form-label"><?php echo __t('testimonials_display', 'Testimonials Display'); ?></label>
                             <select name="testimonials_display" class="form-control-select">
                                 <option value="both" <?php echo ($current_settings['testimonials_display'] ?? '') === 'both' ? 'selected' : ''; ?>>both</option>
                                 <option value="homepage" <?php echo ($current_settings['testimonials_display'] ?? '') === 'homepage' ? 'selected' : ''; ?>>homepage</option>
@@ -591,25 +591,25 @@ $current_settings = [
                     
                     <!-- SEO Section -->
                     <div class="settings-section">
-                        <div class="section-title">SEO</div>
+                        <div class="section-title"><?php echo __t('seo', 'SEO'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">MetaTitle</label>
+                            <label class="form-label"><?php echo __t('meta_title', 'Meta Title'); ?></label>
                             <input type="text" name="meta_title" class="form-control" value="<?php echo htmlspecialchars($current_settings['meta_title'] ?? ''); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">MetaDescription</label>
+                            <label class="form-label"><?php echo __t('meta_description', 'Meta Description'); ?></label>
                             <textarea name="meta_description" class="form-control-textarea"><?php echo htmlspecialchars($current_settings['meta_description'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">MetaKeywords</label>
+                            <label class="form-label"><?php echo __t('meta_keywords', 'Meta Keywords'); ?></label>
                             <input type="text" name="meta_keywords" class="form-control" value="<?php echo htmlspecialchars($current_settings['meta_keywords'] ?? ''); ?>">
                         </div>
                         
                         <div class="file-upload-group">
-                            <label class="form-label">OgImage</label>
+                            <label class="form-label"><?php echo __t('og_image', 'OG Image'); ?></label>
                             <?php if (!empty($current_settings['og_image'])): ?>
                                 <div class="file-preview">
                                     <img src="../<?php echo htmlspecialchars($current_settings['og_image']); ?>" alt="Current OG Image">
@@ -619,7 +619,7 @@ $current_settings = [
                         </div>
                         
                         <div class="file-upload-group">
-                            <label class="form-label">Favicon</label>
+                            <label class="form-label"><?php echo __t('favicon', 'Favicon'); ?></label>
                             <?php if (!empty($current_settings['favicon'])): ?>
                                 <div class="file-preview">
                                     <img src="../<?php echo htmlspecialchars($current_settings['favicon']); ?>?v=<?php echo time(); ?>" alt="Current Favicon">
@@ -629,17 +629,17 @@ $current_settings = [
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">MetaRobots</label>
+                            <label class="form-label"><?php echo __t('meta_robots', 'Meta Robots'); ?></label>
                             <input type="text" name="meta_robots" class="form-control" value="<?php echo htmlspecialchars($current_settings['meta_robots'] ?? 'index, follow'); ?>">
                         </div>
                     </div>
                     
                     <!-- HOMEPAGE IMAGES Section -->
                     <div class="settings-section">
-                        <div class="section-title">HOMEPAGE IMAGES</div>
+                        <div class="section-title"><?php echo __t('homepage_images', 'HOMEPAGE IMAGES'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">HomepageHeroImage</label>
+                            <label class="form-label"><?php echo __t('homepage_hero_image', 'Homepage Hero Image'); ?></label>
                             <?php if (!empty($current_settings['homepage_hero_image'])): ?>
                                 <div class="file-preview">
                                     <img src="../<?php echo htmlspecialchars($current_settings['homepage_hero_image']); ?>" alt="Current Homepage Hero Image">
@@ -649,7 +649,7 @@ $current_settings = [
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">HomepageAboutImage</label>
+                            <label class="form-label"><?php echo __t('homepage_about_image', 'Homepage About Image'); ?></label>
                             <?php if (!empty($current_settings['homepage_about_image'])): ?>
                                 <div class="file-preview">
                                     <img src="../<?php echo htmlspecialchars($current_settings['homepage_about_image']); ?>" alt="Current Homepage About Image">
@@ -659,7 +659,7 @@ $current_settings = [
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">HomepageBannerImage</label>
+                            <label class="form-label"><?php echo __t('homepage_banner_image', 'Homepage Banner Image'); ?></label>
                             <?php if (!empty($current_settings['homepage_banner_image'])): ?>
                                 <div class="file-preview">
                                     <img src="../<?php echo htmlspecialchars($current_settings['homepage_banner_image']); ?>" alt="Current Homepage Banner Image">
@@ -669,29 +669,29 @@ $current_settings = [
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">HomepageLogoStripImages</label>
+                            <label class="form-label"><?php echo __t('homepage_logo_strip_images', 'Homepage Logo Strip Images'); ?></label>
                             <textarea name="homepage_logo_strip" class="form-control-textarea" placeholder="Enter logo strip URLs or descriptions, one per line"><?php echo htmlspecialchars($current_settings['homepage_logo_strip'] ?? ''); ?></textarea>
                         </div>
                     </div>
                     
                     <!-- LEGAL Section -->
                     <div class="settings-section">
-                        <div class="section-title">LEGAL PAGES</div>
+                        <div class="section-title"><?php echo __t('legal_pages', 'LEGAL PAGES'); ?></div>
                         
                         <div class="form-group">
-                            <label class="form-label">Privacy Policy Content</label>
+                            <label class="form-label"><?php echo __t('privacy_policy_content', 'Privacy Policy Content'); ?></label>
                             <textarea name="privacy_policy_content" class="form-control-textarea" placeholder="Leave blank to use the default Privacy Policy"><?php echo htmlspecialchars($current_settings['privacy_policy_content'] ?? ''); ?></textarea>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Terms of Service Content</label>
+                            <label class="form-label"><?php echo __t('terms_service_content', 'Terms of Service Content'); ?></label>
                             <textarea name="terms_content" class="form-control-textarea" placeholder="Leave blank to use the default Terms of Service"><?php echo htmlspecialchars($current_settings['terms_content'] ?? ''); ?></textarea>
                         </div>
                     </div>
                     
                     <!-- Save Button -->
                     <div class="form-group">
-                        <button type="submit" name="update_settings" class="btn btn-primary">Save</button>
+                        <button type="submit" name="update_settings" class="btn btn-primary"><?php echo __t('save', 'Save'); ?></button>
                     </div>
                 </form>
                 

@@ -336,7 +336,7 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
     <div class="container">
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="employees.php">Employees</a> > <?php echo htmlspecialchars($employee['name']); ?>
+            <a href="employees.php"><?php echo __t('employees', 'Employees'); ?></a> > <?php echo htmlspecialchars($employee['name']); ?>
         </div>
         
         <!-- Employee Profile Card -->
@@ -354,15 +354,15 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
                 
                 <div class="employee-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Codes</span>
+                        <span class="stat-label"><?php echo __t('codes', 'Codes'); ?></span>
                         <span class="stat-value"><?php echo count($invitationCodes); ?></span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Recruited</span>
+                        <span class="stat-label"><?php echo __t('recruited', 'Recruited'); ?></span>
                         <span class="stat-value"><?php echo count($recruitedUsers); ?></span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Contacts</span>
+                        <span class="stat-label"><?php echo __t('contacts', 'Contacts'); ?></span>
                         <span class="stat-value"><?php echo count($contacts); ?></span>
                     </div>
                 </div>
@@ -372,17 +372,17 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
         <!-- Invitation Codes Card -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Used InvitationCodes</h3>
+                <h3 class="card-title"><?php echo __t('used_invitation_codes', 'Used Invitation Codes'); ?></h3>
             </div>
             <div class="card-body">
                 <?php if (!empty($usedInvitationCodes)): ?>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>CODE</th>
-                                <th>MAXUSES</th>
-                                <th>USED</th>
-                                <th>ACTIVE</th>
+                                <th><?php echo __t('code', 'CODE'); ?></th>
+                                <th><?php echo __t('max_uses', 'MAX USES'); ?></th>
+                                <th><?php echo __t('used', 'USED'); ?></th>
+                                <th><?php echo __t('active', 'ACTIVE'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -400,7 +400,7 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
                     </table>
                 <?php else: ?>
                     <div class="empty-state">
-                        <div class="empty-state-text">NoRecruited</div>
+                        <div class="empty-state-text"><?php echo __t('no_recruited', 'No Recruited Users'); ?></div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -409,17 +409,17 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
         <!-- Recruited Users Card -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">RecruitedUsers</h3>
+                <h3 class="card-title"><?php echo __t('recruited_users', 'Recruited Users'); ?></h3>
             </div>
             <div class="card-body">
                 <?php if (!empty($recruitedUsers)): ?>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Code</th>
-                                <th>Joined</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('code', 'Code'); ?></th>
+                                <th><?php echo __t('joined', 'Joined'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -435,7 +435,7 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
                     </table>
                 <?php else: ?>
                     <div class="empty-state">
-                        <div class="empty-state-text">NoRecruited</div>
+                        <div class="empty-state-text"><?php echo __t('no_recruited', 'No Recruited Users'); ?></div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -444,19 +444,19 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
         <!-- Contacts Card -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Contacts</h3>
+                <h3 class="card-title"><?php echo __t('contacts', 'Contacts'); ?></h3>
             </div>
             <div class="card-body">
                 <?php if (!empty($contacts)): ?>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                                <th>Message</th>
-                                <th>Date</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('phone', 'Phone'); ?></th>
+                                <th><?php echo __t('status', 'Status'); ?></th>
+                                <th><?php echo __t('message', 'Message'); ?></th>
+                                <th><?php echo __t('date', 'Date'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -474,7 +474,7 @@ $usedInvitationCodes = array_values(array_filter($invitationCodes, function ($co
                     </table>
                 <?php else: ?>
                     <div class="empty-state">
-                        <div class="empty-state-text">NoContacts</div>
+                        <div class="empty-state-text"><?php echo __t('no_contacts', 'No Contacts'); ?></div>
                     </div>
                 <?php endif; ?>
             </div>

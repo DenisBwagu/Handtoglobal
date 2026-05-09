@@ -460,17 +460,17 @@ try {
     <div class="header">
         <div class="container">
             <div class="nav-menu">
-                <h1><i class="fas fa-chart-line"></i> Finance Analysis</h1>
+                <h1><i class="fas fa-chart-line"></i> <?php echo __t('finance_analysis', 'Finance Analysis'); ?></h1>
                 <div class="nav-links">
-                    <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <a href="users.php"><i class="fas fa-users"></i> Users</a>
-                    <a href="tasks.php"><i class="fas fa-tasks"></i> Tasks</a>
-                    <a href="combos.php"><i class="fas fa-layer-group"></i> Combos</a>
-                    <a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> Codes</a>
-                    <a href="finance-analysis.php"><i class="fas fa-chart-line"></i> Finance</a>
-                    <a href="deposits.php"><i class="fas fa-dollar-sign"></i> Deposits</a>
-                    <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
-                    <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> <?php echo __t('dashboard', 'Dashboard'); ?></a>
+                    <a href="users.php"><i class="fas fa-users"></i> <?php echo __t('users', 'Users'); ?></a>
+                    <a href="tasks.php"><i class="fas fa-tasks"></i> <?php echo __t('tasks', 'Tasks'); ?></a>
+                    <a href="combos.php"><i class="fas fa-layer-group"></i> <?php echo __t('combos', 'Combos'); ?></a>
+                    <a href="invitation-codes.php"><i class="fas fa-ticket-alt"></i> <?php echo __t('invitation_codes', 'Codes'); ?></a>
+                    <a href="finance-analysis.php"><i class="fas fa-chart-line"></i> <?php echo __t('finance', 'Finance'); ?></a>
+                    <a href="deposits.php"><i class="fas fa-dollar-sign"></i> <?php echo __t('deposits', 'Deposits'); ?></a>
+                    <a href="withdrawals.php"><i class="fas fa-money-bill-wave"></i> <?php echo __t('withdrawals', 'Withdrawals'); ?></a>
+                    <a href="logout.php"><i class="fas fa-sign-out-alt"></i> <?php echo __t('logout', 'Logout'); ?></a>
                 </div>
             </div>
         </div>
@@ -493,12 +493,12 @@ try {
         <div class="date-filter">
             <form method="GET" class="form-row">
                 <div class="form-group">
-                    <label for="date_from">From Date</label>
+                    <label for="date_from"><?php echo __t('from_date', 'From Date'); ?></label>
                     <input type="date" id="date_from" name="date_from" class="form-control" 
                            value="<?php echo $date_from; ?>">
                 </div>
                 <div class="form-group">
-                    <label for="date_to">To Date</label>
+                    <label for="date_to"><?php echo __t('to_date', 'To Date'); ?></label>
                     <input type="date" id="date_to" name="date_to" class="form-control" 
                            value="<?php echo $date_to; ?>">
                 </div>
@@ -515,34 +515,34 @@ try {
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">$<?php echo number_format($stats['deposits_total'], 2); ?></div>
-                <div class="stat-label">Total Deposits</div>
+                <div class="stat-label"><?php echo __t('total_deposits', 'Total Deposits'); ?></div>
                 <small><?php echo $stats['deposits_count']; ?> transactions</small>
             </div>
             <div class="stat-card">
                 <div class="stat-number">$<?php echo number_format($stats['withdrawals_total'], 2); ?></div>
-                <div class="stat-label">Total Withdrawals</div>
+                <div class="stat-label"><?php echo __t('total_withdrawals', 'Total Withdrawals'); ?></div>
                 <small><?php echo $stats['withdrawals_count']; ?> transactions</small>
             </div>
             <div class="stat-card">
                 <div class="stat-number <?php echo $stats['net_profit'] >= 0 ? 'positive' : 'negative'; ?>">
                     $<?php echo number_format($stats['net_profit'], 2); ?>
                 </div>
-                <div class="stat-label">Net Profit/Loss</div>
+                <div class="stat-label"><?php echo __t('net_profit_loss', 'Net Profit/Loss'); ?></div>
                 <small>Deposits - Withdrawals</small>
             </div>
             <div class="stat-card">
                 <div class="stat-number">$<?php echo number_format($stats['tasks_earnings'], 2); ?></div>
-                <div class="stat-label">Task Earnings</div>
+                <div class="stat-label"><?php echo __t('task_earnings', 'Task Earnings'); ?></div>
                 <small><?php echo $stats['tasks_completed']; ?> tasks completed</small>
             </div>
             <div class="stat-card">
                 <div class="stat-number"><?php echo $stats['total_users']; ?></div>
-                <div class="stat-label">Total Users</div>
+                <div class="stat-label"><?php echo __t('total_users', 'Total Users'); ?></div>
                 <small><?php echo $stats['active_users']; ?> active users</small>
             </div>
             <div class="stat-card">
                 <div class="stat-number"><?php echo $stats['pending_deposits'] + $stats['pending_withdrawals']; ?></div>
-                <div class="stat-label">Pending Transactions</div>
+                <div class="stat-label"><?php echo __t('pending_transactions', 'Pending Transactions'); ?></div>
                 <small><?php echo $stats['pending_deposits']; ?> deposits, <?php echo $stats['pending_withdrawals']; ?> withdrawals</small>
             </div>
         </div>
@@ -550,7 +550,7 @@ try {
         <!-- Charts -->
         <div class="card">
             <div class="card-header">
-                <h2>Transaction Trends</h2>
+                <h2><?php echo __t('transaction_trends', 'Transaction Trends'); ?></h2>
             </div>
             <div class="chart-container">
                 <canvas id="transactionChart"></canvas>
@@ -560,17 +560,17 @@ try {
         <!-- Top Users -->
         <div class="card">
             <div class="card-header">
-                <h2>Top Users by Balance</h2>
+                <h2><?php echo __t('top_users_by_balance', 'Top Users by Balance'); ?></h2>
             </div>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Rank</th>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Balance</th>
-                        <th>Tasks Completed</th>
-                        <th>Total Earned</th>
+                        <th><?php echo __t('rank', 'Rank'); ?></th>
+                        <th><?php echo __t('user', 'User'); ?></th>
+                        <th><?php echo __t('email', 'Email'); ?></th>
+                        <th><?php echo __t('balance', 'Balance'); ?></th>
+                        <th><?php echo __t('tasks_completed', 'Tasks Completed'); ?></th>
+                        <th><?php echo __t('total_earned', 'Total Earned'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -597,16 +597,16 @@ try {
         <!-- Recent Transactions -->
         <div class="card">
             <div class="card-header">
-                <h2>Recent Transactions</h2>
+                <h2><?php echo __t('recent_transactions', 'Recent Transactions'); ?></h2>
             </div>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>User</th>
-                        <th>Date</th>
+                        <th><?php echo __t('type', 'Type'); ?></th>
+                        <th><?php echo __t('amount', 'Amount'); ?></th>
+                        <th><?php echo __t('status', 'Status'); ?></th>
+                        <th><?php echo __t('user', 'User'); ?></th>
+                        <th><?php echo __t('date', 'Date'); ?></th>
                     </tr>
                 </thead>
                 <tbody>

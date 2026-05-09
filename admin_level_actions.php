@@ -6,7 +6,7 @@ require_once '../includes/settings_helpers.php';
 header('Content-Type: application/json');
 
 // Check if user is logged in and is admin
-if (!isAdminLoggedIn()) {
+if (!isset($_SESSION['admin'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized access']);
     exit;
 }
@@ -34,8 +34,6 @@ try {
         case 'unlock':
             $result = unlockLevelForUser($userId, $level);
             if ($result) {
-                updateUserSessionData($userId);
-                refreshUserDashboardCache($userId);
                 echo json_encode(['success' => true, 'message' => "Level {$level} unlocked for user"]);
             } else {
                 echo json_encode(['success' => false, 'error' => 'Failed to unlock level']);
@@ -45,8 +43,6 @@ try {
         case 'flush':
             $result = flushLevelForUser($userId, $level);
             if ($result) {
-                updateUserSessionData($userId);
-                refreshUserDashboardCache($userId);
                 echo json_encode(['success' => true, 'message' => "Level {$level} flushed for user"]);
             } else {
                 echo json_encode(['success' => false, 'error' => 'Failed to flush level']);

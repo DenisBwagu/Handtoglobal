@@ -2,6 +2,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/settings_helpers.php';
 require_once __DIR__ . '/includes/language_helpers.php';
+set_language('english');
 
 // Get Telegram link from settings
 $supportLink = get_telegram_link();

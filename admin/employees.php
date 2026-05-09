@@ -94,12 +94,12 @@ try {
             
             <div class="page-header">
                 <h1><?php echo get_translation('employees_management', 'Employees Management'); ?></h1>
-                <p>Manage all employees</p>
+                <p><?php echo __t('manage_all_employees', 'Manage all employees'); ?></p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h1 class="card-title">All Employees</h1>
+                    <h1 class="card-title"><?php echo __t('all_employees', 'All Employees'); ?></h1>
                     <div class="header-actions">
                         <form method="GET" style="display: flex; gap: 8px;">
                             <div class="search-container">
@@ -115,11 +115,11 @@ try {
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Created</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('role', 'Role'); ?></th>
+                                <th><?php echo __t('status', 'Status'); ?></th>
+                                <th><?php echo __t('created', 'Created'); ?></th>
                                 <th><?php echo get_translation('actions', 'Actions'); ?></th>
                             </tr>
                         </thead>
@@ -139,7 +139,7 @@ try {
                                         <div class="actions">
                                             <a href="employee_view.php?id=<?php echo $employee['id']; ?>" class="action-link view"><?php echo get_translation('view', 'View'); ?></a>
                                             <a href="employee_edit.php?id=<?php echo $employee['id']; ?>" class="action-link edit"><?php echo get_translation('edit', 'Edit'); ?></a>
-                                            <a href="employees.php?delete=<?php echo $employee['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this employee?')"><?php echo get_translation('delete', 'Delete'); ?></a>
+                                            <a href="employees.php?delete=<?php echo $employee['id']; ?>" class="action-link delete" onclick="return confirm('<?php echo __t('are_you_sure_delete_employee', 'Are you sure you want to delete this employee?'); ?>')"><?php echo get_translation('delete', 'Delete'); ?></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -149,7 +149,7 @@ try {
                     
                     <?php if (empty($employees)): ?>
                         <div class="empty-state">
-                            No employees found. Click "<?php echo get_translation('add', 'Add'); ?>" to create the first employee.
+                            <?php echo __t('no_employees_found_click', 'No employees found. Click'); ?> "<?php echo get_translation('add', 'Add'); ?>" <?php echo __t('create_first_employee', 'to create the first employee.'); ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -157,11 +157,11 @@ try {
                 <?php if ($totalEmployees > 0): ?>
                     <div class="table-footer">
                         <div class="table-info">
-                            Showing <?php echo $offset + 1; ?> to <?php echo min($offset + $limit, $totalEmployees); ?> of <?php echo $totalEmployees; ?>
+                            <?php echo __t('showing', 'Showing'); ?> <?php echo $offset + 1; ?> <?php echo __t('to', 'to'); ?> <?php echo min($offset + $limit, $totalEmployees); ?> <?php echo __t('of', 'of'); ?> <?php echo $totalEmployees; ?>
                         </div>
                         <div class="pagination">
                             <?php if ($page > 1): ?>
-                                <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>">Previous</a>
+                                <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>"><?php echo __t('previous', 'Previous'); ?></a>
                             <?php endif; ?>
                             
                             <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
@@ -171,7 +171,7 @@ try {
                             <?php endfor; ?>
                             
                             <?php if ($page < $totalPages): ?>
-                                <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>">Next</a>
+                                <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>"><?php echo __t('next', 'Next'); ?></a>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -108,7 +108,7 @@ if (empty($levels)) {
         <div class="main-content">
             <div class="card">
                 <div class="card-header">
-                    <h1 class="card-title">Levels</h1>
+                    <h1 class="card-title"><?php echo __t('levels', 'Levels'); ?></h1>
                     <button class="btn-add" onclick="window.location.href='levels_create.php'">
                         Add
                     </button>
@@ -118,14 +118,14 @@ if (empty($levels)) {
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>ORDER</th>
-                                <th>NAME</th>
-                                <th>TYPE</th>
-                                <th>REWARD</th>
-                                <th>TASKS</th>
-                                <th>DEPOSIT</th>
-                                <th>ACTIVE</th>
-                                <th>Actions</th>
+                                <th><?php echo __t('order', 'ORDER'); ?></th>
+                                <th><?php echo __t('name', 'NAME'); ?></th>
+                                <th><?php echo __t('type', 'TYPE'); ?></th>
+                                <th><?php echo __t('reward', 'REWARD'); ?></th>
+                                <th><?php echo __t('tasks', 'TASKS'); ?></th>
+                                <th><?php echo __t('deposit', 'DEPOSIT'); ?></th>
+                                <th><?php echo __t('active', 'ACTIVE'); ?></th>
+                                <th><?php echo __t('actions', 'Actions'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -148,8 +148,8 @@ if (empty($levels)) {
                                     </td>
                                     <td>
                                         <div class="actions">
-                                            <a href="levels_edit.php?id=<?php echo $level['id']; ?>" class="action-link edit">Edit</a>
-                                            <a href="levels.php?delete=<?php echo $level['id']; ?>" class="action-link delete" onclick="return confirm('Are you sure you want to delete this level?')">Delete</a>
+                                            <a href="levels_edit.php?id=<?php echo $level['id']; ?>" class="action-link edit"><?php echo __t('edit', 'Edit'); ?></a>
+                                            <a href="levels.php?delete=<?php echo $level['id']; ?>" class="action-link delete" onclick="return confirm('<?php echo __t('are_you_sure_delete_level', 'Are you sure you want to delete this level?'); ?>')"><?php echo __t('delete', 'Delete'); ?></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -159,7 +159,7 @@ if (empty($levels)) {
                     
                     <?php if (empty($levels)): ?>
                         <div class="empty-state">
-                            No levels found. Click "Add" to create the first level.
+                            <?php echo __t('no_levels_found', 'No levels found. Click "Add" to create the first level.'); ?>
                         </div>
                     <?php endif; ?>
                 </div>

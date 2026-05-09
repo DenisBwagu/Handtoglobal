@@ -9,6 +9,8 @@ if (ini_get('session.use_cookies')) {
     setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
 }
 
+unset($_SESSION['language']);
+setcookie('htg_language', '', time() - 3600, '/');
 session_destroy();
 
 redirect('../login.php');

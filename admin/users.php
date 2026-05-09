@@ -12,6 +12,21 @@ if (!isAdminLoggedIn()) {
 
 $msg = "";
 $error = "";
+if (isset($_GET['deleted'])) {
+    $msg = "User deleted successfully!";
+}
+
+// Handle user operations
+if (isset($_GET['delete'])) {
+    $id = (int)$_GET['delete'];
+    try {
+        $stmt = $conn->prepare("DELETE FROM users WHERE id=?");
+        $stmt->execute([$id]);
+        redirect('users.php?deleted=1');
+    } catch(PDOException $e) {
+        $error = "Failed to delete user: " . $e->getMessage();
+    }
+}
 
 // Handle search and pagination
 $search = $_GET['search'] ?? '';
@@ -41,8 +56,13 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $users = $stmt->fetchAll();
 
-function getUserDisplayLevel($user) {
-    return getCurrentUserActiveLevel($user['id'], $user);
+// Helper function to get user level based on balance
+function getUserLevel($balance) {
+    if ($balance >= 500) return 'Platinum';
+    if ($balance >= 250) return 'Gold';
+    if ($balance >= 150) return 'Silver';
+    if ($balance >= 100) return 'Bronze';
+    return 'Bronze';
 }
 ?>
 
@@ -70,24 +90,19 @@ function getUserDisplayLevel($user) {
                     <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($msg); ?>
                 </div>
             <?php endif; ?>
-            <?php if ($error): ?>
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-                </div>
-            <?php endif; ?>
             
             <div class="page-header">
-                <h1>Users Management</h1>
-                <p>Manage all registered users</p>
+                <h1><?php echo __t('users_management', 'Users Management'); ?></h1>
+                <p><?php echo __t('manage_all_registered_users', 'Manage all registered users'); ?></p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h1 class="card-title">All Users</h1>
+                    <h1 class="card-title"><?php echo __t('all_users', 'All Users'); ?></h1>
                     <form method="GET" style="display: flex; gap: 8px;">
                         <div class="search-container">
                             <i class="fas fa-search search-icon"></i>
-                            <input type="text" name="search" class="search-input" placeholder="Search..." value="<?php echo htmlspecialchars($search); ?>">
+                            <input type="text" name="search" class="search-input" placeholder="<?php echo __t('search', 'Search'); ?>..." value="<?php echo htmlspecialchars($search); ?>">
                         </div>
                     </form>
                 </div>
@@ -96,13 +111,13 @@ function getUserDisplayLevel($user) {
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>InvitationCode</th>
-                                <th>Level</th>
-                                <th>Balance</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th><?php echo __t('name', 'Name'); ?></th>
+                                <th><?php echo __t('email', 'Email'); ?></th>
+                                <th><?php echo __t('invitation_code', 'Invitation Code'); ?></th>
+                                <th><?php echo __t('level', 'Level'); ?></th>
+                                <th><?php echo __t('balance', 'Balance'); ?></th>
+                                <th><?php echo __t('status', 'Status'); ?></th>
+                                <th><?php echo __t('actions', 'Actions'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,7 +126,7 @@ function getUserDisplayLevel($user) {
                                     <td><?php echo htmlspecialchars($user['fullname']); ?></td>
                                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                                     <td class="invitation-code"><?php echo $user['invite_code_used'] ? htmlspecialchars($user['invite_code_used']) : '-'; ?></td>
-                                    <td class="level"><?php echo htmlspecialchars(getUserDisplayLevel($user)); ?></td>
+                                    <td class="level"><?php echo getUserLevel($user['balance']); ?></td>
                                     <td class="balance">$<?php echo number_format($user['balance'], 2); ?></td>
                                     <td>
                                         <?php 
@@ -123,12 +138,13 @@ function getUserDisplayLevel($user) {
                                         }
                                         ?>
                                         <span class="badge <?php echo $is_active ? 'badge-active' : 'badge-blocked'; ?>">
-                                            <?php echo $is_active ? 'Active' : 'Blocked'; ?>
+                                            <?php echo $is_active ? __t('active', 'Active') : __t('blocked', 'Blocked'); ?>
                                         </span>
                                     </td>
                                     <td>
                                         <div class="actions">
-                                            <a href="user_view.php?id=<?php echo $user['id']; ?>" class="action-link">View</a>
+                                            <a href="user_view.php?id=<?php echo $user['id']; ?>" class="action-link"><?php echo __t('view', 'View'); ?></a>
+                                            <a href="users.php?delete=<?php echo $user['id']; ?>" class="action-link delete" onclick="return confirm('<?php echo __t('are_you_sure_delete_user', 'Are you sure you want to delete this user?'); ?>')"><?php echo __t('delete', 'Delete'); ?></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -138,7 +154,7 @@ function getUserDisplayLevel($user) {
                 
                 <?php if (empty($users)): ?>
                     <div style="padding: 40px; text-align: center; color: #6c757d;">
-                        No users found for the selected criteria.
+                        <?php echo __t('no_users_found_selected', 'No users found for the selected criteria.'); ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -146,11 +162,11 @@ function getUserDisplayLevel($user) {
             <?php if ($totalUsers > 0): ?>
                 <div class="table-footer">
                     <div class="table-info">
-                        Showing <?php echo $offset + 1; ?> to <?php echo min($offset + $limit, $totalUsers); ?> of <?php echo $totalUsers; ?>
+                        <?php echo __t('showing', 'Showing'); ?> <?php echo $offset + 1; ?> <?php echo __t('to', 'to'); ?> <?php echo min($offset + $limit, $totalUsers); ?> <?php echo __t('of', 'of'); ?> <?php echo $totalUsers; ?>
                     </div>
                     <div class="pagination">
                         <?php if ($page > 1): ?>
-                            <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>">Previous</a>
+                            <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>"><?php echo __t('previous', 'Previous'); ?></a>
                         <?php endif; ?>
                         
                         <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
@@ -160,7 +176,7 @@ function getUserDisplayLevel($user) {
                         <?php endfor; ?>
                         
                         <?php if ($page < $totalPages): ?>
-                            <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>">Next</a>
+                            <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>"><?php echo __t('next', 'Next'); ?></a>
                         <?php endif; ?>
                     </div>
                 </div>

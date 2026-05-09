@@ -551,7 +551,7 @@ if (isset($_POST['create_task'])) {
                 <form method="POST" enctype="multipart/form-data">
                     <!-- Level -->
                     <div class="form-group">
-                        <label class="form-label">Level</label>
+                        <label class="form-label"><?php echo __t('level', 'Level'); ?></label>
                         <select name="level" class="form-control-select" required>
                             <option value="">SelectLevel</option>
                             <option value="Bronze">Bronze</option>
@@ -563,7 +563,7 @@ if (isset($_POST['create_task'])) {
                     
                     <!-- Title -->
                     <div class="form-group">
-                        <label class="form-label">Title</label>
+                        <label class="form-label"><?php echo __t('title', 'Title'); ?></label>
                         <input type="text" name="title" class="form-control" value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>" required>
                     </div>
                     
@@ -575,25 +575,25 @@ if (isset($_POST['create_task'])) {
                     
                     <!-- Reward -->
                     <div class="form-group">
-                        <label class="form-label">Reward Amount ($)</label>
+                        <label class="form-label"><?php echo __t('reward_amount', 'Reward Amount ($)'); ?></label>
                         <input type="number" name="reward" class="form-control" value="<?php echo htmlspecialchars($_POST['reward'] ?? '1.80'); ?>" step="0.01" min="0" required>
                     </div>
                     
                     <!-- Description -->
                     <div class="form-group">
-                        <label class="form-label">Description</label>
+                        <label class="form-label"><?php echo __t('description', 'Description'); ?></label>
                         <textarea name="description" class="form-control-textarea" required><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
                     </div>
                     
                     <!-- Instructions -->
                     <div class="form-group">
-                        <label class="form-label">Instructions</label>
+                        <label class="form-label"><?php echo __t('instructions', 'Instructions'); ?></label>
                         <textarea name="instructions" class="form-control-textarea"><?php echo htmlspecialchars($_POST['instructions'] ?? ''); ?></textarea>
                     </div>
                     
                     <!-- ItemImage -->
                     <div class="form-group">
-                        <label class="form-label">ItemImage</label>
+                        <label class="form-label"><?php echo __t('item_image', 'Item Image'); ?></label>
                         <div class="file-input-wrapper">
                             <input type="file" name="item_image" class="file-input" accept="image/*" onchange="previewImage(this)">
                         </div>
@@ -604,13 +604,13 @@ if (isset($_POST['create_task'])) {
                     
                     <!-- ExternalLink -->
                     <div class="form-group">
-                        <label class="form-label">ExternalLink</label>
+                        <label class="form-label"><?php echo __t('external_link', 'External Link'); ?></label>
                         <input type="text" name="external_link" class="form-control" value="<?php echo htmlspecialchars($_POST['external_link'] ?? ''); ?>">
                     </div>
                     
                     <!-- Submit Button -->
                     <div class="form-group">
-                        <button type="submit" name="create_task" class="btn btn-primary">Create</button>
+                        <button type="submit" name="create_task" class="btn btn-primary"><?php echo __t('create', 'Create'); ?></button>
                     </div>
                 </form>
             </div>

@@ -869,10 +869,10 @@ if ($total_withdrawals == 0) {
             <!-- Filter Section -->
             <div class="filter-section">
                 <select class="status-filter" onchange="window.location.href='?status=' + this.value">
-                    <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Status</option>
-                    <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                    <option value="Approved" <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
-                    <option value="Rejected" <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
+                    <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>><?php echo __t('all_status', 'All Status'); ?></option>
+                    <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>><?php echo __t('pending', 'Pending'); ?></option>
+                    <option value="Approved" <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>><?php echo __t('approved', 'Approved'); ?></option>
+                    <option value="Rejected" <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>><?php echo __t('rejected', 'Rejected'); ?></option>
                 </select>
             </div>
             
@@ -880,14 +880,14 @@ if ($total_withdrawals == 0) {
             <table class="withdrawals-table">
                     <thead>
                         <tr>
-                            <th>USER</th>
-                            <th>AMOUNT</th>
-                            <th>ASSET/NETWORK</th>
-                            <th>WALLET ADDRESS</th>
-                            <th>MEMO TAG</th>
-                            <th>STATUS</th>
-                            <th>DATE</th>
-                            <th>ACTIONS</th>
+                            <th><?php echo __t('user', 'USER'); ?></th>
+                            <th><?php echo __t('amount', 'AMOUNT'); ?></th>
+                            <th><?php echo __t('asset_network', 'ASSET/NETWORK'); ?></th>
+                            <th><?php echo __t('wallet_address', 'WALLET ADDRESS'); ?></th>
+                            <th><?php echo __t('memo_tag', 'MEMO TAG'); ?></th>
+                            <th><?php echo __t('status', 'STATUS'); ?></th>
+                            <th><?php echo __t('date', 'DATE'); ?></th>
+                            <th><?php echo __t('actions', 'ACTIONS'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -930,7 +930,7 @@ if ($total_withdrawals == 0) {
                                 </td>
                                 <td>
                                     <span class="badge badge-<?php echo strtolower($withdrawal['status']); ?>">
-                                        <?php echo htmlspecialchars($withdrawal['status']); ?>
+                                        <?php echo __t(strtolower($withdrawal['status']), htmlspecialchars($withdrawal['status'])); ?>
                                     </span>
                                 </td>
                                 <td>
@@ -940,19 +940,19 @@ if ($total_withdrawals == 0) {
                                 <td>
                                     <div class="actions">
                                         <a href="view_withdrawal.php?id=<?php echo $withdrawal['id']; ?>" class="btn-view" style="text-decoration: none; display: inline-block; padding: 8px 16px;">
-                                            View
+                                            <?php echo __t('view', 'View'); ?>
                                         </a>
                                         <?php if ($withdrawal['status'] === 'Pending'): ?>
                                             <button class="btn-view" onclick="approveWithdrawal(<?php echo $withdrawal['id']; ?>)">
-                                                Approve
+                                                <?php echo __t('approve', 'Approve'); ?>
                                             </button>
                                             <button class="btn-delete" onclick="rejectWithdrawal(<?php echo $withdrawal['id']; ?>)">
-                                                Reject
+                                                <?php echo __t('reject', 'Reject'); ?>
                                             </button>
                                         <?php endif; ?>
                                         <a href="?delete=<?php echo $withdrawal['id']; ?>" class="btn-delete" 
                                            onclick="return confirm('Are you sure you want to delete this withdrawal?')">
-                                            Delete
+                                            <?php echo __t('delete', 'Delete'); ?>
                                         </a>
                                     </div>
                                 </td>
@@ -964,7 +964,7 @@ if ($total_withdrawals == 0) {
             <?php if (empty($withdrawals)): ?>
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>
-                    <h3>No withdrawals found</h3>
+                    <h3><?php echo __t('no_withdrawals_found', 'No withdrawals found'); ?></h3>
                     <p>No withdrawals match the selected criteria.</p>
                 </div>
             <?php endif; ?>
@@ -973,7 +973,7 @@ if ($total_withdrawals == 0) {
             <?php if ($total_withdrawals > 0): ?>
                 <div class="pagination">
                     <div class="pagination-info">
-                        Showing <?php echo $start_record; ?> to <?php echo $end_record; ?> of <?php echo $total_withdrawals; ?>
+                        <?php echo __t('showing', 'Showing'); ?> <?php echo $start_record; ?> <?php echo __t('to', 'to'); ?> <?php echo $end_record; ?> <?php echo __t('of', 'of'); ?> <?php echo $total_withdrawals; ?>
                     </div>
                     <div class="pagination-controls">
                         <?php if ($page > 1): ?>
@@ -981,7 +981,7 @@ if ($total_withdrawals == 0) {
                                 Previous
                             </a>
                         <?php else: ?>
-                            <button class="pagination-btn" disabled>Previous</button>
+                            <button class="pagination-btn" disabled><?php echo __t('previous', 'Previous'); ?></button>
                         <?php endif; ?>
                         
                         <?php
@@ -1001,7 +1001,7 @@ if ($total_withdrawals == 0) {
                                 Next
                             </a>
                         <?php else: ?>
-                            <button class="pagination-btn" disabled>Next</button>
+                            <button class="pagination-btn" disabled><?php echo __t('next', 'Next'); ?></button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1009,11 +1009,11 @@ if ($total_withdrawals == 0) {
         </div>
     </div>
     
-    <!-- View Modal -->
+    <!-- <?php echo __t('view', 'View'); ?> Modal -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Withdrawal Details</h3>
+                <h3 class="modal-title"><?php echo __t('withdrawal_details', 'Withdrawal Details'); ?></h3>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
@@ -1055,56 +1055,56 @@ if ($total_withdrawals == 0) {
                         
                         modalBody.innerHTML = `
                             <div class="detail-row">
-                                <span class="detail-label">User Name</span>
+                                <span class="detail-label"><?php echo __t('user_name', 'User Name'); ?></span>
                                 <span class="detail-value">${data.withdrawal.fullname}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">User Email</span>
+                                <span class="detail-label"><?php echo __t('user_email', 'User Email'); ?></span>
                                 <span class="detail-value">${data.withdrawal.email}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Amount</span>
+                                <span class="detail-label"><?php echo __t('amount', 'Amount'); ?></span>
                                 <span class="detail-value amount">$${parseFloat(data.withdrawal.amount).toFixed(2)}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Asset</span>
+                                <span class="detail-label"><?php echo __t('asset', 'Asset'); ?></span>
                                 <span class="detail-value">${data.withdrawal.coin_asset || data.withdrawal.asset || 'USDT'}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Network</span>
+                                <span class="detail-label"><?php echo __t('network', 'Network'); ?></span>
                                 <span class="detail-value">${data.withdrawal.network || 'TRC20'}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Wallet Address</span>
+                                <span class="detail-label"><?php echo __t('wallet_address', 'Wallet Address'); ?></span>
                                 <span class="detail-value">${data.withdrawal.wallet_address}</span>
                             </div>
                             ${data.withdrawal.memo_tag ? `
                             <div class="detail-row">
-                                <span class="detail-label">Memo Tag</span>
+                                <span class="detail-label"><?php echo __t('memo_tag', 'Memo Tag'); ?></span>
                                 <span class="detail-value">${data.withdrawal.memo_tag}</span>
                             </div>
                             ` : ''}
                             <div class="detail-row">
-                                <span class="detail-label">Status</span>
+                                <span class="detail-label"><?php echo __t('status', 'Status'); ?></span>
                                 <span class="detail-value">
                                     <span class="badge badge-${data.withdrawal.status.toLowerCase()}">${data.withdrawal.status}</span>
                                 </span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Date Submitted</span>
+                                <span class="detail-label"><?php echo __t('date_submitted', 'Date Submitted'); ?></span>
                                 <span class="detail-value">${new Date(data.withdrawal.created_at).toLocaleString()}</span>
                             </div>
                         `;
                         
                         if (data.withdrawal.status === 'Pending') {
                             modalFooter.innerHTML = `
-                                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                                <button class="btn btn-danger" onclick="rejectWithdrawal(${id})">Reject</button>
-                                <button class="btn btn-success" onclick="approveWithdrawal(${id})">Approve</button>
+                                <button class="btn btn-secondary" onclick="closeModal()"><?php echo __t('close', 'Close'); ?></button>
+                                <button class="btn btn-danger" onclick="rejectWithdrawal(${id})"><?php echo __t('reject', 'Reject'); ?></button>
+                                <button class="btn btn-success" onclick="approveWithdrawal(${id})"><?php echo __t('approve', 'Approve'); ?></button>
                             `;
                         } else {
                             modalFooter.innerHTML = `
-                                <button class="btn btn-primary" onclick="closeModal()">Close</button>
+                                <button class="btn btn-primary" onclick="closeModal()"><?php echo __t('close', 'Close'); ?></button>
                             `;
                         }
                         

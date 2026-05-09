@@ -789,16 +789,16 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
             <!-- Edit Form -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Edit Invitation Code</h2>
+                    <h2 class="card-title"><?php echo __t('edit_invitation_code', 'Edit Invitation Code'); ?></h2>
                 </div>
                 
                 <?php if ($edit_code): ?>
                     <div class="code-summary">
-                        <h3>Code Summary</h3>
+                        <h3><?php echo __t('code_summary', 'Code Summary'); ?></h3>
                         <div class="code-summary-grid">
                             <div class="code-summary-item">
                                 <span class="code-summary-label">Type:</span>
-                                <span class="code-summary-value">Single</span>
+                                <span class="code-summary-value"><?php echo __t('single', 'Single'); ?></span>
                             </div>
                             <div class="code-summary-item">
                                 <span class="code-summary-label">Code:</span>
@@ -817,9 +817,9 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Employee</label>
+                                <label class="form-label"><?php echo __t('employee', 'Employee'); ?></label>
                                 <select name="employee_id" class="form-control">
-                                    <option value="0">No Employee</option>
+                                    <option value="0"><?php echo __t('no_employee', 'No Employee'); ?></option>
                                     <?php foreach ($employees as $employee): ?>
                                         <option value="<?php echo $employee['id']; ?>" <?php echo $edit_code['employee_id'] == $employee['id'] ? 'selected' : ''; ?>>
                                             <?php echo htmlspecialchars($employee['name'] . ' (' . $employee['email'] . ')'); ?>
@@ -829,7 +829,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Max Uses</label>
+                                <label class="form-label"><?php echo __t('max_uses', 'Max Uses'); ?></label>
                                 <input type="number" name="max_uses" class="form-control" value="<?php echo $edit_code['max_uses']; ?>" min="1" max="1000" required>
                             </div>
                             
@@ -842,7 +842,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                         <div class="form-group">
                             <div class="checkbox-group">
                                 <input type="checkbox" name="is_active" id="is_active" <?php echo $edit_code['is_active'] ? 'checked' : ''; ?>>
-                                <label for="is_active">Codes Active</label>
+                                <label for="is_active"><?php echo __t('codes_active', 'Codes Active'); ?></label>
                             </div>
                         </div>
                         
@@ -863,10 +863,10 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
             <!-- List Page -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Invitation Codes</h2>
+                    <h2 class="card-title"><?php echo __t('invitation_codes', 'Invitation Codes'); ?></h2>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <select name="employee_filter" class="filter-dropdown" onchange="window.location.href='?employee_filter=' + this.value">
-                            <option value="0">All Employees</option>
+                            <option value="0"><?php echo __t('all_employees', 'All Employees'); ?></option>
                             <?php foreach ($employees as $employee): ?>
                                 <option value="<?php echo $employee['id']; ?>" <?php echo $employee_filter == $employee['id'] ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($employee['name']); ?>
@@ -877,7 +877,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                             <i class="fas fa-download"></i> Export Csv
                         </a>
                         <a href="?generate=1" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Generate
+                            <i class="fas fa-plus"></i> <?php echo __t('generate', 'Generate'); ?>
                         </a>
                     </div>
                 </div>
@@ -889,9 +889,9 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Employee</label>
+                                <label class="form-label"><?php echo __t('employee', 'Employee'); ?></label>
                                 <select name="employee_id" class="form-control" required>
-                                    <option value="0">No Employee</option>
+                                    <option value="0"><?php echo __t('no_employee', 'No Employee'); ?></option>
                                     <?php foreach ($employees as $employee): ?>
                                         <option value="<?php echo $employee['id']; ?>">
                                             <?php echo htmlspecialchars($employee['name'] . ' (' . $employee['email'] . ')'); ?>
@@ -901,17 +901,17 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Number Of Codes</label>
+                                <label class="form-label"><?php echo __t('number_of_codes', 'Number Of Codes'); ?></label>
                                 <input type="number" name="number_of_codes" class="form-control" value="1" min="1" max="100" required>
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Max Uses Per Code</label>
+                                <label class="form-label"><?php echo __t('max_uses_per_code', 'Max Uses Per Code'); ?></label>
                                 <input type="number" name="max_uses_per_code" class="form-control" value="1" min="1" max="1000" required>
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Code Prefix</label>
+                                <label class="form-label"><?php echo __t('code_prefix', 'Code Prefix'); ?></label>
                                 <input type="text" name="code_prefix" class="form-control" placeholder="Optional prefix">
                             </div>
                             
@@ -922,7 +922,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                         </div>
                         
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Generate
+                            <i class="fas fa-plus"></i> <?php echo __t('generate', 'Generate'); ?>
                         </button>
                     </form>
                 <?php endif; ?>
@@ -930,14 +930,14 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>CODE</th>
-                            <th>EMPLOYEE</th>
-                            <th>STARTING BALANCE</th>
-                            <th>MAX USES</th>
-                            <th>USED</th>
-                            <th>REMAINING</th>
-                            <th>ACTIVE</th>
-                            <th>ACTIONS</th>
+                            <th><?php echo __t('code', 'CODE'); ?></th>
+                            <th><?php echo __t('employee', 'EMPLOYEE'); ?></th>
+                            <th><?php echo __t('starting_balance', 'STARTING BALANCE'); ?></th>
+                            <th><?php echo __t('max_uses', 'MAX USES'); ?></th>
+                            <th><?php echo __t('used', 'USED'); ?></th>
+                            <th><?php echo __t('remaining', 'REMAINING'); ?></th>
+                            <th><?php echo __t('active', 'ACTIVE'); ?></th>
+                            <th><?php echo __t('actions', 'ACTIONS'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -960,8 +960,8 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                                 </td>
                                 <td>
                                     <div class="actions">
-                                        <a href="?edit=<?php echo $code['id']; ?>">Edit</a>
-                                        <a href="?delete=<?php echo $code['id']; ?>" onclick="return confirm('Are you sure you want to delete this invitation code?');">Delete</a>
+                                        <a href="?edit=<?php echo $code['id']; ?>"><?php echo __t('edit', 'Edit'); ?></a>
+                                        <a href="?delete=<?php echo $code['id']; ?>" onclick="return confirm('<?php echo __t('are_you_sure_delete_invitation_code', 'Are you sure you want to delete this invitation code?'); ?>');"><?php echo __t('delete', 'Delete'); ?></a>
                                     </div>
                                 </td>
                             </tr>
@@ -971,7 +971,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                 
                 <?php if (empty($codes)): ?>
                     <p style="text-align: center; padding: 40px; color: #6b7280;">
-                        No invitation codes found. Generate your first codes above!
+                        <?php echo __t('no_invitation_codes_found', 'No invitation codes found. Generate your first codes above!'); ?>
                     </p>
                 <?php endif; ?>
                 
@@ -982,7 +982,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                         </div>
                         <div class="pagination-links">
                             <?php if ($page > 1): ?>
-                                <a href="?page=<?php echo $page - 1; ?>&employee_filter=<?php echo $employee_filter; ?>">Previous</a>
+                                <a href="?page=<?php echo $page - 1; ?>&employee_filter=<?php echo $employee_filter; ?>"><?php echo __t('previous', 'Previous'); ?></a>
                             <?php endif; ?>
                             
                             <?php for ($i = 1; $i <= $total_pages; $i++): ?>
@@ -994,7 +994,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
                             <?php endfor; ?>
                             
                             <?php if ($page < $total_pages): ?>
-                                <a href="?page=<?php echo $page + 1; ?>&employee_filter=<?php echo $employee_filter; ?>">Next</a>
+                                <a href="?page=<?php echo $page + 1; ?>&employee_filter=<?php echo $employee_filter; ?>"><?php echo __t('next', 'Next'); ?></a>
                             <?php endif; ?>
                         </div>
                     </div>

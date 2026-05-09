@@ -501,19 +501,19 @@ $statuses = ['new', 'contacted', 'converted', 'lost'];
                     
                     <!-- Phone -->
                     <div class="form-group">
-                        <label class="form-label">Phone</label>
+                        <label class="form-label"><?php echo __t('phone', 'Phone'); ?></label>
                         <input type="tel" name="phone" class="form-control" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
                     </div>
                     
                     <!-- Email -->
                     <div class="form-group">
-                        <label class="form-label">Email</label>
+                        <label class="form-label"><?php echo __t('email', 'Email'); ?></label>
                         <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
                     </div>
                     
                     <!-- Employee -->
                     <div class="form-group">
-                        <label class="form-label">Employee</label>
+                        <label class="form-label"><?php echo __t('employee', 'Employee'); ?></label>
                         <select name="employee_id" class="form-control-select">
                             <option value="">Select Employee (Optional)</option>
                             <?php foreach ($employees as $employee): ?>
@@ -526,7 +526,7 @@ $statuses = ['new', 'contacted', 'converted', 'lost'];
                     
                     <!-- Status -->
                     <div class="form-group">
-                        <label class="form-label">Status</label>
+                        <label class="form-label"><?php echo __t('status', 'Status'); ?></label>
                         <select name="status" class="form-control-select" required>
                             <?php foreach ($statuses as $status): ?>
                                 <option value="<?php echo $status; ?>" <?php echo (($_POST['status'] ?? 'new') == $status) ? 'selected' : ''; ?>>
@@ -540,20 +540,20 @@ $statuses = ['new', 'contacted', 'converted', 'lost'];
                     <div class="form-group">
                         <div class="checkbox-group">
                             <input type="checkbox" name="registered" class="checkbox-input" <?php echo (isset($_POST['registered'])) ? 'checked' : ''; ?>>
-                            <label class="form-label" style="margin-bottom: 0;">Registered</label>
+                            <label class="form-label" style="margin-bottom: 0;"><?php echo __t('registered', 'Registered'); ?></label>
                         </div>
                     </div>
                     
                     <!-- Notes -->
                     <div class="form-group">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label"><?php echo __t('notes', 'Notes'); ?></label>
                         <textarea name="notes" class="form-control-textarea"><?php echo htmlspecialchars($_POST['notes'] ?? ''); ?></textarea>
                     </div>
                     
                     <!-- Buttons -->
                     <div class="form-group">
-                        <a href="contacts.php" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" name="create_contact" class="btn btn-primary">Create Contact</button>
+                        <a href="contacts.php" class="btn btn-secondary"><?php echo __t('cancel', 'Cancel'); ?></a>
+                        <button type="submit" name="create_contact" class="btn btn-primary"><?php echo __t('create_contact', 'Create Contact'); ?></button>
                     </div>
                 </form>
             </div>

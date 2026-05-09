@@ -131,7 +131,7 @@ $siteName = get_site_name();
         <div class="content-area">
             <div class="page-header">
                 <div>
-                    <h1>Profile</h1>
+                    <h1><?php echo __t('profile', 'Profile'); ?></h1>
                     <p>Account details are loaded from the database on every page load.</p>
                 </div>
                 <a class="btn btn-secondary" href="dashboard.php"><i class="fas fa-arrow-left"></i> Dashboard</a>
@@ -141,29 +141,29 @@ $siteName = get_site_name();
             <?php if ($error): ?><div class="notice error"><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
             <section class="grid">
-                <div class="stat-card"><div class="stat-label">Current Level</div><div class="stat-value"><?php echo htmlspecialchars(normalizeLevelName($user['level'] ?? 'Bronze')); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value">$<?php echo number_format((float)($user['balance'] ?? 0), 2); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Tasks Completed</div><div class="stat-value"><?php echo (int)($stats['total_tasks'] ?? 0); ?></div></div>
-                <div class="stat-card"><div class="stat-label">Pending Withdrawals</div><div class="stat-value"><?php echo $pendingWithdrawals; ?></div></div>
+                <div class="stat-card"><div class="stat-label"><?php echo __t('current_level', 'Current Level'); ?></div><div class="stat-value"><?php echo htmlspecialchars(normalizeLevelName($user['level'] ?? 'Bronze')); ?></div></div>
+                <div class="stat-card"><div class="stat-label"><?php echo __t('balance', 'Balance'); ?></div><div class="stat-value">$<?php echo number_format((float)($user['balance'] ?? 0), 2); ?></div></div>
+                <div class="stat-card"><div class="stat-label"><?php echo __t('tasks_completed', 'Tasks Completed'); ?></div><div class="stat-value"><?php echo (int)($stats['total_tasks'] ?? 0); ?></div></div>
+                <div class="stat-card"><div class="stat-label"><?php echo __t('pending_withdrawals', 'Pending Withdrawals'); ?></div><div class="stat-value"><?php echo $pendingWithdrawals; ?></div></div>
             </section>
 
             <section class="panel">
-                <h2>Profile Information</h2>
+                <h2><?php echo __t('profile_information', 'Profile Information'); ?></h2>
                 <form method="post" class="form-grid">
                     <div class="form-group">
-                        <label>Email</label>
+                        <label><?php echo __t('email', 'Email'); ?></label>
                         <input type="email" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" readonly>
                     </div>
                     <div class="form-group">
-                        <label>Full Name</label>
+                        <label><?php echo __t('full_name', 'Full Name'); ?></label>
                         <input type="text" name="fullname" value="<?php echo htmlspecialchars($user['fullname'] ?? ''); ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Phone</label>
+                        <label><?php echo __t('phone', 'Phone'); ?></label>
                         <input type="tel" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
                     </div>
                     <div class="form-group">
-                        <label>Address</label>
+                        <label><?php echo __t('address', 'Address'); ?></label>
                         <input type="text" name="address" value="<?php echo htmlspecialchars($user['address'] ?? ''); ?>">
                     </div>
                     <div class="form-group full actions">
@@ -173,18 +173,18 @@ $siteName = get_site_name();
             </section>
 
             <section class="panel">
-                <h2>Security</h2>
+                <h2><?php echo __t('security', 'Security'); ?></h2>
                 <form method="post" class="form-grid">
                     <div class="form-group">
-                        <label>Current Password</label>
+                        <label><?php echo __t('current_password', 'Current Password'); ?></label>
                         <input type="password" name="current_password" autocomplete="current-password">
                     </div>
                     <div class="form-group">
-                        <label>New Password</label>
+                        <label><?php echo __t('new_password', 'New Password'); ?></label>
                         <input type="password" name="new_password" autocomplete="new-password">
                     </div>
                     <div class="form-group">
-                        <label>Confirm New Password</label>
+                        <label><?php echo __t('confirm_new_password', 'Confirm New Password'); ?></label>
                         <input type="password" name="confirm_password" autocomplete="new-password">
                     </div>
                     <div class="form-group actions">
@@ -194,10 +194,10 @@ $siteName = get_site_name();
             </section>
 
             <section class="panel">
-                <h2>Language</h2>
+                <h2><?php echo __t('language', 'Language'); ?></h2>
                 <form method="post" class="form-grid">
                     <div class="form-group">
-                        <label>Language</label>
+                        <label><?php echo __t('language', 'Language'); ?></label>
                         <select name="language">
                             <?php foreach ($availableLanguages as $code => $name): ?>
                                 <option value="<?php echo htmlspecialchars($code); ?>" <?php echo $currentLanguage === $code ? 'selected' : ''; ?>>
