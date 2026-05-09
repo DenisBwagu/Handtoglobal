@@ -52,14 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($uploadDir, 0755, true);
     }
 
-    $imageFields = [
-        'site_logo',
-        'site_favicon',
-        'og_image',
-        'homepage_hero_image',
-        'homepage_about_image',
-        'homepage_banner_image'
-    ];
+   $imageFields = [
+    'site_logo',
+    'site_favicon',
+    'og_image',
+    'homepage_hero_image',
+    'homepage_about_image',
+    'homepage_banner_image'
+];
 
     foreach ($imageFields as $field) {
 
@@ -84,6 +84,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    // TRUSTED LOGO IMAGES
+if (!empty($_FILES['homepage_trusted_logo_images']['name'][0])) {
+
+    $logoDir = __DIR__ . '/../uploads/settings/trusted-logos/';
+
+    if (!is_dir($logoDir)) {
+        mkdir($logoDir, 0755, true);
+    }
+
+    $uploadedLogos = [];
+
+    foreach ($_FILES['homepage_trusted_logo_images']['tmp_name'] as $key => $tmpName) {
+
+        if ($_FILES['homepage_trusted_logo_images']['error'][$key] === UPLOAD_ERR_OK) {
+
+            $original = $_FILES['homepage_trusted_logo_images']['name'][$key];
+            $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+
+            $allowed = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+
+            if (in_array($ext, $allowed, true)) {
+
+                $filename = 'trusted_logo_' . time() . '_' . $key . '.' . $ext;
+
+                $target = $logoDir . $filename;
+
+                if (move_uploaded_file($tmpName, $target)) {
+
+                    $uploadedLogos[] = 'uploads/settings/trusted-logos/' . $filename;
+
+                }
+            }
+        }
+    }
+
+    if (!empty($uploadedLogos)) {
+
+        update_setting(
+            'homepage_trusted_logo_images',
+            json_encode($uploadedLogos)
+        );
+    }
+}
 
     header("Location: settings.php?saved=1");
     exit;
@@ -113,6 +157,7 @@ $current_settings = [
     'homepage_about_image' => get_setting('homepage_about_image', 'assets/images/about-image.jpg'),
     'homepage_banner_image' => get_setting('homepage_banner_image', 'assets/images/banner.jpg'),
     'homepage_logo_strip' => get_setting('homepage_logo_strip', ''),
+    'homepage_trusted_logo_images' => get_setting('homepage_trusted_logo_images', ''),
     'privacy_policy_content' => get_setting('privacy_policy_content', ''),
     'terms_content' => get_setting('terms_content', '')
 ];
@@ -671,6 +716,40 @@ $current_settings = [
                         <div class="form-group">
                             <label class="form-label">HomepageLogoStripImages</label>
                             <textarea name="homepage_logo_strip" class="form-control-textarea" placeholder="Enter logo strip URLs or descriptions, one per line"><?php echo htmlspecialchars($current_settings['homepage_logo_strip'] ?? ''); ?></textarea>
+                        <div class="form-group">
+    <label class="form-label">Homepage Trusted Logo Images</label>
+
+    <?php
+    $trustedLogos = json_decode($current_settings['homepage_trusted_logo_images'] ?? '[]', true);
+
+    if (!empty($trustedLogos)):
+    ?>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+
+            <?php foreach ($trustedLogos as $logo): ?>
+
+                <div class="file-preview" style="width:90px;height:60px;">
+                    <img src="../<?php echo htmlspecialchars($logo); ?>"
+                         style="width:100%;height:100%;object-fit:contain;background:#fff;">
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    <?php endif; ?>
+
+    <input type="file"
+           name="homepage_trusted_logo_images[]"
+           class="file-input"
+           accept="image/png,image/jpeg,image/webp,image/svg+xml"
+           multiple>
+
+    <small>
+        Upload multiple trusted brand logos
+    </small>
+</div>
                         </div>
                     </div>
                     

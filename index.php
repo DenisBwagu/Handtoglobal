@@ -148,6 +148,21 @@ a{text-decoration:none}
     flex:0 0 auto;
     min-width:120px;
 }
+.trusted-logo-image{
+    width:130px;
+    height:55px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.trusted-logo-image img{
+    max-width:120px;
+    max-height:45px;
+    object-fit:contain;
+    filter:grayscale(100%);
+    opacity:.75;
+}
 
 @keyframes trustedScroll{
     from{
@@ -451,19 +466,41 @@ body.dark-mode .testimonial-modern-card p{
 <section class="trusted-strip">
     <p><?php echo htmlspecialchars(get_setting('homepage_trusted_title', 'Trusted By Leading Brands')); ?></p>
 
-    <div class="trusted-logos" style="animation-duration: <?php echo (int)get_setting('homepage_logo_animation_speed', 28); ?>s;">
-        <?php
-        $trustedLogos = get_setting('homepage_trusted_logos', "FILA\nLEGO\nADIDAS\nSUBARU\nDELL\nNIKE", true);
-        $trustedItems = array_filter(array_map('trim', explode("\n", $trustedLogos)));
+    <?php
+    $trustedLogoImages = json_decode(get_setting('homepage_trusted_logo_images', '[]'), true);
+    $trustedLogoImages = is_array($trustedLogoImages) ? array_filter($trustedLogoImages) : [];
 
-        for ($i = 0; $i < 2; $i++):
-            foreach ($trustedItems as $logo):
-        ?>
-            <span><?php echo htmlspecialchars($logo); ?></span>
-        <?php
-            endforeach;
-        endfor;
-        ?>
+    $trustedLogoText = get_setting('homepage_trusted_logos', "FILA\nLEGO\nADIDAS\nSUBARU\nDELL\nNIKE", true);
+    $trustedTextItems = array_filter(array_map('trim', explode("\n", $trustedLogoText)));
+
+    $logoSpeed = (int)get_setting('homepage_logo_animation_speed', 28);
+    if ($logoSpeed < 5) {
+        $logoSpeed = 28;
+    }
+    ?>
+
+    <div class="trusted-logos" style="animation-duration: <?php echo $logoSpeed; ?>s;">
+
+        <?php if (!empty($trustedLogoImages)): ?>
+
+            <?php for ($i = 0; $i < 2; $i++): ?>
+                <?php foreach ($trustedLogoImages as $logo): ?>
+                    <span class="trusted-logo-image">
+                        <img src="<?php echo htmlspecialchars($logo); ?>" alt="Trusted Logo">
+                    </span>
+                <?php endforeach; ?>
+            <?php endfor; ?>
+
+        <?php else: ?>
+
+            <?php for ($i = 0; $i < 2; $i++): ?>
+                <?php foreach ($trustedTextItems as $logo): ?>
+                    <span><?php echo htmlspecialchars($logo); ?></span>
+                <?php endforeach; ?>
+            <?php endfor; ?>
+
+        <?php endif; ?>
+
     </div>
 </section>
 
