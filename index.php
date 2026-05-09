@@ -68,779 +68,617 @@ $support_link = get_telegram_link();
     <meta property="og:image" content="<?php echo htmlspecialchars(get_og_image()); ?>">
     <link rel="icon" href="<?php echo htmlspecialchars($faviconUrl); ?>" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --secondary: #7c3aed;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --text: #1a1a1a;
-            --muted: #6b7280;
-            --border: #e5e7eb;
-            --bg: #f5f7fb;
-            --white: #ffffff;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text);
-            background: #eef2ff;
-            overflow-x: hidden;
-        }
-
-        /* Header Styles */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
-            padding: 1rem 0;
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-
-        /* Main Navigation (Admin/User Dashboard) - Hidden when right nav is shown */
-.nav-buttons {
-            display: none;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #16a34a;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .nav-right {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .nav-right {
-                display: none;
-            }
-            
-            .nav-buttons {
-                display: flex;
-                gap: 12px;
-                align-items: center;
-            }
-        }
-
-        /* Hero Section */
-        .hero {
-            margin-top: 80px;
-            padding: 100px 20px;
-            background: var(--gradient);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero {
-            <?php $hero_image = get_setting('homepage_hero_image', '', true); ?>
-            <?php if ($hero_image): ?>
-                background: url('<?php echo $hero_image; ?>') center/cover no-repeat;
-            <?php endif; ?>
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .hero-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 24px;
-            line-height: 1.2;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            animation: fadeInUp 1s ease-out 0.2s both;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fadeInUp 1s ease-out 0.4s both;
-        }
-
-        /* Animated Logo Strip */
-        .logo-strip {
-            background: var(--white);
-            padding: 40px 0;
-            overflow: hidden;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .logo-track {
-            display: flex;
-            animation: scrollRight 42s linear infinite;
-            width: fit-content;
-        }
-
-        .logo-track:hover {
-            animation-play-state: paused;
-        }
-
-        .logo-item {
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            padding: 0 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--muted);
-        }
-
-        .logo-item i {
-            margin-right: 10px;
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 100px 20px;
-            background: var(--bg);
-        }
-
-        .features-content {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .features h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 60px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-        }
-
-        .feature-card {
-            background: var(--white);
-            padding: 40px 30px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 2rem;
-            color: white;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 16px;
-        }
-
-        .feature-card p {
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        /* Testimonials Section */
-        .testimonials {
-            padding: 100px 20px;
-            background: var(--white);
-            overflow: hidden;
-        }
-
-        .testimonials h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 60px;
-        }
-
-        .testimonials-track {
-            display: flex;
-            animation: scrollRight 40s linear infinite;
-            width: fit-content;
-        }
-
-        .testimonials-track:hover {
-            animation-play-state: paused;
-        }
-
-        .testimonial-card {
-            flex-shrink: 0;
-            background: var(--bg);
-            padding: 30px;
-            border-radius: 16px;
-            margin: 0 20px;
-            min-width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .testimonial-content {
-            font-size: 1.1rem;
-            color: var(--text);
-            margin-bottom: 20px;
-            line-height: 1.6;
-            font-style: italic;
-        }
-
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .author-avatar {
-            width: 50px;
-            height: 50px;
-            background: var(--gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .author-info h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .author-info .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            background: var(--primary);
-            color: white;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        /* CTA Section */
-        .cta {
-            padding: 100px 20px;
-            background: var(--gradient);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .cta-content {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta h2 {
-            font-size: 3rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 24px;
-        }
-
-        .cta p {
-            font-size: 1.25rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 40px;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--text);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes scrollLeft {
-            from {
-                transform: translateX(0);
-            }
-            to {
-                transform: translateX(-50%);
-            }
-        }
-
-        @keyframes scrollRight {
-            from {
-                transform: translateX(-50%);
-            }
-            to {
-                transform: translateX(0);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero p {
-                font-size: 1.1rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-
-            .testimonial-card {
-                min-width: 300px;
-                margin: 0 15px;
-            }
-
-            .cta h2 {
-                font-size: 2rem;
-            }
-
-            .cta p {
-                font-size: 1.1rem;
-            }
-
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .nav-buttons {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero {
-                padding: 60px 15px;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .features, .testimonials, .cta {
-                padding: 60px 15px;
-            }
-
-            .feature-card {
-                padding: 30px 20px;
-            }
-
-            .testimonial-card {
-                padding: 20px;
-                min-width: 250px;
-            }
-        }
-    </style>
+   <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+    --green:#16d39a;
+    --green-soft:#d8f8ec;
+    --dark:#07111f;
+    --dark-2:#0b1627;
+    --text:#101827;
+    --muted:#64748b;
+    --border:#dbe3ee;
+    --bg:#ffffff;
+    --soft:#f8fafc;
+    --white:#ffffff;
+}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text);background:#fff;overflow-x:hidden}
+a{text-decoration:none}
+.header{height:58px;background:#fff;position:fixed;top:0;left:0;right:0;z-index:1000;border-bottom:1px solid #eee}
+.header-content{max-width:1180px;margin:auto;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#2563eb}
+.logo img{height:28px;width:auto}
+.desktop-nav{display:flex;gap:24px}
+.desktop-nav a{font-size:13px;color:#334155;font-weight:700}
+.nav-right{display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:11px 18px;font-weight:800;font-size:13px;border:0;cursor:pointer;transition:.25s}
+.btn-light{color:#0f172a;background:#fff}
+.btn-dark{color:#fff;background:#07111f}
+.btn-success{background:var(--green);color:#fff}
+.btn-glass{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.large-btn{padding:15px 28px}
+
+.hero{margin-top:58px;min-height:430px;background:url('<?php echo htmlspecialchars(get_setting('homepage_hero_image', '', true)); ?>') center/cover no-repeat;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff}
+.hero-overlay{position:absolute;inset:0;background:rgba(3,9,20,.62)}
+.hero-content{position:relative;z-index:2;max-width:760px;padding:40px 20px 20px}
+.hero-badge{display:inline-block;background:rgba(24,201,139,.18);border:1px solid rgba(24,201,139,.45);color:#d1fae5;padding:8px 16px;border-radius:999px;font-size:12px;font-weight:800;margin-bottom:18px}
+.hero h1{font-size:46px;line-height:1.02;font-weight:900;letter-spacing:-2px;margin-bottom:18px}
+.hero h1 span{color:var(--green)}
+.hero p{font-size:17px;line-height:1.7;color:#e5e7eb;max-width:640px;margin:0 auto 26px}
+.hero-buttons{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.hero-mini-stats{margin:20px auto 0;display:flex;justify-content:center;gap:14px}
+.hero-mini-stats div{min-width:95px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:13px 18px}
+.hero-mini-stats strong{display:block;font-size:22px}
+.hero-mini-stats span{font-size:12px;color:#dbeafe}
+
+.trusted-strip{padding:34px 20px;text-align:center;background:#fff;border-bottom:1px solid var(--border)}
+.trusted-strip p{font-size:12px;color:#64748b;margin-bottom:20px;font-weight:700}
+.trusted-strip{
+    padding:34px 0;
+    text-align:center;
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+}
+
+.trusted-strip p{
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:20px;
+    font-weight:700;
+}
+
+.trusted-logos{
+    display:flex;
+    align-items:center;
+    gap:60px;
+    width:max-content;
+    animation:trustedScroll 28s linear infinite;
+    color:#777;
+    font-size:24px;
+    font-weight:900;
+    opacity:.65;
+}
+
+.trusted-logos:hover{
+    animation-play-state:paused;
+}
+
+.trusted-logos span{
+    flex:0 0 auto;
+    min-width:120px;
+}
+
+@keyframes trustedScroll{
+    from{
+        transform:translateX(100vw);
+    }
+    to{
+        transform:translateX(-100%);
+    }
+}
+
+.about-section{padding:80px 20px;background:#fff}
+.about-grid{max-width:980px;margin:auto;display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+.section-tag{font-size:12px;color:var(--green);font-weight:900;letter-spacing:.12em;margin-bottom:10px;text-transform:uppercase}
+.section-tag.center{text-align:center}
+.about-text h2,.how-section h2,.features-modern h2,.testimonials-modern h2,.cta-box h2{font-size:34px;line-height:1.15;font-weight:900;margin-bottom:14px}
+.about-text p,.section-subtitle{color:#64748b;font-size:15px;line-height:1.8}
+.about-features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+.about-box{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff;font-weight:800;font-size:13px}
+.about-box i{color:var(--green);display:block;margin-bottom:8px}
+.about-image img{width:100%;height:270px;object-fit:cover;border-radius:18px;box-shadow:0 22px 50px rgba(15,23,42,.18)}
+
+.how-section{
+    padding:82px 20px;
+    background:
+        radial-gradient(circle at center, rgba(22,211,154,.18), transparent 35%),
+        linear-gradient(180deg,#07111f 0%,#0b1627 100%);
+    color:#fff;
+    text-align:center;
+    position:relative;
+}
+.how-section::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size:18px 18px;
+    opacity:.35;
+    pointer-events:none;
+}
+
+.how-section > *{
+    position:relative;
+    z-index:1;
+}
+
+body.dark-mode{
+    background:#07111f;
+    color:#e5e7eb;
+}
+
+body.dark-mode .header,
+body.dark-mode .trusted-strip,
+body.dark-mode .about-section,
+body.dark-mode .features-modern,
+body.dark-mode .testimonials-modern{
+    background:#07111f;
+    color:#e5e7eb;
+}
+
+body.dark-mode .modern-card,
+body.dark-mode .testimonial-modern-card,
+body.dark-mode .about-box{
+    background:#0b1627;
+    border-color:rgba(255,255,255,.12);
+}
+
+body.dark-mode p,
+body.dark-mode .modern-card p,
+body.dark-mode .testimonial-modern-card p{
+    color:#94a3b8;
+}
+
+.theme-toggle{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:1px solid #dbe3ee;
+    background:#ffffff;
+    color:#07111f;
+    cursor:pointer;
+    font-size:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 18px rgba(15,23,42,.12);
+}
+
+.theme-toggle:hover{
+    background:#f1f5f9;
+}
+.how-section .section-subtitle{color:#94a3b8;margin-bottom:30px}
+.steps-grid{max-width:900px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:24px;text-align:left}
+.step-number{width:34px;height:34px;border-radius:9px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:14px}
+.step-card h3{font-size:17px;margin-bottom:8px}
+.step-card p{color:#cbd5e1;font-size:13px;line-height:1.6}
+
+.features-modern{padding:80px 20px;background:#fff;max-width:980px;margin:auto}
+.features-modern-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:26px}
+.modern-card{padding:28px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.modern-card i{width:34px;height:34px;border-radius:8px;background:#dcfce7;color:var(--green);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.modern-card h3{font-size:16px;margin-bottom:8px}
+.modern-card p{font-size:13px;color:#64748b;line-height:1.6}
+
+.testimonials-modern{
+    padding:80px 20px;
+    background:#fff;
+    max-width:980px;
+    margin:auto;
+}
+
+.testimonials-slider{
+    overflow:hidden;
+    position:relative;
+    margin-top:32px;
+}
+
+.testimonials-track-modern{
+    display:flex;
+    gap:22px;
+    width:max-content;
+    animation:testimonialsMove 38s linear infinite;
+}
+
+.testimonials-track-modern:hover{
+    animation-play-state:paused;
+}
+
+.testimonial-modern-card{
+    width:320px;
+    min-height:220px;
+    background:#fff;
+    border:1px solid #dbe3ee;
+    border-radius:18px;
+    padding:26px;
+    flex-shrink:0;
+    box-shadow:0 10px 30px rgba(15,23,42,.05);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.quote-icon{
+    color:#b7f3d9;
+    font-size:34px;
+    margin-bottom:16px;
+}
+
+.testimonial-modern-card p{
+    color:#475569;
+    font-size:14px;
+    line-height:1.8;
+    margin-bottom:28px;
+}
+
+.testimonial-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-top:1px solid #edf2f7;
+    padding-top:18px;
+}
+
+.testimonial-bottom h4{
+    font-size:14px;
+    color:#07111f;
+}
+
+.client-badge{
+    padding:5px 12px;
+    border-radius:999px;
+    background:#dcfce7;
+    color:#16a34a;
+    font-size:11px;
+    font-weight:800;
+}
+
+@keyframes testimonialsMove{
+    from{
+        transform:translateX(0);
+    }
+
+    to{
+        transform:translateX(-50%);
+    }
+}
+
+.cta-modern{padding:70px 20px;background:#f8fafc}
+.cta-box{max-width:820px;margin:auto;background:#07111f;color:#fff;border-radius:24px;padding:58px 30px;text-align:center}
+.cta-box p{color:#cbd5e1;margin-bottom:24px}
+.footer-modern{background:#050b14;color:#94a3b8;text-align:center;padding:35px 20px}
+.footer-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+.footer-links a{color:#e5e7eb;font-size:13px}
+
+@media(max-width:800px){
+.desktop-nav{display:none}
+.hero h1{font-size:38px}
+.about-grid,.steps-grid,.features-modern-grid,.testimonial-modern-grid{grid-template-columns:1fr}
+.about-features{grid-template-columns:1fr}
+.hero-mini-stats{flex-direction:column;align-items:center}
+}
+</style>
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <a href="index.php" class="logo">
-                <?php if ($siteLogoUrl): ?>
-                    <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
-                <?php else: ?>
-                    <i class="fas fa-hand-holding-usd"></i>
-                <?php endif; ?>
-                <?php echo htmlspecialchars($siteName); ?>
-            </a>
-            
-            <!-- Right Side Navigation -->
-            <div class="nav-right">
-                <?php if ($is_admin): ?>
-                    <a href="admin/dashboard.php" class="btn btn-primary">
-                        <i class="fas fa-tachometer-alt"></i>
-                        Admin Dashboard
-                    </a>
-                <?php elseif ($is_logged_in): ?>
-                    <a href="dashboard.php" class="btn btn-primary">
-                        <i class="fas fa-tachometer-alt"></i>
-                        Dashboard
-                    </a>
-                    <a href="logout.php" class="btn btn-outline">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                    </a>
-                <?php else: ?>
-                    <a href="login.php" class="btn btn-outline">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Login
-                    </a>
-                    <a href="register.php" class="btn btn-outline">
-                        <i class="fas fa-user-plus"></i>
-                        Register
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </header>
+<header class="header">
+    <div class="header-content">
+        <a href="index.php" class="logo">
+            <?php if ($siteLogoUrl): ?>
+                <img src="<?php echo htmlspecialchars($siteLogoUrl); ?>" alt="<?php echo htmlspecialchars($siteName); ?>">
+            <?php else: ?>
+                <i class="fas fa-hand-holding-usd"></i>
+            <?php endif; ?>
+            Hand To Global
+        </a>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1><?php echo __t('Transform Your Time into Income'); ?></h1>
-            <p><?php echo __t('Join thousands of earners worldwide completing simple tasks and getting paid daily. No experience needed - start earning today!'); ?></p>
-            <div class="hero-buttons">
-                <?php if (!$is_logged_in): ?>
-                    <a href="register.php" class="btn btn-success">
-                        <i class="fas fa-rocket"></i>
-                        <?php echo __t('Start Earning Now'); ?>
-                    </a>
-                <?php endif; ?>
-                <a href="<?php echo $support_link; ?>" target="_blank" class="btn btn-secondary">
-                    <i class="fas fa-headset"></i>
-                    <?php echo __t('Get Support'); ?>
-                </a>
-            </div>
-        </div>
-    </section>
+        <nav class="desktop-nav">
+            <a href="#about">About</a>
+            <a href="#how">How It Works</a>
+            <a href="#features">Features</a>
+            <a href="#reviews">Reviews</a>
+        </nav>
 
-    <!-- Animated Logo Strip -->
-    <section class="logo-strip">
-        <div class="logo-track">
-            <?php 
-            $logo_strip = get_setting('homepage_logo_strip', '', true);
-            $logo_items = $logo_strip ? explode("\n", $logo_strip) : [];
-            foreach ($logo_items as $item):
-                if (trim($item) === '') { continue; }
-            ?>
-                <div class="logo-item">
-                    <?php echo htmlspecialchars(trim($item)); ?>
-                </div>
-            <?php endforeach; ?>
-            <div class="logo-item">
-                <i class="fas fa-dollar-sign"></i>
-                <?php echo __t('daily_earnings', 'Daily Earnings'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-clock"></i>
-                <?php echo __t('flexible_hours', 'Flexible Hours'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-shield-alt"></i>
-                <?php echo __t('secure_payments', 'Secure Payments'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-users"></i>
-                <?php echo __t('growing_community', 'Growing Community'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-dollar-sign"></i>
-                <?php echo __t('daily_earnings', 'Daily Earnings'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-clock"></i>
-                <?php echo __t('flexible_hours', 'Flexible Hours'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-shield-alt"></i>
-                <?php echo __t('secure_payments', 'Secure Payments'); ?>
-            </div>
-            <div class="logo-item">
-                <i class="fas fa-users"></i>
-                <?php echo __t('growing_community', 'Growing Community'); ?>
-            </div>
-        </div>
-    </section>
+       <div class="nav-right">
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="features-content">
-            <h2>Why Choose <?php echo htmlspecialchars($siteName); ?>?</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h3>Simple Tasks</h3>
-                    <p>Complete easy tasks that require no special skills. Perfect for beginners and experienced workers alike.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <h3>Instant Payments</h3>
-                    <p>Get paid quickly and securely. Multiple withdrawal options available for your convenience.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-globe-americas"></i>
-                    </div>
-                    <h3>Work Anywhere</h3>
-                    <p>Access tasks from anywhere in the world. All you need is an internet connection.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
 
-    <?php 
-    $testimonials_display = get_setting('testimonials_display', 'both');
-    if ($testimonials_display !== 'none'): 
-?>
-    <!-- Testimonials Section -->
-    <section class="testimonials">
-        <h2>What Our Community Says</h2>
-        <div class="testimonials-track">
-            <?php foreach ($testimonials as $testimonial): ?>
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "<?php echo htmlspecialchars($testimonial['content']); ?>"
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">
-                            <?php echo strtoupper(substr($testimonial['name'], 0, 1)); ?>
-                        </div>
-                        <div class="author-info">
-                            <h4><?php echo htmlspecialchars($testimonial['name']); ?></h4>
-                            <span class="badge"><?php echo ucfirst(htmlspecialchars($testimonial['type'])); ?></span>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-            
-            <!-- Duplicate testimonials for seamless loop -->
-            <?php foreach ($testimonials as $testimonial): ?>
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "<?php echo htmlspecialchars($testimonial['content']); ?>"
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">
-                            <?php echo strtoupper(substr($testimonial['name'], 0, 1)); ?>
-                        </div>
-                        <div class="author-info">
-                            <h4><?php echo htmlspecialchars($testimonial['name']); ?></h4>
-                            <span class="badge"><?php echo ucfirst(htmlspecialchars($testimonial['type'])); ?></span>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </section>
+    <?php if ($is_logged_in): ?>
+        <a href="dashboard.php" class="btn btn-dark">
+            Dashboard
+        </a>
+
+    <?php else: ?>
+
+        <a href="login.php" class="btn btn-light">
+            Login
+        </a>
+
+        <a href="register.php" class="btn btn-dark">
+            Get Started
+        </a>
+
     <?php endif; ?>
 
-    <!-- CTA Section -->
-    <section class="cta">
-        <div class="cta-content">
-            <h2>Ready to Start Earning?</h2>
-            <p>Join thousands of people who are already making money with <?php echo htmlspecialchars($siteName); ?>. Your journey to financial freedom starts here.</p>
+</div>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+        <div class="hero-badge">
+            Professional Online Task Platform
+        </div>
+
+        <h1>
+            Complete Tasks.<br>
+            <span>Earn Rewards.</span>
+        </h1>
+
+        <p>
+            Join Hand To Global and complete simple guided online tasks from anywhere in the world while earning daily rewards securely.
+        </p>
+
+        <div class="hero-buttons">
             <?php if (!$is_logged_in): ?>
-                <a href="register.php" class="btn btn-success" style="font-size: 1.1rem; padding: 16px 32px;">
-                    <i class="fas fa-rocket"></i>
-                    Get Started Now
+                <a href="register.php" class="btn btn-success">
+                    Start Earning Now
                 </a>
             <?php endif; ?>
-        </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-links">
-                <a href="login.php">Login</a>
-                <a href="register.php">Register</a>
-                <a href="<?php echo $support_link; ?>" target="_blank">Support</a>
-                <a href="privacy.php">Privacy Policy</a>
-                <a href="terms.php">Terms of Service</a>
-            </div>
-            <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
+            <a href="<?php echo htmlspecialchars($support_link); ?>" target="_blank" class="btn btn-glass">
+                Support
+            </a>
         </div>
-    </footer>
+
+        <div class="hero-mini-stats">
+            <div>
+                <strong>40</strong>
+                <span>Tasks</span>
+            </div>
+
+            <div>
+                <strong>4</strong>
+                <span>Levels</span>
+            </div>
+
+            <div>
+                <strong>24/7</strong>
+                <span>Access</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUSTED -->
+<section class="trusted-strip">
+    <p><?php echo htmlspecialchars(get_setting('homepage_trusted_title', 'Trusted By Leading Brands')); ?></p>
+
+    <div class="trusted-logos" style="animation-duration: <?php echo (int)get_setting('homepage_logo_animation_speed', 28); ?>s;">
+        <?php
+        $trustedLogos = get_setting('homepage_trusted_logos', "FILA\nLEGO\nADIDAS\nSUBARU\nDELL\nNIKE", true);
+        $trustedItems = array_filter(array_map('trim', explode("\n", $trustedLogos)));
+
+        for ($i = 0; $i < 2; $i++):
+            foreach ($trustedItems as $logo):
+        ?>
+            <span><?php echo htmlspecialchars($logo); ?></span>
+        <?php
+            endforeach;
+        endfor;
+        ?>
+    </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+    <div class="about-grid">
+
+        <div class="about-text">
+            <div class="section-tag">WHAT WE DO</div>
+
+            <h2>Professional Online Task Platform</h2>
+
+            <p>
+                Hand To Global connects users worldwide with structured online tasks designed to help members grow through achievement levels while earning securely from anywhere.
+            </p>
+
+            <div class="about-features">
+                <div class="about-box">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Instant access</span>
+                </div>
+
+                <div class="about-box">
+                    <i class="fas fa-globe"></i>
+                    <span>Global platform</span>
+                </div>
+
+                <div class="about-box">
+                    <i class="fas fa-language"></i>
+                    <span>Multi-language</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-image">
+            <img src="<?php echo htmlspecialchars(get_setting('homepage_hero_image', '', true)); ?>" alt="About">
+        </div>
+
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+
+    <div class="section-tag center">
+        PROCESS
+    </div>
+
+    <h2>How It Works</h2>
+
+    <p class="section-subtitle">
+        Three simple steps to start earning
+    </p>
+
+    <div class="steps-grid">
+
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Register</h3>
+            <p>Create your free account and access the dashboard instantly.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Complete Tasks</h3>
+            <p>Perform guided review tasks and increase your progress level.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Withdraw Earnings</h3>
+            <p>Request withdrawals securely after completing tasks successfully.</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-modern" id="features">
+
+    <div class="section-tag">
+        FEATURES
+    </div>
+
+    <h2>Why Choose Hand To Global?</h2>
+
+    <div class="features-modern-grid">
+
+        <div class="modern-card">
+            <i class="fas fa-layer-group"></i>
+            <h3>Level Progression</h3>
+            <p>Advance through structured earning levels.</p>
+        </div>
+
+        <div class="modern-card">
+            <i class="fas fa-wallet"></i>
+            <h3>Secure Withdrawals</h3>
+            <p>Fast and protected withdrawal process.</p>
+        </div>
+
+        <div class="modern-card">
+            <i class="fas fa-tasks"></i>
+            <h3>Simple Tasks</h3>
+            <p>Easy guided tasks for all users.</p>
+        </div>
+
+        <div class="modern-card">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Secure Platform</h3>
+            <p>Protected accounts and transactions.</p>
+        </div>
+
+        <div class="modern-card">
+            <i class="fas fa-users"></i>
+            <h3>Referral System</h3>
+            <p>Invite users and earn additional rewards.</p>
+        </div>
+
+        <div class="modern-card">
+            <i class="fas fa-headset"></i>
+            <h3>24/7 Support</h3>
+            <p>Professional support whenever needed.</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-modern" id="reviews">
+
+    <div class="section-tag">
+        REVIEWS
+    </div>
+
+    <h2>What Our Community Says</h2>
+
+   <div class="testimonials-slider">
+
+    <div class="testimonials-track-modern">
+
+        <?php for ($loop = 0; $loop < 2; $loop++): ?>
+
+            <?php foreach ($testimonials as $testimonial): ?>
+
+                <div class="testimonial-modern-card">
+
+                    <div class="quote-icon">
+                        <i class="fas fa-quote-left"></i>
+                    </div>
+
+                    <p>
+                        "<?php echo htmlspecialchars($testimonial['content']); ?>"
+                    </p>
+
+                    <div class="testimonial-bottom">
+
+                        <div>
+                            <h4><?php echo htmlspecialchars($testimonial['name']); ?></h4>
+                        </div>
+
+                        <span class="client-badge">
+                            <?php echo ucfirst(htmlspecialchars($testimonial['type'])); ?>
+                        </span>
+
+                    </div>
+
+                </div>
+
+            <?php endforeach; ?>
+
+        <?php endfor; ?>
+
+    </div>
+
+</div>
+
+</section>
+
+<!-- CTA -->
+<section class="cta-modern">
+
+    <div class="cta-box">
+
+        <h2>Ready To Start Earning?</h2>
+
+        <p>
+            Join thousands of users already growing with Hand To Global.
+        </p>
+
+        <?php if (!$is_logged_in): ?>
+            <a href="register.php" class="btn btn-success large-btn">
+                Create Free Account
+            </a>
+        <?php endif; ?>
+
+    </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer class="footer-modern">
+
+    <div class="footer-links">
+        <a href="login.php">Login</a>
+        <a href="register.php">Register</a>
+        <a href="<?php echo htmlspecialchars($support_link); ?>">Support</a>
+        <a href="privacy.php">Privacy Policy</a>
+        <a href="terms.php">Terms</a>
+    </div>
+
+    <p>
+        © <?php echo date('Y'); ?> Hand To Global. All rights reserved.
+    </p>
+
+</footer>
 
     <script>
         // Smooth scroll for anchor links
@@ -865,6 +703,14 @@ $support_link = get_telegram_link();
                 track.style.animationPlayState = 'running';
             });
         });
+        function toggleTheme(){
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('homepage_theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+}
+
+if(localStorage.getItem('homepage_theme') === 'dark'){
+    document.body.classList.add('dark-mode');
+}
     </script>
 </body>
 </html>
